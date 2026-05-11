@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lösungen – Windenergie und Wasserkraft</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:ital,wght@0,400;0,600;0,700;1,400&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{--blue:#2e9fff;--teal:#00c9a7;--white:#f0ede8;--dim:#888;--bg:#181818;--border:#2e2e2e;--correct:#2d5a2d;--correct-text:#8fd08f}
+  html,body{height:100%;width:100%;overflow:hidden;font-family:'Barlow',sans-serif;background:var(--bg);color:var(--white)}
+  body::before{content:'';position:fixed;inset:0;background-image:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.012) 2px,rgba(255,255,255,.012) 3px),repeating-linear-gradient(90deg,transparent,transparent 4px,rgba(255,255,255,.008) 4px,rgba(255,255,255,.008) 5px);pointer-events:none;z-index:0}
+  .slides{height:100vh;width:100%;position:relative}
+  .slide{position:absolute;inset:0;display:none;flex-direction:column}
+  .slide.active{display:flex}
+  .slide-title{justify-content:center;align-items:center;text-align:center;background:#111;gap:20px;cursor:pointer}
+  .slide-title h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(52px,10vw,120px);line-height:1;letter-spacing:3px}
+  .slide-title h1 span{color:var(--blue)}
+  .slide-title p{font-family:'Barlow Condensed',sans-serif;font-size:clamp(16px,2.2vw,28px);letter-spacing:4px;text-transform:uppercase;color:var(--dim)}
+  .start-hint{margin-top:40px;font-size:clamp(14px,1.8vw,22px);color:var(--dim);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+  .slide-q{display:none;flex-direction:column;height:100vh}
+  .slide-q.active{display:flex}
+  .q-topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 32px;background:#111;border-bottom:3px solid var(--blue);flex-shrink:0}
+  .q-badge{font-family:'Bebas Neue',sans-serif;font-size:clamp(14px,2vw,22px);letter-spacing:3px;color:var(--blue)}
+  .q-counter{font-family:'Barlow Condensed',sans-serif;font-size:clamp(12px,1.5vw,18px);color:var(--dim);letter-spacing:2px}
+  .q-teil{font-family:'Barlow Condensed',sans-serif;font-size:clamp(11px,1.4vw,17px);color:var(--dim);letter-spacing:2px;text-transform:uppercase}
+  .q-body{flex:1;display:flex;flex-direction:column;justify-content:center;padding:32px clamp(28px,5vw,90px);gap:24px;position:relative;overflow:hidden}
+  .q-number{font-family:'Bebas Neue',sans-serif;font-size:clamp(80px,14vw,170px);line-height:1;color:#242424;position:absolute;right:clamp(24px,4vw,70px);top:50%;transform:translateY(-50%);pointer-events:none;user-select:none}
+  .q-text{font-size:clamp(26px,4vw,52px);font-weight:700;line-height:1.25;color:var(--white);max-width:82%;position:relative;z-index:1}
+  .q-sub{font-size:clamp(14px,1.8vw,22px);font-weight:400;font-style:italic;color:var(--dim);margin-top:8px}
+  .q-answer{position:relative;z-index:1;max-width:88%;opacity:0;transform:translateY(14px);transition:opacity .35s ease,transform .35s ease;pointer-events:none}
+  .q-answer.visible{opacity:1;transform:translateY(0);pointer-events:auto}
+  .reveal-hint{position:absolute;bottom:86px;left:50%;transform:translateX(-50%);font-family:'Barlow Condensed',sans-serif;font-size:clamp(13px,1.6vw,20px);letter-spacing:3px;text-transform:uppercase;color:var(--dim);border:1px solid #333;padding:10px 28px;cursor:pointer;transition:all .2s;background:transparent;z-index:2}
+  .reveal-hint:hover{border-color:var(--blue);color:var(--blue)}
+  .reveal-hint.hidden{opacity:0;pointer-events:none}
+  .ans-open{font-size:clamp(16px,2.1vw,28px);color:var(--dim);font-style:italic;line-height:1.5;border-left:4px solid var(--blue);padding-left:18px}
+  .ans-open strong{color:var(--white);font-style:normal}
+  .ans-choices{display:flex;flex-direction:column;gap:10px}
+  .ans-choice{display:flex;align-items:center;gap:14px;padding:11px 18px;font-size:clamp(14px,1.9vw,24px);line-height:1.3;border:1px solid var(--border);background:#1e1e1e}
+  .ans-choice.correct{background:var(--correct);border-color:#3a7a3a;color:var(--correct-text);font-weight:700}
+  .ans-choice.wrong{opacity:.35}
+  .icon{font-size:clamp(15px,1.8vw,22px);flex-shrink:0}
+  .ans-fills{display:flex;flex-direction:column;gap:10px}
+  .ans-fill{font-size:clamp(15px,2vw,26px);line-height:1.5;color:var(--white)}
+  .ans-fill .lbl{font-family:'Barlow Condensed',sans-serif;font-size:clamp(12px,1.4vw,18px);color:var(--dim);margin-right:6px;letter-spacing:1px}
+  .ans-fill strong{color:var(--teal)}
+  .ans-table{width:100%;border-collapse:collapse;font-size:clamp(12px,1.4vw,19px)}
+  .ans-table th{background:#2e2e2e;color:var(--dim);font-family:'Barlow Condensed',sans-serif;font-size:clamp(10px,1.1vw,15px);letter-spacing:1.5px;text-transform:uppercase;padding:7px 10px;text-align:left}
+  .ans-table td{border:1px solid var(--border);padding:7px 10px;vertical-align:top;line-height:1.4}
+  .ans-table .cat{color:var(--teal);font-weight:700}
+  .ans-tip{margin-top:10px;font-size:clamp(12px,1.3vw,17px);color:var(--dim);font-style:italic;border-left:3px solid #333;padding-left:12px}
+  .nav-bar{position:fixed;bottom:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:12px 32px;background:#111;border-top:1px solid #2a2a2a;z-index:10}
+  .nav-btn{font-family:'Barlow Condensed',sans-serif;font-size:clamp(13px,1.6vw,18px);letter-spacing:2px;text-transform:uppercase;color:var(--dim);background:transparent;border:1px solid #333;padding:8px 24px;cursor:pointer;transition:all .2s}
+  .nav-btn:hover:not(:disabled){border-color:var(--blue);color:var(--blue)}
+  .nav-btn:disabled{opacity:.2;cursor:default}
+  .progress{display:flex;gap:6px;align-items:center}
+  .dot{width:8px;height:8px;border-radius:50%;background:#333;transition:background .2s}
+  .dot.active{background:var(--blue)}.dot.done{background:#555}
+</style>
+</head>
+<body>
+<div class="slides" id="slides">
+
+<div class="slide slide-title active" id="slide-0" onclick="next()">
+  <h1>Wind & <span>Wasser</span></h1>
+  <p>total phänomenal  ·  Lösungen  ·  Klasse 9</p>
+  <div class="start-hint">Klicken zum Starten →</div>
+</div>
+
+<div class="slide slide-q" id="slide-1">
+  <div class="q-topbar"><div class="q-teil">Teil A – Vorwissen</div><div class="q-badge">Aufgabe 1</div><div class="q-counter">1 / 11</div></div>
+  <div class="q-body"><div class="q-number">1</div>
+    <div class="q-text">Welche erneuerbaren Energiequellen kennst du?<div class="q-sub">mind. drei nennen</div></div>
+    <div class="q-answer" id="ans-1">
+      <div class="ans-fills">
+        <div class="ans-fill"><strong>Windkraft</strong> (Onshore / Offshore) · <strong>Wasserkraft</strong> (Laufwasser, Pumpspeicher) · <strong>Photovoltaik</strong> · <strong>Solarthermie</strong> · <strong>Biomasse</strong> · <strong>Geothermie</strong></div>
+        <div class="ans-fill">Laut Film: Erneuerbare decken bereits <strong>knapp die Hälfte</strong> des deutschen Strombedarfs – Windkraft an erster Stelle.</div>
+      </div>
+    </div>
+  </div>
+  <button class="reveal-hint" id="rev-1" onclick="reveal(1)">▶ Lösung anzeigen</button>
+</div>
+
+<div class="slide slide-q" id="slide-2">
+  <div class="q-topbar"><div class="q-teil">Teil A – Vorwissen</div><div class="q-badge">Aufgabe 2</div><div class="q-counter">2 / 11</div></div>
+  <div class="q-body"><div class="q-number">2</div>
+    <div class="q-text">Was bedeutet „Grundlast" in der Energieversorgung?</div>
+    <div class="q-answer" id="ans-2">
+      <div class="ans-fills">
+        <div class="ans-fill">Grundlast = <strong>ständig anfallender Mindestbedarf</strong> an elektrischer Energie, der rund um die Uhr gedeckt werden muss.</div>
+        <div class="ans-fill">Laufwasserkraftwerke wie Iffezheim decken genau diese Grundlast – sie laufen <strong>24/7</strong> zuverlässig.</div>
+      </div>
+    </div>
+  </div>
+  <button class="reveal-hint" id="rev-2" onclick="reveal(2)">▶ Lösung anzeigen</button>
+</div>
+
+<div class="slide slide-q" id="slide-3">
+  <div class="q-topbar"><div class="q-teil">Teil B – Beim Zuschauen</div><div class="q-badge">Aufgabe 3</div><div class="q-counter">3 / 11</div></div>
+  <div class="q-body"><div class="q-number">3</div>
+    <div class="q-text">Vergleich: Laufwasserkraftwerk ↔ Pumpspeicherkraftwerk</div>
+    <div class="q-answer" id="ans-3">
+      <table class="ans-table">
+        <tr><th>Merkmal</th><th>Laufwasserkraftwerk (Iffezheim)</th><th>Pumpspeicher (Kraftwerk Wehr)</th></tr>
+        <tr><td class="cat">Funktion</td><td>Fließendes Rheinwasser → Strom (Grundlast)</td><td>Speichert / gibt Energie je nach Bedarf ab</td></tr>
+        <tr><td class="cat">Turbine</td><td>Kaplanturbine (wie Schiffspropeller), 25 m Fallhöhe</td><td>Francis-Turbine, 600 m Fallhöhe</td></tr>
+        <tr><td class="cat">Besonderheit</td><td>Verstellbare Schaufeln, Computer regelt Drehzahl</td><td>Unterirdisch, >100 Wechsel Pumpen/Erzeugen pro Tag</td></tr>
+        <tr><td class="cat">Vorteil</td><td>Konstant, zuverlässig, 200.000 Haushalte</td><td>Riesige „Batterie", stabilisiert das Stromnetz</td></tr>
+      </table>
+    </div>
+  </div>
+  <button class="reveal-hint" id="rev-3" onclick="reveal(3)">▶ Lösung anzeigen</button>
+</div>
+
+<div class="slide slide-q" id="slide-4">
+  <div class="q-topbar"><div class="q-teil">Teil B – Beim Zuschauen</div><div class="q-badge">Aufgabe 4</div><div class="q-counter">4 / 11</div></div>
+  <div class="q-body"><div class="q-number">4</div>
+    <div class="q-text">Zwei konkrete Zahlen zum Kraftwerk Wehr?</div>
+    <div class="q-answer" id="ans-4">
+      <div class="ans-fills">
+        <div class="ans-fill"><strong>600 m</strong> Fallhöhe (Wasser fällt fast senkrecht)</div>
+        <div class="ans-fill"><strong>mehr als 100</strong> Wechsel zwischen Pumpen und Erzeugen pro Tag</div>
+        <div class="ans-fill">Bonus: Kraftwerk liegt <strong>komplett unterirdisch</strong> im Berg / gehört zu einem Verbund von <strong>5</strong> Wasserkraftwerken im Schwarzwald</div>
+      </div>
+    </div>
+  </div>
+  <button class="reveal-hint" id="rev-4" onclick="reveal(4)">▶ Lösung anzeigen</button>
+</div>
+
+<div class="slide slide-q" id="slide-5">
+  <div class="q-topbar"><div class="q-teil">Teil C – Windkraft</div><div class="q-badge">Aufgabe 5</div><div class="q-counter">5 / 11</div></div>
+  <div class="q-body"><div class="q-number">5</div>
+    <div class="q-text">Lückentext: Wie erzeugt eine Windkraftanlage Strom?</div>
+    <div class="q-answer" id="ans-5">
+      <div class="ans-fills">
+        <div class="ans-fill"><span class="lbl">a)</span> Herzstück = die <strong>Gondel</strong> (~300 Tonnen)</div>
+        <div class="ans-fill"><span class="lbl">b)</span> <strong>Rotor</strong> treibt die Achse an → auf der Achse sitzen elektrische <strong>Spulen</strong></div>
+        <div class="ans-fill"><span class="lbl">c)</span> Außenherum: Ring aus festen <strong>Permanentmagneten</strong></div>
+        <div class="ans-fill"><span class="lbl">d)</span> Magnetfeld verschiebt <strong>Elektronen</strong> in den Spulen → elektrische <strong>Spannung</strong> → <strong>Strom</strong></div>
+      </div>
+    </div>
+  </div>
+  <button class="reveal-hint" id="rev-5" onclick="reveal(5)">▶ Lösung anzeigen</button>
+</div>
+
+<div class="slide slide-q" id="slide-6">
+  <div class="q-topbar"><div class="q-teil">Teil C – Windkraft</div><div class="q-badge">Aufgabe 6</div><div class="q-counter">6 / 11</div></div>
+  <div class="q-body"><div class="q-number">6</div>
+    <div class="q-text">Warum eignet sich die Nordsee besonders gut für Windparks?</div>
+    <div class="q-answer" id="ans-6">
+      <div class="ans-fills">
+        <div class="ans-fill">1. Windräder laufen dort <strong>über zwei Drittel der Zeit unter Volllast</strong> – Flaute ist selten.</div>
+        <div class="ans-fill">2. Windparks auf See stören die Bevölkerung <strong>kaum</strong> (weit weg, kein Lärm, kein Schattenwurf).</div>
+        <div class="ans-fill">Bonus: Nord- und Ostsee sind relativ <strong>flach</strong> → Fundamente lassen sich gut verankern.</div>
+      </div>
+    </div>
+  </div>
+  <button class="reveal-hint" id="rev-6" onclick="reveal(6)">▶ Lösung anzeigen</button>
+</div>
+
+<div class="slide slide-q" id="slide-7">
+  <div class="q-topbar"><div class="q-teil">Teil D – Pumpspeicher</div><div class="q-badge">Aufgabe 7</div><div class="q-counter">7 / 11</div></div>
+  <div class="q-body"><div class="q-number">7</div>
+    <div class="q-text">Die zwei Betriebsarten eines Pumpspeicherkraftwerks?</div>
+    <div class="q-answer" id="ans-7">
+      <div class="ans-fills">
+        <div class="ans-fill"><strong>Turbinenbetrieb (Erzeugen):</strong> Wasser fließt von oben nach unten → treibt Turbine/Generator an → Strom ins Netz. Wird genutzt, wenn Wind/Sonne zu wenig liefern.</div>
+        <div class="ans-fill"><strong>Pumpbetrieb (Speichern):</strong> Überschussstrom aus Wind/Sonne pumpt Wasser ins Oberbecken → Energie wird als Lageenergie gespeichert.</div>
+      </div>
+    </div>
+  </div>
+  <button class="reveal-hint" id="rev-7" onclick="reveal(7)">▶ Lösung anzeigen</button>
+</div>
+
+<div class="slide slide-q" id="slide-8">
+  <div class="q-topbar"><div class="q-teil">Teil D – Netzstabilität</div><div class="q-badge">Aufgabe 8</div><div class="q-counter">8 / 11</div></div>
+  <div class="q-body"><div class="q-number">8</div>
+    <div class="q-text">Welche Rolle spielen Pumpspeicher für die Netzstabilität?</div>
+    <div class="q-answer" id="ans-8">
+      <div class="ans-fills">
+        <div class="ans-fill">Sie können <strong>sehr schnell</strong> zwischen Pumpen und Erzeugen wechseln (>100 × pro Tag).</div>
+        <div class="ans-fill">→ Gleichen <strong>Schwankungen</strong> im Stromnetz aus: zu viel Strom → pumpen; zu wenig → erzeugen.</div>
+        <div class="ans-fill">→ Verhindern einen <strong>Blackout</strong> – sowohl bei Überlast als auch bei Unterversorgung.</div>
+      </div>
+      <div class="ans-tip">Steinbeck (TC 06:21): „wichtiges Element, wenn es darum geht, einen Blackout zu verhindern."</div>
+    </div>
+  </div>
+  <button class="reveal-hint" id="rev-8" onclick="reveal(8)">▶ Lösung anzeigen</button>
+</div>
+
+<div class="slide slide-q" id="slide-9">
+  <div class="q-topbar"><div class="q-teil">Teil E – Belo Monte</div><div class="q-badge">Aufgabe 9</div><div class="q-counter">9 / 11</div></div>
+  <div class="q-body"><div class="q-number">9</div>
+    <div class="q-text">Folgen des Belo-Monte-Staudamms</div>
+    <div class="q-answer" id="ans-9">
+      <table class="ans-table">
+        <tr><th>Ökologische Folgen</th><th>Soziale / menschliche Folgen</th></tr>
+        <tr><td>Regenwald + Äcker auf <strong>Bodensee-großer Fläche</strong> überflutet</td><td><strong>20.000 Menschen</strong> zwangsumgesiedelt</td></tr>
+        <tr><td>Hunderte Inseln verschwunden, <strong>Fischbestände dezimiert</strong></td><td>Dorfgemeinschaften zerstört, Altamira leidet unter <strong>Gewalt &amp; Kriminalität</strong></td></tr>
+      </table>
+    </div>
+  </div>
+  <button class="reveal-hint" id="rev-9" onclick="reveal(9)">▶ Lösung anzeigen</button>
+</div>
+
+<div class="slide slide-q" id="slide-10">
+  <div class="q-topbar"><div class="q-teil">Teil E – Bewertung</div><div class="q-badge">Aufgabe 10</div><div class="q-counter">10 / 11</div></div>
+  <div class="q-body"><div class="q-number">10</div>
+    <div class="q-text">Ist Wasserkraft immer eine „grüne" Energie?<div class="q-sub">offene Frage – Unterrichtsdiskussion</div></div>
+    <div class="q-answer" id="ans-10">
+      <div class="ans-open"><strong>Nein, nicht immer.</strong> Große Staudämme wie Belo Monte haben massive ökologische und soziale Auswirkungen. Dazu kommt: Durch den Klimawandel werden Dürren häufiger → weniger Wasser → geringere Leistung. Pumpspeicher (geschlossene Systeme) sind dagegen nachhaltiger. <strong>Fazit:</strong> Wasserkraft ist nicht per se grün – es kommt stark auf den Typ und Standort an.</div>
+    </div>
+  </div>
+  <button class="reveal-hint" id="rev-10" onclick="reveal(10)">▶ Lösung anzeigen</button>
+</div>
+
+<div class="slide slide-q" id="slide-11">
+  <div class="q-topbar"><div class="q-teil">Teil E – Transfer</div><div class="q-badge">Aufgabe 11</div><div class="q-counter">11 / 11</div></div>
+  <div class="q-body"><div class="q-number">11</div>
+    <div class="q-text">Tempo der Energiewende „verfünffachen" – was meint Quaschning?<div class="q-sub">offene Frage – Unterrichtsgespräch</div></div>
+    <div class="q-answer" id="ans-11">
+      <div class="ans-fills">
+        <div class="ans-fill">Mit dem heutigen Tempo würde die Energiewende <strong>~150 Jahre</strong> dauern – nötig wären 20 Jahre.</div>
+        <div class="ans-fill">→ Tempo muss <strong>5× schneller</strong> werden, um bis 2045 klimaneutral zu sein.</div>
+        <div class="ans-fill">Vergleich <strong>Mondlandung</strong>: USA haben 1961 ein scheinbar unmögliches Ziel in 7 Jahren erreicht – mit dem nötigen politischen Willen ist das möglich.</div>
+      </div>
+      <div class="ans-tip">TC 13:55 – kraftvoller Schluss, gut für Unterrichtsdiskussion geeignet.</div>
+    </div>
+  </div>
+  <button class="reveal-hint" id="rev-11" onclick="reveal(11)">▶ Lösung anzeigen</button>
+</div>
+
+</div>
+
+<div class="nav-bar">
+  <button class="nav-btn" id="btn-prev" onclick="prev()" disabled>← Zurück</button>
+  <div class="progress" id="progress"></div>
+  <button class="nav-btn" id="btn-next" onclick="next()">Weiter →</button>
+</div>
+
+<script>
+const TOTAL=12; let current=0;
+function buildProgress(){
+  const el=document.getElementById('progress'); el.innerHTML='';
+  for(let i=0;i<TOTAL;i++){const d=document.createElement('div');d.className='dot'+(i===current?' active':i<current?' done':'');el.appendChild(d);}
+}
+function showSlide(n){
+  document.querySelectorAll('.slide').forEach(s=>s.classList.remove('active'));
+  document.getElementById('slide-'+n).classList.add('active');
+  current=n;
+  document.getElementById('btn-prev').disabled=n===0;
+  document.getElementById('btn-next').disabled=n===TOTAL-1;
+  buildProgress();
+}
+function next(){if(current<TOTAL-1)showSlide(current+1);}
+function prev(){if(current>0)showSlide(current-1);}
+function reveal(n){
+  const a=document.getElementById('ans-'+n),b=document.getElementById('rev-'+n);
+  if(a)a.classList.add('visible'); if(b)b.classList.add('hidden');
+}
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' '||e.key==='Enter'){e.preventDefault();next();}
+  if(e.key==='ArrowLeft'){e.preventDefault();prev();}
+  if(e.key==='l'||e.key==='L')reveal(current);
+});
+buildProgress();
+</script>
+</body>
+</html>

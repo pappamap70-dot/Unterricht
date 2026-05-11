@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lösungen – Sonnenenergie</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:ital,wght@0,400;0,600;0,700;1,400&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --gold: #f5a800;
+    --gold-dim: #7a5200;
+    --white: #f0ede8;
+    --dim: #888;
+    --bg: #181818;
+    --card: #232323;
+    --correct: #2d5a2d;
+    --correct-text: #8fd08f;
+    --border: #2e2e2e;
+  }
+  html, body { height: 100%; width: 100%; overflow: hidden;
+    font-family: 'Barlow', sans-serif; background: var(--bg); color: var(--white); }
+
+  /* concrete texture */
+  body::before { content:''; position:fixed; inset:0;
+    background-image: repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.012) 2px,rgba(255,255,255,.012) 3px),
+      repeating-linear-gradient(90deg,transparent,transparent 4px,rgba(255,255,255,.008) 4px,rgba(255,255,255,.008) 5px);
+    pointer-events:none; z-index:0; }
+
+  .slides { height:100vh; width:100%; position:relative; }
+  .slide { position:absolute; inset:0; display:none; flex-direction:column; }
+  .slide.active { display:flex; }
+
+  /* TITLE */
+  .slide-title { justify-content:center; align-items:center; text-align:center; background:#111; gap:20px; cursor:pointer; }
+  .slide-title h1 { font-family:'Bebas Neue',sans-serif; font-size:clamp(60px,11vw,130px); line-height:1; letter-spacing:3px; }
+  .slide-title h1 span { color:var(--gold); }
+  .slide-title p { font-family:'Barlow Condensed',sans-serif; font-size:clamp(16px,2.2vw,28px); letter-spacing:4px; text-transform:uppercase; color:var(--dim); }
+  .start-hint { margin-top:40px; font-size:clamp(14px,1.8vw,22px); color:var(--dim); animation:pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:.4} 50%{opacity:1} }
+
+  /* Q SLIDE */
+  .slide-q { display:none; flex-direction:column; height:100vh; }
+  .slide-q.active { display:flex; }
+
+  .q-topbar { display:flex; align-items:center; justify-content:space-between;
+    padding:14px 32px; background:#111; border-bottom:3px solid var(--gold); flex-shrink:0; }
+  .q-badge { font-family:'Bebas Neue',sans-serif; font-size:clamp(14px,2vw,22px); letter-spacing:3px; color:var(--gold); }
+  .q-counter { font-family:'Barlow Condensed',sans-serif; font-size:clamp(12px,1.5vw,18px); color:var(--dim); letter-spacing:2px; }
+  .q-teil { font-family:'Barlow Condensed',sans-serif; font-size:clamp(11px,1.4vw,17px); color:var(--dim); letter-spacing:2px; text-transform:uppercase; }
+
+  .q-body { flex:1; display:flex; flex-direction:column; justify-content:center;
+    padding:32px clamp(28px,5vw,90px); gap:24px; position:relative; overflow:hidden; }
+
+  .q-number { font-family:'Bebas Neue',sans-serif; font-size:clamp(80px,14vw,170px);
+    line-height:1; color:#242424; position:absolute; right:clamp(24px,4vw,70px);
+    top:50%; transform:translateY(-50%); pointer-events:none; user-select:none; }
+
+  .q-text { font-size:clamp(28px,4.5vw,56px); font-weight:700; line-height:1.25;
+    color:var(--white); max-width:80%; position:relative; z-index:1; }
+  .q-sub { font-size:clamp(14px,2vw,24px); font-weight:400; font-style:italic;
+    color:var(--dim); margin-top:8px; }
+
+  .q-answer { position:relative; z-index:1; max-width:88%;
+    opacity:0; transform:translateY(14px);
+    transition:opacity .35s ease, transform .35s ease; pointer-events:none; }
+  .q-answer.visible { opacity:1; transform:translateY(0); pointer-events:auto; }
+
+  .reveal-hint { position:absolute; bottom:86px; left:50%; transform:translateX(-50%);
+    font-family:'Barlow Condensed',sans-serif; font-size:clamp(13px,1.6vw,20px);
+    letter-spacing:3px; text-transform:uppercase; color:var(--dim);
+    border:1px solid #333; padding:10px 28px; cursor:pointer;
+    transition:all .2s; background:transparent; z-index:2; }
+  .reveal-hint:hover { border-color:var(--gold); color:var(--gold); }
+  .reveal-hint.hidden { opacity:0; pointer-events:none; }
+
+  /* ANSWER TYPES */
+  .ans-open { font-size:clamp(17px,2.3vw,30px); color:var(--dim); font-style:italic;
+    line-height:1.5; border-left:4px solid var(--gold); padding-left:18px; }
+  .ans-open strong { color:var(--white); font-style:normal; }
+
+  .ans-choices { display:flex; flex-direction:column; gap:10px; }
+  .ans-choice { display:flex; align-items:center; gap:14px;
+    padding:11px 18px; font-size:clamp(14px,1.9vw,26px); line-height:1.3;
+    border:1px solid var(--border); background:#1e1e1e; }
+  .ans-choice.correct { background:var(--correct); border-color:#3a7a3a;
+    color:var(--correct-text); font-weight:700; }
+  .ans-choice.wrong { opacity:.35; }
+  .icon { font-size:clamp(15px,1.8vw,22px); flex-shrink:0; }
+
+  .ans-fills { display:flex; flex-direction:column; gap:10px; }
+  .ans-fill { font-size:clamp(16px,2.1vw,28px); line-height:1.5; color:var(--white); }
+  .ans-fill .lbl { font-family:'Barlow Condensed',sans-serif; font-size:clamp(12px,1.4vw,18px);
+    color:var(--dim); margin-right:6px; letter-spacing:1px; }
+  .ans-fill strong { color:var(--gold); }
+
+  .ans-formula { font-size:clamp(18px,2.5vw,34px); line-height:1.8;
+    font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; }
+  .ans-formula .step { color:var(--dim); font-size:0.8em; display:block; margin-bottom:4px; }
+  .ans-formula .result { color:var(--gold); font-size:1.1em; font-weight:700; }
+
+  .ans-table { width:100%; border-collapse:collapse; font-size:clamp(12px,1.5vw,20px); }
+  .ans-table th { background:#2e2e2e; color:var(--dim);
+    font-family:'Barlow Condensed',sans-serif; font-size:clamp(11px,1.2vw,16px);
+    letter-spacing:1.5px; text-transform:uppercase; padding:7px 12px; text-align:left; }
+  .ans-table td { border:1px solid var(--border); padding:8px 12px; vertical-align:top; line-height:1.4; }
+  .ans-table .cat { color:var(--gold); font-weight:700; }
+
+  .ans-tip { margin-top:10px; font-size:clamp(12px,1.3vw,17px); color:var(--dim);
+    font-style:italic; border-left:3px solid #333; padding-left:12px; }
+
+  /* NAV */
+  .nav-bar { position:fixed; bottom:0; left:0; right:0;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 32px; background:#111; border-top:1px solid #2a2a2a; z-index:10; }
+  .nav-btn { font-family:'Barlow Condensed',sans-serif;
+    font-size:clamp(13px,1.6vw,18px); letter-spacing:2px; text-transform:uppercase;
+    color:var(--dim); background:transparent; border:1px solid #333;
+    padding:8px 24px; cursor:pointer; transition:all .2s; }
+  .nav-btn:hover:not(:disabled) { border-color:var(--gold); color:var(--gold); }
+  .nav-btn:disabled { opacity:.2; cursor:default; }
+  .progress { display:flex; gap:6px; align-items:center; }
+  .dot { width:8px; height:8px; border-radius:50%; background:#333; transition:background .2s; }
+  .dot.active { background:var(--gold); }
+  .dot.done { background:#555; }
+</style>
+</head>
+<body>
+<div class="slides" id="slides">
+
+<!-- TITLE -->
+<div class="slide slide-title active" id="slide-0" onclick="next()">
+  <h1>Sonnen<span>energie</span></h1>
+  <p>total phänomenal  ·  Lösungen  ·  Klasse 9</p>
+  <div class="start-hint">Klicken zum Starten →</div>
+</div>
+
+<!-- 1 -->
+<div class="slide slide-q" id="slide-1">
+  <div class="q-topbar"><div class="q-teil">Teil A – Vorwissen</div><div class="q-badge">Aufgabe 1</div><div class="q-counter">1 / 12</div></div>
+  <div class="q-body"><div class="q-number">1</div>
+    <div class="q-text">Zwei grundlegende Möglichkeiten, Sonnenenergie zu nutzen?</div>
+    <div class="q-answer" id="ans-1">
+      <div class="ans-fills">
+        <div class="ans-fill"><strong>Solarthermie</strong> – Sonnenlicht wird in Wärme umgewandelt (z.B. Sonnenkollektor, Warmwasser)</div>
+        <div class="ans-fill"><strong>Photovoltaik</strong> – Sonnenlicht wird direkt in elektrischen Strom umgewandelt (Solarzellen)</div>
+      </div>
+    </div>
+  </div>
+  <button class="reveal-hint" id="rev-1" onclick="reveal(1)">▶ Lösung anzeigen</button>
+</div>
+
+<!-- 2 -->
+<div class="slide slide-q" id="slide-2">
+  <div class="q-topbar"><div class="q-teil">Teil A – Vorwissen</div><div class="q-badge">Aufgabe 2</div><div class="q-counter">2 / 12</div></div>
+  <div class="q-body"><div class="q-number">2</div>
+    <div class="q-text">Die Sonne liefert täglich mehr Energie als die Menschheit im Jahr braucht – warum nutzen wir sie trotzdem so wenig?<div class="q-sub">offene Frage – Unterrichtsgespräch</div></div>
+    <div class="q-answer" id="ans-2">
+      <div class="ans-open">Individuelle Antworten – z.B.: Wir können nur ein Tausendstel der eingestrahlten Energie nutzen / Technologien noch zu teuer / fehlende Speicher / politische Hürden / Fläche fehlt</div>
+    </div>
+  </div>
+  <button class="reveal-hint" id="rev-2" onclick="reveal(2)">▶ Lösung anzeigen</button>
+</div>
+
+<!-- 3 -->
+<div class="slide slide-q" id="slide-3">
+  <div class="q-topbar"><div class="q-teil">Teil B – Beim Zuschauen</div><div class="q-badge">Aufgabe 3</div><div class="q-counter">3 / 12</div></div>
+  <div class="q-body"><div class="q-number">3</div>
+    <div class="q-text">Vergleich Solarthermie ↔ Photovoltaik</div>
+    <div class="q-answer" id="ans-3">
+      <table class="ans-table">
+        <tr><th>Merkmal</th><th>Solarthermie</th><th>Photovoltaik</th></tr>
+        <tr><td class="cat">Prinzip</td><td>Licht → Wärme (dunkle Fläche absorbiert)</td><td>Licht → Strom (Silizium-Solarzelle)</td></tr>
+        <tr><td class="cat">Energieform</td><td>Wärmeenergie</td><td>Elektrische Energie</td></tr>
+        <tr><td class="cat">Anwendung</td><td>Warmwasser, Heizung, Kraftwerk</td><td>Strom für Haushalt, Fahrzeuge, Netz</td></tr>
+        <tr><td class="cat">Vorteil</td><td>Energie speicherbar (Salztanks) → auch nachts</td><td>Direkter Strom, überall einsetzbar</td></tr>
+      </table>
+    </div>
+  </div>
+  <button class="reveal-hint" id="rev-3" onclick="reveal(3)">▶ Lösung anzeigen</button>
+</div>
+
+<!-- 4 -->
+<div class="slide slide-q" id="slide-4">
+  <div class="q-topbar"><div class="q-teil">Teil B – Beim Zuschauen</div><div class="q-badge">Aufgabe 4</div><div class="q-counter">4 / 12</div></div>
+  <div class="q-body"><div class="q-number">4</div>
+    <div class="q-text">Wie wird Energie in einem Solarthermie-Kraftwerk über Nacht gespeichert?</div>
+    <div class="q-answer" id="ans-4">
+      <div class="ans-fills">
+        <div class="ans-fill">1. Tagsüber erhitzt das Kraftwerk <strong>flüssiges Salz</strong> mit der Abwärme des heißen Öls.</div>
+        <div class="ans-fill">2. Das heiße Salz wird in einem <strong>Speichertank</strong> gelagert (Wärmespeicher).</div>
+        <div class="ans-fill">3. Nach Sonnenuntergang gibt das Salz seine Wärme ab → Dampf → <strong>Turbine → Strom</strong>.</div>
+        <div class="ans-fill">→ So ist <strong>Tag-und-Nacht-Betrieb</strong> möglich (Grundlastfähigkeit).</div>
+      </div>
+    </div>
+  </div>
+  <button class="reveal-hint" id="rev-4" onclick="reveal(4)">▶ Lösung anzeigen</button>
+</div>
+
+<!-- 5 -->
+<div class="slide slide-q" id="slide-5">
+  <div class="q-topbar"><div class="q-teil">Teil C – Solarzelle</div><div class="q-badge">Aufgabe 5</div><div class="q-counter">5 / 12</div></div>
+  <div class="q-body"><div class="q-number">5</div>
+    <div class="q-text">Lückentext: Funktionsprinzip der Solarzelle</div>
+    <div class="q-answer" id="ans-5">
+      <div class="ans-fills">
+        <div class="ans-fill"><span class="lbl">a)</span> Solarzellen bestehen aus einem Kristallgitter aus <strong>Silizium</strong>-Atomen.</div>
+        <div class="ans-fill"><span class="lbl">b)</span> Durch Beimischung entsteht eine <strong>positive</strong> und eine <strong>negative</strong> Ladungsschicht.</div>
+        <div class="ans-fill"><span class="lbl">c)</span> Trifft <strong>Licht</strong> auf die Solarzelle, werden <strong>Elektronen</strong> freigesetzt.</div>
+        <div class="ans-fill"><span class="lbl">d)</span> Das Ungleichgewicht der Ladungen erzeugt einen elektrischen <strong>Strom</strong>.</div>
+      </div>
+    </div>
+  </div>
+  <button class="reveal-hint" id="rev-5" onclick="reveal(5)">▶ Lösung anzeigen</button>
+</div>
+
+<!-- 6 -->
+<div class="slide slide-q" id="slide-6">
+  <div class="q-topbar"><div class="q-teil">Teil C – Solarzelle</div><div class="q-badge">Aufgabe 6</div><div class="q-counter">6 / 12</div></div>
+  <div class="q-body"><div class="q-number">6</div>
+    <div class="q-text">Warum sind dunkle Oberflächen für Solarkollektoren besser geeignet als helle?</div>
+    <div class="q-answer" id="ans-6">
+      <div class="ans-fills">
+        <div class="ans-fill"><strong>Helle Oberflächen</strong> reflektieren den Großteil der Sonnenstrahlen – die Energie geht verloren.</div>
+        <div class="ans-fill"><strong>Dunkle Oberflächen absorbieren</strong> die Lichtstrahlen und wandeln sie in Wärmeenergie um.</div>
+        <div class="ans-fill">Wärme = Bewegungsenergie der Teilchen → dunkle Fläche schwingt stärker → mehr Wärme.</div>
+      </div>
+    </div>
+  </div>
+  <button class="reveal-hint" id="rev-6" onclick="reveal(6)">▶ Lösung anzeigen</button>
+</div>
+
+<!-- 7 -->
+<div class="slide slide-q" id="slide-7">
+  <div class="q-topbar"><div class="q-teil">Teil D – Rechnen</div><div class="q-badge">Aufgabe 7</div><div class="q-counter">7 / 12</div></div>
+  <div class="q-body"><div class="q-number">7</div>
+    <div class="q-text">Wirkungsgrad – Rechenaufgabe<div class="q-sub">1000 W/m²  |  Wirkungsgrad 20 %  |  66 m² Anlage</div></div>
+    <div class="q-answer" id="ans-7">
+      <div class="ans-formula">
+        <span class="step">a) Leistung pro m²:</span>
+        1000 W/m² × 0,20 = <strong style="color:var(--gold)">200 W/m²</strong>
+        <span class="step" style="margin-top:16px">b) Gesamtleistung 66 m²:</span>
+        66 m² × 200 W/m² = <span class="result">13.200 W = 13,2 kW</span>
+      </div>
+      <div class="ans-tip">Das entspricht dem Strombedarf von ca. 3 Familien gleichzeitig.</div>
+    </div>
+  </div>
+  <button class="reveal-hint" id="rev-7" onclick="reveal(7)">▶ Lösung anzeigen</button>
+</div>
+
+<!-- 8 -->
+<div class="slide slide-q" id="slide-8">
+  <div class="q-topbar"><div class="q-teil">Teil D – Rechnen</div><div class="q-badge">Aufgabe 8</div><div class="q-counter">8 / 12</div></div>
+  <div class="q-body"><div class="q-number">8</div>
+    <div class="q-text">Wirtschaftlichkeit – Amortisationszeit<div class="q-sub">Anlage: 25.000 €  |  Ersparnis: 2.500 € / Jahr</div></div>
+    <div class="q-answer" id="ans-8">
+      <div class="ans-formula">
+        25.000 € ÷ 2.500 €/Jahr = <span class="result">10 Jahre</span>
+      </div>
+      <div class="ans-tip">Nach 10 Jahren ist die Anlage vollständig durch eingesparte Stromkosten bezahlt.</div>
+    </div>
+  </div>
+  <button class="reveal-hint" id="rev-8" onclick="reveal(8)">▶ Lösung anzeigen</button>
+</div>
+
+<!-- 9 -->
+<div class="slide slide-q" id="slide-9">
+  <div class="q-topbar"><div class="q-teil">Teil E – Verständnis</div><div class="q-badge">Aufgabe 9</div><div class="q-counter">9 / 12</div></div>
+  <div class="q-body"><div class="q-number">9</div>
+    <div class="q-text">Welche Dachausrichtung ist für eine PV-Anlage optimal und warum?</div>
+    <div class="q-answer" id="ans-9">
+      <div class="ans-fills">
+        <div class="ans-fill"><strong>Optimal: Südseite</strong> mit steilem Winkel → 100 % der erreichbaren Ausbeute.</div>
+        <div class="ans-fill">Grund: Sonne steht in Deutschland im Süden – rechter Winkel zur Einstrahlung maximiert die Energie.</div>
+        <div class="ans-fill">Ost/West: immer noch 70–90 % möglich → lohnt sich trotzdem.</div>
+      </div>
+    </div>
+  </div>
+  <button class="reveal-hint" id="rev-9" onclick="reveal(9)">▶ Lösung anzeigen</button>
+</div>
+
+<!-- 10 -->
+<div class="slide slide-q" id="slide-10">
+  <div class="q-topbar"><div class="q-teil">Teil E – Verständnis</div><div class="q-badge">Aufgabe 10</div><div class="q-counter">10 / 12</div></div>
+  <div class="q-body"><div class="q-number">10</div>
+    <div class="q-text">Welche Aussage ist richtig?</div>
+    <div class="q-answer" id="ans-10">
+      <div class="ans-choices">
+        <div class="ans-choice wrong"><span class="icon">✗</span> PV-Module erzeugen am meisten Strom, wenn sie nach Norden zeigen.</div>
+        <div class="ans-choice correct"><span class="icon">✓</span> Solarthermie-Kraftwerke können auch nachts Strom liefern, wenn sie Wärmespeicher besitzen.</div>
+        <div class="ans-choice wrong"><span class="icon">✗</span> Der Wirkungsgrad einer Solarzelle beträgt nahezu 100 %.</div>
+        <div class="ans-choice wrong"><span class="icon">✗</span> Solaranlagen lohnen sich nur auf Süddächern.</div>
+      </div>
+    </div>
+  </div>
+  <button class="reveal-hint" id="rev-10" onclick="reveal(10)">▶ Lösung anzeigen</button>
+</div>
+
+<!-- 11 -->
+<div class="slide slide-q" id="slide-11">
+  <div class="q-topbar"><div class="q-teil">Teil E – Verständnis</div><div class="q-badge">Aufgabe 11</div><div class="q-counter">11 / 12</div></div>
+  <div class="q-body"><div class="q-number">11</div>
+    <div class="q-text">Vorteil von Solarthermie-Kraftwerken gegenüber Photovoltaik?</div>
+    <div class="q-answer" id="ans-11">
+      <div class="ans-fills">
+        <div class="ans-fill"><strong>Energiespeicherung:</strong> Die erzeugte Wärme lässt sich in Salztanks speichern → Stromerzeugung auch nachts und bei Bewölkung möglich.</div>
+        <div class="ans-fill">→ Solarthermie-Kraftwerke können als <strong>Grundlastkraftwerk</strong> betrieben werden (wie früher Kohle/Atom).</div>
+      </div>
+    </div>
+  </div>
+  <button class="reveal-hint" id="rev-11" onclick="reveal(11)">▶ Lösung anzeigen</button>
+</div>
+
+<!-- 12 -->
+<div class="slide slide-q" id="slide-12">
+  <div class="q-topbar"><div class="q-teil">Teil E – Transfer</div><div class="q-badge">Aufgabe 12</div><div class="q-counter">12 / 12</div></div>
+  <div class="q-body"><div class="q-number">12</div>
+    <div class="q-text">Was wäre nötig, damit Solarenergie aus Nordafrika auch Deutschland versorgen könnte?<div class="q-sub">offene Frage – Unterrichtsgespräch</div></div>
+    <div class="q-answer" id="ans-12">
+      <div class="ans-fills">
+        <div class="ans-fill"><strong>Solarthermie-Kraftwerke</strong> in Nordafrika (Wüste, viel Sonne, viel Platz).</div>
+        <div class="ans-fill"><strong>Hochspannungs-Gleichstromkabel</strong> (HGÜ) durch das Mittelmeer und durch Europa.</div>
+        <div class="ans-fill">→ Energieverluste gering, auch über mehrere Tausend km möglich.</div>
+        <div class="ans-fill">→ Ergänzung zu Wind- und Wasserkraft in Europa (z.B. bei Flaute).</div>
+      </div>
+      <div class="ans-tip">Film (Min. 13:44): „Das klingt nach Science-Fiction, ist es aber gar nicht."</div>
+    </div>
+  </div>
+  <button class="reveal-hint" id="rev-12" onclick="reveal(12)">▶ Lösung anzeigen</button>
+</div>
+
+</div>
+
+<!-- NAV -->
+<div class="nav-bar">
+  <button class="nav-btn" id="btn-prev" onclick="prev()" disabled>← Zurück</button>
+  <div class="progress" id="progress"></div>
+  <button class="nav-btn" id="btn-next" onclick="next()">Weiter →</button>
+</div>
+
+<script>
+const TOTAL = 13;
+let current = 0;
+
+function buildProgress() {
+  const el = document.getElementById('progress');
+  el.innerHTML = '';
+  for (let i = 0; i < TOTAL; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === current ? ' active' : i < current ? ' done' : '');
+    el.appendChild(d);
+  }
+}
+
+function showSlide(n) {
+  document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+  document.getElementById('slide-' + n).classList.add('active');
+  current = n;
+  document.getElementById('btn-prev').disabled = n === 0;
+  document.getElementById('btn-next').disabled = n === TOTAL - 1;
+  buildProgress();
+}
+
+function next() { if (current < TOTAL - 1) showSlide(current + 1); }
+function prev() { if (current > 0) showSlide(current - 1); }
+
+function reveal(n) {
+  const ans = document.getElementById('ans-' + n);
+  const btn = document.getElementById('rev-' + n);
+  if (ans) ans.classList.add('visible');
+  if (btn) btn.classList.add('hidden');
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') { e.preventDefault(); next(); }
+  if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
+  if (e.key === 'l' || e.key === 'L') reveal(current);
+});
+
+buildProgress();
+</script>
+</body>
+</html>
