@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lösungen – Schreinermeister</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:ital,wght@0,400;0,600;0,700;1,400&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{--brown:#a0522d;--wood:#d4a55a;--white:#f5f0e8;--dim:#888;--bg:#1a1714;--border:#2e2a26;--correct:#2d5a2d;--correct-text:#8fd08f}
+  html,body{height:100%;width:100%;overflow:hidden;font-family:'Barlow',sans-serif;background:var(--bg);color:var(--white)}
+  body::before{content:'';position:fixed;inset:0;
+    background-image:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.01) 2px,rgba(255,255,255,.01) 3px),
+      repeating-linear-gradient(90deg,transparent,transparent 6px,rgba(255,255,255,.006) 6px,rgba(255,255,255,.006) 7px);
+    pointer-events:none;z-index:0}
+  .slides{height:100vh;width:100%;position:relative}
+  .slide{position:absolute;inset:0;display:none;flex-direction:column}
+  .slide.active{display:flex}
+  .slide-title{justify-content:center;align-items:center;text-align:center;background:#110f0d;gap:16px;cursor:pointer}
+  .slide-title h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(48px,9vw,110px);line-height:1;letter-spacing:3px;color:var(--white)}
+  .slide-title h1 span{color:var(--wood)}
+  .slide-title .sub{font-family:'Barlow Condensed',sans-serif;font-size:clamp(14px,2vw,26px);letter-spacing:4px;text-transform:uppercase;color:var(--dim)}
+  .slide-title .hint{margin-top:36px;font-size:clamp(13px,1.6vw,20px);color:var(--dim);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+
+  .slide-q{display:none;flex-direction:column;height:100vh}
+  .slide-q.active{display:flex}
+  .q-topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 32px;background:#110f0d;border-bottom:3px solid var(--brown);flex-shrink:0}
+  .q-badge{font-family:'Bebas Neue',sans-serif;font-size:clamp(14px,2vw,22px);letter-spacing:3px;color:var(--wood)}
+  .q-counter{font-family:'Barlow Condensed',sans-serif;font-size:clamp(12px,1.5vw,18px);color:var(--dim);letter-spacing:2px}
+  .q-teil{font-family:'Barlow Condensed',sans-serif;font-size:clamp(11px,1.4vw,17px);color:var(--dim);letter-spacing:2px;text-transform:uppercase}
+  .q-body{flex:1;display:flex;flex-direction:column;justify-content:center;padding:32px clamp(28px,5vw,90px);gap:22px;position:relative;overflow:hidden}
+  .q-number{font-family:'Bebas Neue',sans-serif;font-size:clamp(80px,14vw,170px);line-height:1;color:#252018;position:absolute;right:clamp(24px,4vw,70px);top:50%;transform:translateY(-50%);pointer-events:none;user-select:none}
+  .q-text{font-size:clamp(26px,4vw,52px);font-weight:700;line-height:1.25;color:var(--white);max-width:82%;position:relative;z-index:1}
+  .q-sub{font-size:clamp(13px,1.7vw,22px);font-weight:400;font-style:italic;color:var(--dim);margin-top:8px}
+  .q-answer{position:relative;z-index:1;max-width:88%;opacity:0;transform:translateY(14px);transition:opacity .35s ease,transform .35s ease;pointer-events:none}
+  .q-answer.visible{opacity:1;transform:translateY(0);pointer-events:auto}
+  .reveal-hint{position:absolute;bottom:86px;left:50%;transform:translateX(-50%);font-family:'Barlow Condensed',sans-serif;font-size:clamp(13px,1.6vw,20px);letter-spacing:3px;text-transform:uppercase;color:var(--dim);border:1px solid #333;padding:10px 28px;cursor:pointer;transition:all .2s;background:transparent;z-index:2}
+  .reveal-hint:hover{border-color:var(--wood);color:var(--wood)}
+  .reveal-hint.hidden{opacity:0;pointer-events:none}
+
+  .ans-open{font-size:clamp(16px,2.1vw,28px);color:var(--dim);font-style:italic;line-height:1.5;border-left:4px solid var(--brown);padding-left:18px}
+  .ans-open strong{color:var(--white);font-style:normal}
+  .ans-choices{display:flex;flex-direction:column;gap:10px}
+  .ans-choice{display:flex;align-items:center;gap:14px;padding:11px 18px;font-size:clamp(14px,1.9vw,26px);line-height:1.3;border:1px solid var(--border);background:#1e1a16}
+  .ans-choice.correct{background:var(--correct);border-color:#3a7a3a;color:var(--correct-text);font-weight:700}
+  .ans-choice.wrong{opacity:.35}
+  .icon{font-size:clamp(15px,1.8vw,22px);flex-shrink:0}
+  .ans-fills{display:flex;flex-direction:column;gap:10px}
+  .ans-fill{font-size:clamp(15px,2vw,26px);line-height:1.5;color:var(--white)}
+  .ans-fill .lbl{font-family:'Barlow Condensed',sans-serif;font-size:clamp(12px,1.4vw,18px);color:var(--dim);margin-right:6px;letter-spacing:1px}
+  .ans-fill strong{color:var(--wood)}
+  .ans-table{width:100%;border-collapse:collapse;font-size:clamp(12px,1.4vw,20px)}
+  .ans-table th{background:#2e2820;color:var(--dim);font-family:'Barlow Condensed',sans-serif;font-size:clamp(10px,1.1vw,15px);letter-spacing:1.5px;text-transform:uppercase;padding:7px 10px;text-align:left}
+  .ans-table td{border:1px solid var(--border);padding:7px 10px;vertical-align:top;line-height:1.4}
+  .ans-table .cat{color:var(--wood);font-weight:700}
+  .ans-tip{margin-top:10px;font-size:clamp(11px,1.2vw,16px);color:var(--dim);font-style:italic;border-left:3px solid #333;padding-left:12px}
+
+  .nav-bar{position:fixed;bottom:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:12px 32px;background:#110f0d;border-top:1px solid #2a2520;z-index:10}
+  .nav-btn{font-family:'Barlow Condensed',sans-serif;font-size:clamp(13px,1.6vw,18px);letter-spacing:2px;text-transform:uppercase;color:var(--dim);background:transparent;border:1px solid #333;padding:8px 24px;cursor:pointer;transition:all .2s}
+  .nav-btn:hover:not(:disabled){border-color:var(--wood);color:var(--wood)}
+  .nav-btn:disabled{opacity:.2;cursor:default}
+  .progress{display:flex;gap:6px;align-items:center}
+  .dot{width:8px;height:8px;border-radius:50%;background:#333;transition:background .2s}
+  .dot.active{background:var(--wood)}.dot.done{background:#555}
+</style>
+</head>
+<body>
+<div class="slides" id="slides">
+
+<div class="slide slide-title active" id="slide-0" onclick="next()">
+  <h1>Schreiner<span>meister</span></h1>
+  <div class="sub">SWR Landesschau BW  ·  Lösungen  ·  Klasse 9</div>
+  <div class="hint">Klicken zum Starten →</div>
+</div>
+
+<!-- 1 -->
+<div class="slide slide-q" id="slide-1">
+  <div class="q-topbar"><div class="q-teil">Teil A – Vorwissen</div><div class="q-badge">Aufgabe 1</div><div class="q-counter">1 / 13</div></div>
+  <div class="q-body"><div class="q-number">1</div>
+    <div class="q-text">Geselle vs. Schreinermeister – was ist der Unterschied?</div>
+    <div class="q-answer" id="ans-1">
+      <div class="ans-fills">
+        <div class="ans-fill"><strong>Geselle:</strong> Abgeschlossene Berufsausbildung (3 Jahre), arbeitet im Betrieb.</div>
+        <div class="ans-fill"><strong>Meister:</strong> Zusätzliche Meisterprüfung (Meisterschule), darf ausbilden, kann einen eigenen Betrieb leiten.</div>
+        <div class="ans-fill">Lars hat die Meisterprüfung abgelegt und den Betrieb mit <strong>24 Jahren</strong> übernommen.</div>
+      </div>
+    </div>
+  </div>
+  <button class="reveal-hint" id="rev-1" onclick="reveal(1)">▶ Lösung anzeigen</button>
+</div>
+
+<!-- 2 -->
+<div class="slide slide-q" id="slide-2">
+  <div class="q-topbar"><div class="q-teil">Teil A – Vorwissen</div><div class="q-badge">Aufgabe 2</div><div class="q-counter">2 / 13</div></div>
+  <div class="q-body"><div class="q-number">2</div>
+    <div class="q-text">Welche Holzverbindungen gibt es?<div class="q-sub">offene Frage – mindestens drei</div></div>
+    <div class="q-answer" id="ans-2">
+      <div class="ans-fills">
+        <div class="ans-fill">Leim · Schrauben · Nägel · <strong>Schwalbenschwanzzinken</strong> · Nut & Feder · Dübel · Zapfen & Schlitz · Lamello</div>
+        <div class="ans-fill">Im Film: Lars verbindet den Bettrahmen mit <strong>Schwalbenschwanzzinken – ganz ohne Leim oder Schrauben.</strong></div>
+      </div>
+    </div>
+  </div>
+  <button class="reveal-hint" id="rev-2" onclick="reveal(2)">▶ Lösung anzeigen</button>
+</div>
+
+<!-- 3 -->
+<div class="slide slide-q" id="slide-3">
+  <div class="q-topbar"><div class="q-teil">Teil B – Beim Zuschauen</div><div class="q-badge">Aufgabe 3</div><div class="q-counter">3 / 13</div></div>
+  <div class="q-body"><div class="q-number">3</div>
+    <div class="q-text">Drei Kriterien bei der Baumauswahl für Möbelholz?</div>
+    <div class="q-answer" id="ans-3">
+      <div class="ans-fills">
+        <div class="ans-fill">1. <strong>Hoch gewachsen</strong> – damit lange, gerade Bretter entstehen</div>
+        <div class="ans-fill">2. <strong>Astfrei</strong> – Äste sind Schwachstellen im Holz</div>
+        <div class="ans-fill">3. <strong>Kein Drehwuchs</strong> – sonst verdreht sich das Holz beim Trocknen</div>
+      </div>
+    </div>
+  </div>
+  <button class="reveal-hint" id="rev-3" onclick="reveal(3)">▶ Lösung anzeigen</button>
+</div>
+
+<!-- 4 -->
+<div class="slide slide-q" id="slide-4">
+  <div class="q-topbar"><div class="q-teil">Teil B – Beim Zuschauen</div><div class="q-badge">Aufgabe 4</div><div class="q-counter">4 / 13</div></div>
+  <div class="q-body"><div class="q-number">4</div>
+    <div class="q-text">Was passiert mit den verschiedenen Teilen des gefällten Baums?</div>
+    <div class="q-answer" id="ans-4">
+      <table class="ans-table">
+        <tr><th>Teil</th><th>Verwendung</th></tr>
+        <tr><td class="cat">Beste Blöcke (2 × 5,20 m)</td><td>→ Sägewerk → <strong>Möbelholz</strong> für die Schreinerei</td></tr>
+        <tr><td class="cat">Weitere 10 Meter</td><td>→ <strong>Bauholz</strong> (Verkauf)</td></tr>
+        <tr><td class="cat">Rest (Äste, Wipfel)</td><td>→ einmal im Jahr häckseln → <strong>Hackschnitzelheizung</strong></td></tr>
+      </table>
+      <div class="ans-tip">„Von Stamm bis Wipfel – alles wird verwertet." Nachhaltigkeit pur.</div>
+    </div>
+  </div>
+  <button class="reveal-hint" id="rev-4" onclick="reveal(4)">▶ Lösung anzeigen</button>
+</div>
+
+<!-- 5 -->
+<div class="slide slide-q" id="slide-5">
+  <div class="q-topbar"><div class="q-teil">Teil B – Beim Zuschauen</div><div class="q-badge">Aufgabe 5</div><div class="q-counter">5 / 13</div></div>
+  <div class="q-body"><div class="q-number">5</div>
+    <div class="q-text">Zwei Projekte im Film – Produkt und Holzart?</div>
+    <div class="q-answer" id="ans-5">
+      <div class="ans-fills">
+        <div class="ans-fill">1. <strong>Eichenbett</strong> – Eiche (Rahmen mit Schwalbenschwanzzinken) + Inlay aus <strong>Zirbe</strong></div>
+        <div class="ans-fill">2. <strong>Baumkantentisch + Bank</strong> – massive <strong>Eiche</strong> (ein Stück, 80–100 kg Tischplatte)</div>
+      </div>
+    </div>
+  </div>
+  <button class="reveal-hint" id="rev-5" onclick="reveal(5)">▶ Lösung anzeigen</button>
+</div>
+
+<!-- 6 -->
+<div class="slide slide-q" id="slide-6">
+  <div class="q-topbar"><div class="q-teil">Teil C – Holzkunde</div><div class="q-badge">Aufgabe 6</div><div class="q-counter">6 / 13</div></div>
+  <div class="q-body"><div class="q-number">6</div>
+    <div class="q-text">Lückentext – Holzkunde</div>
+    <div class="q-answer" id="ans-6">
+      <div class="ans-fills">
+        <div class="ans-fill"><span class="lbl">a)</span> Den äußeren, helleren Bereich nennt man <strong>Splint</strong>.</div>
+        <div class="ans-fill"><span class="lbl">b)</span> Schwarze Punkte im Holz sind <strong>Wurmlöcher</strong> – unbrauchbar.</div>
+        <div class="ans-fill"><span class="lbl">c)</span> Ein Baum mit <strong>Drehwuchs</strong> verdreht sich – ungeeignet für Möbel.</div>
+        <div class="ans-fill"><span class="lbl">d)</span> Der Bettrahmen wird mit <strong>Schwalbenschwanzzinken</strong> verbunden – ohne <strong>Leim</strong>.</div>
+        <div class="ans-fill"><span class="lbl">e)</span> Eiche enthält <strong>Gerbsäure</strong> → Hände werden schwarz.</div>
+      </div>
+    </div>
+  </div>
+  <button class="reveal-hint" id="rev-6" onclick="reveal(6)">▶ Lösung anzeigen</button>
+</div>
+
+<!-- 7 -->
+<div class="slide slide-q" id="slide-7">
+  <div class="q-topbar"><div class="q-teil">Teil D – Wirtschaft & Beruf</div><div class="q-badge">Aufgabe 7</div><div class="q-counter">7 / 13</div></div>
+  <div class="q-body"><div class="q-number">7</div>
+    <div class="q-text">Warum ist der Baumkantentisch „fachlich total falsch"?</div>
+    <div class="q-answer" id="ans-7">
+      <div class="ans-fills">
+        <div class="ans-fill"><strong>Problem:</strong> Ein großes massives Holzstück (ein Diel) verzieht sich, reißt und verwindet sich beim Trocknen – fachlich keine gute Konstruktion.</div>
+        <div class="ans-fill"><strong>Trotzdem:</strong> Die Kundin wollte genau das – natürliche Optik, Unikat, ein Stück Natur. Lars kommuniziert das offen mit ihr.</div>
+        <div class="ans-fill">→ <strong>Kundenwunsch</strong> geht vor – wichtig ist transparente Kommunikation über die Eigenschaften des Stücks.</div>
+      </div>
+    </div>
+  </div>
+  <button class="reveal-hint" id="rev-7" onclick="reveal(7)">▶ Lösung anzeigen</button>
+</div>
+
+<!-- 8 -->
+<div class="slide slide-q" id="slide-8">
+  <div class="q-topbar"><div class="q-teil">Teil D – Wirtschaft</div><div class="q-badge">Aufgabe 8</div><div class="q-counter">8 / 13</div></div>
+  <div class="q-body"><div class="q-number">8</div>
+    <div class="q-text">Wie viele Arbeitsstunden stecken in einem Bett?</div>
+    <div class="q-answer" id="ans-8">
+      <div class="ans-choices">
+        <div class="ans-choice wrong"><span class="icon">✗</span> ca. 5 Stunden</div>
+        <div class="ans-choice wrong"><span class="icon">✗</span> ca. 15 Stunden</div>
+        <div class="ans-choice correct"><span class="icon">✓</span> ca. 25 Stunden</div>
+        <div class="ans-choice wrong"><span class="icon">✗</span> ca. 50 Stunden</div>
+      </div>
+      <div class="ans-tip">Tischplatte allein: schon 15 Stunden. „Ein Bett sind nicht einfach vier Bretter und zwei Füße."</div>
+    </div>
+  </div>
+  <button class="reveal-hint" id="rev-8" onclick="reveal(8)">▶ Lösung anzeigen</button>
+</div>
+
+<!-- 9 -->
+<div class="slide slide-q" id="slide-9">
+  <div class="q-topbar"><div class="q-teil">Teil D – Wirtschaft</div><div class="q-badge">Aufgabe 9</div><div class="q-counter">9 / 13</div></div>
+  <div class="q-body"><div class="q-number">9</div>
+    <div class="q-text">Der Endpreis ist abgemacht. Warum ist Verschnitt so problematisch?</div>
+    <div class="q-answer" id="ans-9">
+      <div class="ans-fills">
+        <div class="ans-fill">Der Preis steht fest – jedes zusätzliche Material und jede Arbeitsstunde für Nacharbeit <strong>senkt direkt den Gewinn</strong>.</div>
+        <div class="ans-fill">→ <strong>Fehler = Geldverlust</strong>: Lars: „Fehler oder zu viel Verschnitt, all das senkt den Gewinn."</div>
+        <div class="ans-fill">Deshalb: präzises Arbeiten ist nicht nur Qualitätsfrage, sondern <strong>wirtschaftliche Notwendigkeit</strong>.</div>
+      </div>
+    </div>
+  </div>
+  <button class="reveal-hint" id="rev-9" onclick="reveal(9)">▶ Lösung anzeigen</button>
+</div>
+
+<!-- 10 -->
+<div class="slide slide-q" id="slide-10">
+  <div class="q-topbar"><div class="q-teil">Teil D – Beruf</div><div class="q-badge">Aufgabe 10</div><div class="q-counter">10 / 13</div></div>
+  <div class="q-body"><div class="q-number">10</div>
+    <div class="q-text">Was hat Lars bei der Betriebsübernahme mit 24 Jahren geholfen?</div>
+    <div class="q-answer" id="ans-10">
+      <div class="ans-fills">
+        <div class="ans-fill">1. <strong>Sein Team</strong> steht hinter ihm – Schreinermeister Tobias und die Auszubildende Jana.</div>
+        <div class="ans-fill">2. <strong>Schwiegervater Martin</strong> – hat Lars das Handwerk beigebracht, Familienwald, gemeinsame Arbeit am Wochenende.</div>
+        <div class="ans-fill">3. Lars selbst: <strong>„Man wächst mit seinen Aufgaben."</strong> – Selbstzweifel sind normal, aber man entwickelt sich weiter.</div>
+      </div>
+    </div>
+  </div>
+  <button class="reveal-hint" id="rev-10" onclick="reveal(10)">▶ Lösung anzeigen</button>
+</div>
+
+<!-- 11 -->
+<div class="slide slide-q" id="slide-11">
+  <div class="q-topbar"><div class="q-teil">Teil E – Fehlerkultur</div><div class="q-badge">Aufgabe 11</div><div class="q-counter">11 / 13</div></div>
+  <div class="q-body"><div class="q-number">11</div>
+    <div class="q-text">Jana hat zu groß statt zu klein gesägt. Warum war das ein Glück?</div>
+    <div class="q-answer" id="ans-11">
+      <div class="ans-fills">
+        <div class="ans-fill">Zu <strong>lang</strong> = noch Material da → man kann nochmals kürzen und den Fehler korrigieren.</div>
+        <div class="ans-fill">Zu <strong>kurz</strong> = Holz unwiederbringlich zu klein → man müsste <strong>von vorne beginnen</strong> – neues Material, neue Arbeitszeit, neuer Kostenpunkt.</div>
+        <div class="ans-fill">Lars: <strong>„Arbeitszeit ist meistens das Problem oder das Teure."</strong></div>
+      </div>
+    </div>
+  </div>
+  <button class="reveal-hint" id="rev-11" onclick="reveal(11)">▶ Lösung anzeigen</button>
+</div>
+
+<!-- 12 -->
+<div class="slide slide-q" id="slide-12">
+  <div class="q-topbar"><div class="q-teil">Teil E – Transfer</div><div class="q-badge">Aufgabe 12</div><div class="q-counter">12 / 12</div></div>
+  <div class="q-body"><div class="q-number">12</div>
+    <div class="q-text">„Man wächst mit seinen Aufgaben."<div class="q-sub">offene Frage – Unterrichtsgespräch</div></div>
+    <div class="q-answer" id="ans-12">
+      <div class="ans-open">Lars meint: Wer neue, herausfordernde Aufgaben übernimmt, <strong>entwickelt sich dabei weiter</strong> – auch wenn man anfangs unsicher ist. <strong>Selbstzweifel</strong> sind normal und menschlich, aber kein Grund, eine Chance nicht zu ergreifen. Individuelle Antworten der Schüler/innen erwünscht.</div>
+    </div>
+  </div>
+  <button class="reveal-hint" id="rev-12" onclick="reveal(12)">▶ Lösung anzeigen</button>
+</div>
+
+
+
+</div>
+
+<div class="nav-bar">
+  <button class="nav-btn" id="btn-prev" onclick="prev()" disabled>← Zurück</button>
+  <div class="progress" id="progress"></div>
+  <button class="nav-btn" id="btn-next" onclick="next()">Weiter →</button>
+</div>
+
+<script>
+const TOTAL=13; let current=0;
+function buildProgress(){
+  const el=document.getElementById('progress'); el.innerHTML='';
+  for(let i=0;i<TOTAL;i++){const d=document.createElement('div');d.className='dot'+(i===current?' active':i<current?' done':'');el.appendChild(d);}
+}
+function showSlide(n){
+  document.querySelectorAll('.slide').forEach(s=>s.classList.remove('active'));
+  document.getElementById('slide-'+n).classList.add('active');
+  current=n;
+  document.getElementById('btn-prev').disabled=n===0;
+  document.getElementById('btn-next').disabled=n===TOTAL-1;
+  buildProgress();
+}
+function next(){if(current<TOTAL-1)showSlide(current+1);}
+function prev(){if(current>0)showSlide(current-1);}
+function reveal(n){
+  const a=document.getElementById('ans-'+n),b=document.getElementById('rev-'+n);
+  if(a)a.classList.add('visible'); if(b)b.classList.add('hidden');
+}
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' '||e.key==='Enter'){e.preventDefault();next();}
+  if(e.key==='ArrowLeft'){e.preventDefault();prev();}
+  if(e.key==='l'||e.key==='L')reveal(current);
+});
+buildProgress();
+</script>
+</body>
+</html>
