@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unterrichtsmaterialien – Übersicht</title>
+<style>
+  :root {
+    --bordeaux:   #6B1A2A;
+    --terrakotta: #C0603A;
+    --lachs:      #E8906A;
+    --creme:      #FBF5F0;
+    --text-dark:  #2A1A1A;
+    --grau:       #8a7a75;
+    --border:     #e8dcd4;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+    background: var(--creme);
+    color: var(--text-dark);
+  }
+
+  header {
+    background: linear-gradient(135deg, var(--bordeaux), var(--terrakotta));
+    color: white;
+    padding: 2.2rem 1.5rem 1.8rem;
+    text-align: center;
+  }
+
+  header h1 {
+    margin: 0 0 0.3rem;
+    font-weight: 700;
+    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    letter-spacing: 0.5px;
+  }
+
+  header p {
+    margin: 0;
+    font-weight: 400;
+    opacity: 0.92;
+    font-size: 1.05rem;
+  }
+
+  main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 1.5rem 1.2rem 3rem;
+  }
+
+  .toolbar {
+    display: flex;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 1.4rem;
+  }
+
+  #search {
+    flex: 1;
+    min-width: 200px;
+    padding: 0.6rem 0.9rem;
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 1rem;
+    background: white;
+  }
+  #search:focus {
+    outline: none;
+    border-color: var(--terrakotta);
+  }
+
+  .refresh-btn {
+    padding: 0.6rem 1rem;
+    border: 2px solid var(--terrakotta);
+    background: white;
+    color: var(--bordeaux);
+    border-radius: 8px;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .refresh-btn:hover { background: var(--lachs); color: white; border-color: var(--lachs); }
+
+  .status {
+    text-align: center;
+    padding: 2.5rem 1rem;
+    color: var(--grau);
+    font-size: 1.1rem;
+  }
+
+  .status.error {
+    color: var(--bordeaux);
+    background: #fbeae9;
+    border-radius: 10px;
+    border: 1px solid #f0c9c4;
+  }
+
+  .folder-group {
+    margin-bottom: 1.6rem;
+  }
+
+  .folder-title {
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: var(--bordeaux);
+    margin: 0 0 0.5rem 0.2rem;
+    padding-bottom: 0.3rem;
+    border-bottom: 2px solid var(--lachs);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .file-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+    margin-bottom: 0.55rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    transition: border-color 0.15s, transform 0.1s;
+  }
+  .file-card:hover {
+    border-color: var(--terrakotta);
+    transform: translateX(2px);
+  }
+
+  .file-icon {
+    font-size: 1.3rem;
+    flex-shrink: 0;
+  }
+
+  .file-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .file-name {
+    font-weight: 600;
+    font-size: 1.08rem;
+    color: var(--text-dark);
+    word-break: break-word;
+  }
+
+  .file-link {
+    color: var(--bordeaux);
+    text-decoration: none;
+  }
+  .file-link:hover { text-decoration: underline; }
+
+  .file-path {
+    font-size: 0.85rem;
+    color: var(--grau);
+    font-family: 'Courier New', monospace;
+    word-break: break-all;
+  }
+
+  .file-actions {
+    display: flex;
+    gap: 0.4rem;
+    flex-shrink: 0;
+  }
+
+  .icon-btn {
+    border: 1px solid var(--border);
+    background: var(--creme);
+    border-radius: 6px;
+    padding: 0.4rem 0.6rem;
+    cursor: pointer;
+    font-size: 0.95rem;
+    color: var(--bordeaux);
+    font-family: inherit;
+  }
+  .icon-btn:hover { background: var(--lachs); color: white; border-color: var(--lachs); }
+  .icon-btn.copied { background: #2e7d32; color: white; border-color: #2e7d32; }
+
+  .empty-msg {
+    text-align: center;
+    color: var(--grau);
+    padding: 2rem;
+    font-size: 1.05rem;
+  }
+
+  footer {
+    text-align: center;
+    color: var(--grau);
+    font-size: 0.85rem;
+    padding: 1.5rem;
+  }
+  footer a { color: var(--terrakotta); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📚 Unterrichtsmaterialien</h1>
+  <p>Übersicht aller HTML-Arbeitsblätter & Tools – direkt verlinkbar in Edumap</p>
+</header>
+
+<main>
+  <div class="toolbar">
+    <input type="text" id="search" placeholder="🔍 Datei suchen…" oninput="renderFiles()">
+    <button class="refresh-btn" onclick="loadFiles(true)">↻ Aktualisieren</button>
+  </div>
+
+  <div id="content">
+    <div class="status" id="status">Lade Dateiliste von GitHub…</div>
+  </div>
+</main>
+
+<footer>
+  Repository: <a href="https://github.com/pappamap70-dot/Unterricht" target="_blank">pappamap70-dot/Unterricht</a>
+</footer>
+
+<script>
+const OWNER = 'pappamap70-dot';
+const REPO  = 'Unterricht';
+const BRANCH = 'main';
+const PAGES_BASE = `https://${OWNER}.github.io/${REPO}/`;
+const CACHE_KEY = 'unterricht_index_cache_v1';
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 Minuten
+
+let allFiles = [];
+
+async function loadFiles(forceRefresh = false) {
+  const statusEl = document.getElementById('status');
+  const contentEl = document.getElementById('content');
+
+  if (!forceRefresh) {
+    const cached = getCache();
+    if (cached) {
+      allFiles = cached;
+      renderFiles();
+      return;
+    }
+  }
+
+  contentEl.innerHTML = '<div class="status" id="status">Lade Dateiliste von GitHub…</div>';
+
+  try {
+    const treeUrl = `https://api.github.com/repos/${OWNER}/${REPO}/git/trees/${BRANCH}?recursive=1`;
+    const res = await fetch(treeUrl);
+
+    if (!res.ok) {
+      throw new Error(`GitHub API antwortete mit Status ${res.status}`);
+    }
+
+    const data = await res.json();
+
+    if (!data.tree) {
+      throw new Error('Unerwartete Antwortstruktur von GitHub');
+    }
+
+    const htmlFiles = data.tree
+      .filter(item => item.type === 'blob' && item.path.toLowerCase().endsWith('.html'))
+      .map(item => ({
+        path: item.path,
+        name: item.path.split('/').pop(),
+        folder: item.path.includes('/') ? item.path.substring(0, item.path.lastIndexOf('/')) : ''
+      }))
+      .sort((a, b) => a.path.localeCompare(b.path, 'de'));
+
+    allFiles = htmlFiles;
+    setCache(htmlFiles);
+    renderFiles();
+
+  } catch (err) {
+    contentEl.innerHTML = `
+      <div class="status error">
+        ⚠️ Dateiliste konnte nicht geladen werden.<br>
+        <small>${escapeHtml(err.message)}</small><br><br>
+        Möglich, dass GitHub gerade nicht erreichbar ist oder das Repository-Limit für nicht angemeldete Abfragen erreicht wurde.
+        Versuche es in ein paar Minuten erneut, oder besuche das
+        <a href="https://github.com/${OWNER}/${REPO}" target="_blank">Repository direkt</a>.
+      </div>`;
+  }
+}
+
+function getCache() {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (Date.now() - parsed.ts > CACHE_TTL_MS) return null;
+    return parsed.files;
+  } catch { return null; }
+}
+
+function setCache(files) {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), files }));
+  } catch { /* localStorage evtl. voll - ignorieren */ }
+}
+
+function renderFiles() {
+  const contentEl = document.getElementById('content');
+  const query = document.getElementById('search').value.trim().toLowerCase();
+
+  const filtered = query
+    ? allFiles.filter(f => f.path.toLowerCase().includes(query))
+    : allFiles;
+
+  if (allFiles.length === 0) {
+    contentEl.innerHTML = '<div class="empty-msg">Keine HTML-Dateien im Repository gefunden.</div>';
+    return;
+  }
+
+  if (filtered.length === 0) {
+    contentEl.innerHTML = '<div class="empty-msg">Keine Treffer für diese Suche.</div>';
+    return;
+  }
+
+  // Gruppieren nach Ordner
+  const groups = {};
+  filtered.forEach(f => {
+    const key = f.folder || '(Hauptverzeichnis)';
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(f);
+  });
+
+  const folderNames = Object.keys(groups).sort((a, b) => {
+    if (a === '(Hauptverzeichnis)') return -1;
+    if (b === '(Hauptverzeichnis)') return 1;
+    return a.localeCompare(b, 'de');
+  });
+
+  let html = '';
+  folderNames.forEach(folder => {
+    html += `<div class="folder-group">
+      <div class="folder-title">📁 ${escapeHtml(folder)}</div>`;
+
+    groups[folder].forEach(f => {
+      const url = PAGES_BASE + encodeURIPath(f.path);
+      html += `
+        <div class="file-card">
+          <span class="file-icon">📄</span>
+          <div class="file-info">
+            <div class="file-name"><a class="file-link" href="${url}" target="_blank">${escapeHtml(f.name)}</a></div>
+            <div class="file-path">${escapeHtml(url)}</div>
+          </div>
+          <div class="file-actions">
+            <button class="icon-btn" onclick="copyLink('${url.replace(/'/g, "\\'")}', this)" title="Link kopieren">📋</button>
+          </div>
+        </div>`;
+    });
+
+    html += `</div>`;
+  });
+
+  contentEl.innerHTML = html;
+}
+
+function encodeURIPath(path) {
+  return path.split('/').map(encodeURIComponent).join('/');
+}
+
+function copyLink(url, btn) {
+  navigator.clipboard.writeText(url).then(() => {
+    const original = btn.textContent;
+    btn.textContent = '✓';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = original;
+      btn.classList.remove('copied');
+    }, 1500);
+  }).catch(() => {
+    // Fallback falls Clipboard-API blockiert ist
+    prompt('Link kopieren:', url);
+  });
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+loadFiles(false);
+</script>
+
+</body>
+</html>
