@@ -262,6 +262,7 @@ async function loadFiles(forceRefresh = false) {
 
     const htmlFiles = data.tree
       .filter(item => item.type === 'blob' && item.path.toLowerCase().endsWith('.html'))
+      .filter(item => item.path.toLowerCase() !== 'index.html')
       .map(item => ({
         path: item.path,
         name: item.path.split('/').pop(),
