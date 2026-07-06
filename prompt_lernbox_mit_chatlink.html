@@ -1,0 +1,102 @@
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&display=swap');
+  .lb-wrap { font-family: 'Barlow Condensed', sans-serif; padding: 1.5rem 0.5rem; }
+  .lb-header { background: #6B1A2A; border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 1rem; }
+  .lb-icon { width: 48px; height: 48px; background: #C0603A; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .lb-header-text h1 { color: #FBF5F0; font-size: 22px; font-weight: 700; margin: 0 0 2px; line-height: 1.2; }
+  .lb-header-text p { color: #E8906A; font-size: 15px; font-weight: 400; margin: 0; }
+  .lb-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 1.25rem; }
+  .lb-step { background: var(--surface-2); border: 0.5px solid var(--border); border-radius: 12px; padding: 1rem; }
+  .lb-step-num { width: 28px; height: 28px; background: #6B1A2A; color: #FBF5F0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; margin-bottom: 0.6rem; }
+  .lb-step h3 { font-size: 15px; font-weight: 600; color: var(--text-primary); margin: 0 0 4px; }
+  .lb-step p { font-size: 13px; color: var(--text-secondary); margin: 0; line-height: 1.5; font-family: sans-serif; font-weight: 400; }
+  .lb-step-4 { border: 2px solid #6B1A2A; }
+  .lb-questions { background: var(--surface-1); border-radius: 12px; border: 0.5px solid var(--border); padding: 1rem 1.25rem; margin-bottom: 1.25rem; }
+  .lb-questions h2 { font-size: 16px; font-weight: 600; color: var(--text-primary); margin: 0 0 0.75rem; display: flex; align-items: center; gap: 8px; }
+  .lb-q-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .lb-q { background: var(--surface-2); border-left: 3px solid #C0603A; border-radius: 0 8px 8px 0; padding: 8px 10px; font-size: 13px; color: var(--text-secondary); line-height: 1.4; font-family: sans-serif; font-weight: 400; }
+  .lb-example { background: #FBF5F0; border: 0.5px solid #E8906A; border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1.25rem; }
+  .lb-example h2 { font-size: 15px; font-weight: 600; color: #6B1A2A; margin: 0 0 0.5rem; display: flex; align-items: center; gap: 8px; }
+  .lb-example blockquote { margin: 0; font-size: 13px; color: #3d2020; font-style: italic; line-height: 1.6; font-family: sans-serif; border-left: 3px solid #C0603A; padding-left: 12px; }
+  .lb-cta { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .lb-btn-primary { background: #6B1A2A; color: #FBF5F0; border: none; border-radius: 8px; padding: 0.85rem 2rem; font-size: 17px; font-weight: 700; font-family: 'Barlow Condensed', sans-serif; cursor: pointer; letter-spacing: 0.5px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; transition: background 0.15s; }
+  .lb-btn-primary:hover { background: #C0603A; }
+  .lb-btn-secondary { background: transparent; color: #6B1A2A; border: 1.5px solid #6B1A2A; border-radius: 8px; padding: 0.6rem 1.5rem; font-size: 15px; font-weight: 600; font-family: 'Barlow Condensed', sans-serif; cursor: pointer; letter-spacing: 0.5px; transition: background 0.15s; }
+  .lb-btn-secondary:hover { background: #FBF5F0; }
+  .lb-hint { font-size: 12px; color: var(--text-muted); font-family: sans-serif; text-align: center; }
+  @media (max-width: 460px) { .lb-q-grid { grid-template-columns: 1fr; } }
+</style>
+
+<div class="lb-wrap">
+  <div class="lb-header">
+    <div class="lb-icon">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FBF5F0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z"/>
+        <circle cx="9" cy="14" r="1"/><circle cx="15" cy="14" r="1"/>
+      </svg>
+    </div>
+    <div class="lb-header-text">
+      <h1>Erkläre es mir, KI!</h1>
+      <p>Formuliere deinen Prompt — dann ab in den Chat.</p>
+    </div>
+  </div>
+
+  <div class="lb-steps">
+    <div class="lb-step">
+      <div class="lb-step-num">1</div>
+      <h3>Thema nennen</h3>
+      <p>Wähle ein aktuelles Thema aus dem Unterricht, das du noch nicht ganz verstehst.</p>
+    </div>
+    <div class="lb-step">
+      <div class="lb-step-num">2</div>
+      <h3>Lücken benennen</h3>
+      <p>Was genau ist unklar? Je genauer, desto besser die Antwort der KI.</p>
+    </div>
+    <div class="lb-step">
+      <div class="lb-step-num">3</div>
+      <h3>Format bestimmen</h3>
+      <p>Beispiele? Schritt für Schritt? Mit Vergleichen? Fragen am Ende?</p>
+    </div>
+    <div class="lb-step lb-step-4">
+      <div class="lb-step-num">4</div>
+      <h3>Prompt abschicken</h3>
+      <p>Öffne den KI-Chat unten, tippe deinen Prompt ein und lies die Antwort.</p>
+    </div>
+  </div>
+
+  <div class="lb-questions">
+    <h2>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C0603A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      Leitfragen für deinen Prompt
+    </h2>
+    <div class="lb-q-grid">
+      <div class="lb-q">Worum geht es genau?</div>
+      <div class="lb-q">Was soll erklärt werden?</div>
+      <div class="lb-q">Für welche Klasse / welches Niveau?</div>
+      <div class="lb-q">Beispiele, Vergleiche oder Schritt für Schritt?</div>
+      <div class="lb-q">Soll die KI dir Fragen zum Überprüfen stellen?</div>
+      <div class="lb-q">Was verstehst du noch nicht genau?</div>
+    </div>
+  </div>
+
+  <div class="lb-example">
+    <h2>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B1A2A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+      Beispiel-Prompt
+    </h2>
+    <blockquote>
+      „Erkläre mir das Thema Photosynthese einfach und verständlich für die 7. Klasse. 
+      Nutze ein Beispiel aus dem Alltag und stelle mir zum Schluss 3 Fragen, 
+      mit denen ich prüfen kann, ob ich das Thema verstanden habe."
+    </blockquote>
+  </div>
+
+  <div class="lb-cta">
+    <a class="lb-btn-primary" href="https://www.dieschulapp.de/app/chats/anonymousChatbots/7040867#anonymousUserToken=e1b2f355e16ce523f3b91b90869f071f" target="_blank" rel="noopener">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      KI-Chat öffnen
+    </a>
+    <p class="lb-hint">Öffnet dieschulapp.de — tippe dort deinen fertigen Prompt ein.</p>
+  </div>
+</div>
