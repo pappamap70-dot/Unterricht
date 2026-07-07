@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arduino Blockcoding – Protokollheft</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&display=swap');
+:root {
+  --bordeaux:   #6B1A2A;
+  --terrakotta: #C0603A;
+  --lachs:      #E8906A;
+  --creme:      #FBF5F0;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Barlow Condensed', Arial, sans-serif; background: #f4f0eb; color: #222; font-size: 16px; }
+
+/* NAV */
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--bordeaux); display: flex; flex-wrap: wrap; gap: 4px;
+  padding: 8px 12px; align-items: center;
+}
+nav button {
+  font-family: inherit; font-size: 14px; font-weight: 600;
+  padding: 5px 12px; border: 2px solid transparent; border-radius: 4px;
+  cursor: pointer; background: rgba(255,255,255,0.15); color: #fff;
+  transition: background .15s;
+}
+nav button:hover { background: rgba(255,255,255,0.3); }
+nav .nav-btn.active { background: #fff; color: var(--bordeaux); border-color: #fff; }
+nav .sep { flex: 1; }
+nav .action-btn { background: var(--terrakotta); }
+nav .action-btn:hover { background: var(--lachs); color: #333; }
+
+/* PAGES */
+.page { display: none; max-width: 820px; margin: 24px auto; padding: 0 16px 60px; }
+.page.active { display: block; }
+
+/* CARDS */
+.card {
+  background: #fff; border-radius: 8px; padding: 20px 24px;
+  margin-bottom: 18px; border-left: 5px solid var(--bordeaux);
+  box-shadow: 0 1px 4px rgba(0,0,0,.07);
+}
+.card.green  { border-left-color: #2e7d32; }
+.card.blue   { border-left-color: #1565c0; }
+.card.orange { border-left-color: var(--terrakotta); }
+
+h1 { font-size: 26px; color: var(--bordeaux); margin-bottom: 6px; font-weight: 700; }
+h2 { font-size: 20px; color: var(--bordeaux); margin-bottom: 12px; font-weight: 700; border-bottom: 2px solid var(--lachs); padding-bottom: 4px; }
+h3 { font-size: 17px; color: var(--terrakotta); margin: 14px 0 8px; font-weight: 600; }
+p  { line-height: 1.5; margin-bottom: 8px; }
+
+/* FORM ELEMENTS */
+label { display: block; font-weight: 600; margin: 10px 0 4px; }
+input[type=text] {
+  width: 100%; padding: 7px 10px; border: 1.5px solid #ccc; border-radius: 4px;
+  font-family: inherit; font-size: 15px;
+}
+input[type=text]:focus { outline: none; border-color: var(--bordeaux); }
+textarea {
+  width: 100%; min-height: 60px; padding: 8px 10px;
+  border: 1.5px solid #ccc; border-radius: 4px;
+  font-family: inherit; font-size: 15px; resize: none; overflow: hidden;
+}
+textarea:focus { outline: none; border-color: var(--bordeaux); }
+
+select.ans {
+  font-family: inherit; font-size: 15px; padding: 5px 8px;
+  border: 1.5px solid #ccc; border-radius: 4px; margin-top: 4px;
+}
+select.ans.correct { background: #d4edda; border-color: #28a745; }
+select.ans.wrong   { background: #f8d7da; border-color: #dc3545; }
+
+/* CHECKLIST */
+.checklist { list-style: none; margin: 8px 0; }
+.checklist li { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; font-size: 15px; }
+.checklist input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--bordeaux); cursor: pointer; }
+
+/* SCREENSHOT */
+.screenshot-area {
+  border: 2px dashed #bbb; border-radius: 6px; min-height: 140px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  cursor: pointer; color: #888; font-size: 14px; text-align: center; padding: 12px;
+  margin: 8px 0; position: relative; background: #fafafa;
+}
+.screenshot-area img { max-width: 100%; max-height: 300px; border-radius: 4px; }
+.screenshot-area .remove-btn {
+  position: absolute; top: 6px; right: 8px; background: #e53935; color: #fff;
+  border: none; border-radius: 3px; padding: 2px 7px; cursor: pointer; font-size: 13px;
+}
+
+/* PROGRESS */
+.progress-bar { background: #eee; border-radius: 20px; height: 10px; margin: 8px 0 4px; }
+.progress-fill { background: var(--bordeaux); height: 10px; border-radius: 20px; transition: width .3s; }
+.progress-label { font-size: 13px; color: #666; text-align: right; }
+
+/* BAUTEILE PILLS */
+.pills { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 12px; }
+.pill {
+  background: var(--creme); border: 1.5px solid var(--lachs);
+  border-radius: 20px; padding: 3px 12px; font-size: 14px; font-weight: 600;
+}
+
+/* HINWEIS */
+.hinweis {
+  background: #fff8e1; border-left: 4px solid #f9a825;
+  border-radius: 4px; padding: 10px 14px; font-size: 14px; margin: 10px 0;
+}
+
+@media print {
+  nav, .no-print { display: none !important; }
+  .page { display: none !important; padding: 0; margin: 0; }
+  .page.active { display: block !important; }
+  body.print-all .page {
+    display: block !important;
+    break-after: page;
+    page-break-after: always;
+    page-break-inside: avoid;
+  }
+  body.print-all .page:last-child { break-after: auto; page-break-after: auto; }
+  .card { box-shadow: none; break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <button class="nav-btn active" data-page="1" onclick="showPage(1)">Start</button>
+  <button class="nav-btn" data-page="2" onclick="showPage(2)">Ü1 LED</button>
+  <button class="nav-btn" data-page="3" onclick="showPage(3)">Ü2 Ampel</button>
+  <button class="nav-btn" data-page="4" onclick="showPage(4)">Ü3 Taster</button>
+  <button class="nav-btn" data-page="5" onclick="showPage(5)">Ü4 LDR</button>
+  <button class="nav-btn" data-page="6" onclick="showPage(6)">Reflexion</button>
+  <span class="sep"></span>
+  <button class="action-btn" onclick="exportData()">💾 Speichern</button>
+  <button class="action-btn" onclick="importData()">📂 Laden</button>
+  <button class="action-btn" onclick="printSingle()">🖨 Seite</button>
+  <button class="action-btn" onclick="printAll()">🖨 Alles</button>
+</nav>
+<input type="file" id="fileImport" accept=".json" style="display:none" onchange="loadFile(this)">
+
+<!-- ══════════════════════════════ SEITE 1 – START ══════════════════════════════ -->
+<div class="page active" id="page1">
+  <div class="card">
+    <h1>⚡ Arduino Blockcoding – Protokollheft</h1>
+    <p>In diesem Heft dokumentierst du deine 4 Tinkercad-Schaltungsübungen.</p>
+
+    <label for="f-name">Name</label>
+    <input type="text" id="f-name" placeholder="Dein Name">
+    <label for="f-klasse">Klasse</label>
+    <input type="text" id="f-klasse" placeholder="z.B. 9a">
+    <label for="f-datum">Datum</label>
+    <input type="text" id="f-datum" placeholder="TT.MM.JJJJ">
+  </div>
+
+  <div class="card blue">
+    <h2>📋 Übungsübersicht</h2>
+    <table style="width:100%;border-collapse:collapse;font-size:15px;">
+      <tr style="background:var(--creme);font-weight:700;">
+        <td style="padding:7px 10px;">Nr.</td>
+        <td style="padding:7px 10px;">Thema</td>
+        <td style="padding:7px 10px;">Konzept</td>
+      </tr>
+      <tr><td style="padding:6px 10px;">1</td><td>LED blinken lassen</td><td>Sequenz &amp; Schleife</td></tr>
+      <tr style="background:#fafafa;"><td style="padding:6px 10px;">2</td><td>Ampel</td><td>Sequenz mit Wartezeiten</td></tr>
+      <tr><td style="padding:6px 10px;">3</td><td>Taster steuert LED</td><td>Bedingung (wenn–dann–sonst)</td></tr>
+      <tr style="background:#fafafa;"><td style="padding:6px 10px;">4</td><td>Nachtlicht (LDR)</td><td>Analogwert &amp; Schwellenwert</td></tr>
+    </table>
+  </div>
+
+  <div class="card orange">
+    <h2>📌 So arbeitest du</h2>
+    <ol style="padding-left:20px;line-height:2;">
+      <li>Schaltung in Tinkercad aufbauen</li>
+      <li>Blockcode schreiben und simulieren</li>
+      <li>Screenshot der fertigen Schaltung hier einfügen</li>
+      <li>Fragen beantworten und Checkliste abhaken</li>
+    </ol>
+    <div class="hinweis" style="margin-top:12px;">
+      💡 <strong>Tipp:</strong> Deine Eingaben werden automatisch gespeichert. Mit 💾 kannst du eine Sicherungsdatei herunterladen.
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Fortschritt</h2>
+    <div class="progress-bar"><div class="progress-fill" id="progressBar" style="width:0%"></div></div>
+    <p class="progress-label" id="progressLabel">0 von 4 Übungen abgehakt</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ SEITE 2 – ÜBUNG 1 ══════════════════════════════ -->
+<div class="page" id="page2">
+  <div class="card">
+    <h1>💡 Übung 1 – LED blinken lassen</h1>
+    <div class="pills">
+      <span class="pill">LED</span>
+      <span class="pill">Widerstand 220Ω</span>
+      <span class="pill">Arduino Uno</span>
+      <span class="pill">Breadboard</span>
+    </div>
+    <p><strong>Aufgabe:</strong> Eine LED blinkt im Sekundentakt – 1 Sekunde an, 1 Sekunde aus.</p>
+  </div>
+
+  <div class="card green">
+    <h2>🖥️ Schaltung &amp; Simulation</h2>
+
+    <label>An welchem Pin hast du die LED angeschlossen?</label>
+    <input type="text" placeholder="z.B. Pin 9">
+
+    <label>Skizziere kurz den Anschluss der LED (langer/kurzer Pin, Widerstand, Kabel zu Arduino):</label>
+    <textarea oninput="auto(this)" placeholder="z.B. langer Pin → Widerstand → Pin 9 · kurzer Pin → GND"></textarea>
+
+    <label>Screenshot deiner Tinkercad-Schaltung:</label>
+    <div class="screenshot-area" id="ss1" onclick="triggerPaste('ss1')" ondragover="event.preventDefault()" ondrop="dropImg(event,'ss1')">
+      <span>📷 Klicken, Strg+V oder Bild hierher ziehen</span>
+    </div>
+
+    <label>Welche Blöcke hast du verwendet? (Stichpunkte)</label>
+    <textarea oninput="auto(this)" placeholder='z.B. "für immer", "Anschluss 9 auf HOCH einstellen", "1 Sekunden warten" …'></textarea>
+
+    <label>Wie oft wiederholt sich dein Code? Warum braucht man dafür eine Schleife?</label>
+    <textarea oninput="auto(this)" placeholder="Erkläre in 1–2 Sätzen …"></textarea>
+
+    <label>Hat die Simulation funktioniert?</label>
+    <select class="ans" onchange="chk(this,'ja')">
+      <option value="">– wählen –</option>
+      <option value="ja">Ja, auf Anhieb</option>
+      <option value="nein">Nein, erst nach Fehlersuche</option>
+    </select>
+  </div>
+
+  <div class="card">
+    <h3>✅ Checkliste Übung 1</h3>
+    <ul class="checklist">
+      <li><input type="checkbox" id="c1a"><label for="c1a">LED korrekt gepolt (langer Pin = Plus)</label></li>
+      <li><input type="checkbox" id="c1b"><label for="c1b">Widerstand 220Ω eingebaut</label></li>
+      <li><input type="checkbox" id="c1c"><label for="c1c">„für immer"-Schleife verwendet</label></li>
+      <li><input type="checkbox" id="c1d"><label for="c1d">LED blinkt im Sekundentakt</label></li>
+    </ul>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ SEITE 3 – ÜBUNG 2 ══════════════════════════════ -->
+<div class="page" id="page3">
+  <div class="card">
+    <h1>🚦 Übung 2 – Ampel</h1>
+    <div class="pills">
+      <span class="pill">3× LED (rot/gelb/grün)</span>
+      <span class="pill">3× Widerstand 220Ω</span>
+      <span class="pill">Arduino Uno</span>
+      <span class="pill">Breadboard</span>
+    </div>
+    <p><strong>Aufgabe:</strong> Drei LEDs (rot, gelb, grün) schalten automatisch wie eine Ampel durch.</p>
+  </div>
+
+  <div class="card green">
+    <h2>🖥️ Schaltung &amp; Simulation</h2>
+
+    <label>Welche Pins hast du verwendet?</label>
+    <input type="text" placeholder="Rot: Pin ___ · Gelb: Pin ___ · Grün: Pin ___">
+
+    <label>Welche Wartezeiten hast du gewählt (in Sekunden)?</label>
+    <input type="text" placeholder="Rot: ___ s · Rot+Gelb: ___ s · Grün: ___ s · Gelb: ___ s">
+
+    <label>Screenshot deiner Tinkercad-Schaltung:</label>
+    <div class="screenshot-area" id="ss2" onclick="triggerPaste('ss2')" ondragover="event.preventDefault()" ondrop="dropImg(event,'ss2')">
+      <span>📷 Klicken, Strg+V oder Bild hierher ziehen</span>
+    </div>
+
+    <label>Warum musst du bei jedem Schritt immer alle 3 LEDs gleichzeitig ein- oder ausschalten?</label>
+    <textarea oninput="auto(this)" placeholder="Erkläre in 1–2 Sätzen …"></textarea>
+
+    <label>Wie viele Blöcke hat dein Code insgesamt ungefähr?</label>
+    <input type="text" placeholder="ca. ___ Blöcke">
+
+    <label>Was wäre bei einer echten Ampel noch anders, was hier nicht simuliert wird?</label>
+    <textarea oninput="auto(this)" placeholder="z.B. Fußgängerampel, Sensor für Fahrzeuge …"></textarea>
+
+    <label>Hat die Simulation funktioniert?</label>
+    <select class="ans" onchange="chk(this,'ja')">
+      <option value="">– wählen –</option>
+      <option value="ja">Ja, auf Anhieb</option>
+      <option value="nein">Nein, erst nach Fehlersuche</option>
+    </select>
+  </div>
+
+  <div class="card">
+    <h3>✅ Checkliste Übung 2</h3>
+    <ul class="checklist">
+      <li><input type="checkbox" id="c2a"><label for="c2a">Alle 3 LEDs korrekt angeschlossen (je 220Ω)</label></li>
+      <li><input type="checkbox" id="c2b"><label for="c2b">Ampelphasen in richtiger Reihenfolge</label></li>
+      <li><input type="checkbox" id="c2c"><label for="c2c">Verschiedene Wartezeiten pro Phase</label></li>
+      <li><input type="checkbox" id="c2d"><label for="c2d">Ampel läuft in Endlosschleife</label></li>
+    </ul>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ SEITE 4 – ÜBUNG 3 ══════════════════════════════ -->
+<div class="page" id="page4">
+  <div class="card">
+    <h1>🔘 Übung 3 – Taster steuert LED</h1>
+    <div class="pills">
+      <span class="pill">Taster</span>
+      <span class="pill">LED</span>
+      <span class="pill">Widerstand 220Ω</span>
+      <span class="pill">Widerstand 10kΩ</span>
+      <span class="pill">Arduino Uno</span>
+    </div>
+    <p><strong>Aufgabe:</strong> Solange der Taster gedrückt ist, leuchtet die LED. Sonst bleibt sie aus.</p>
+  </div>
+
+  <div class="card green">
+    <h2>🖥️ Schaltung &amp; Simulation</h2>
+
+    <label>Welcher Pin liest den Taster (Eingang)? Welcher steuert die LED (Ausgang)?</label>
+    <input type="text" placeholder="Taster: Pin ___ · LED: Pin ___">
+
+    <label>Screenshot deiner Tinkercad-Schaltung:</label>
+    <div class="screenshot-area" id="ss3" onclick="triggerPaste('ss3')" ondragover="event.preventDefault()" ondrop="dropImg(event,'ss3')">
+      <span>📷 Klicken, Strg+V oder Bild hierher ziehen</span>
+    </div>
+
+    <label>Schreibe deine Bedingung auf (so wie sie im Blockcode steht):</label>
+    <input type="text" placeholder='z.B. "Digitalen Anschluss 2 lesen = HOCH"'>
+
+    <label>Was macht der 10kΩ-Widerstand (Pull-down)? Erkläre in eigenen Worten:</label>
+    <textarea oninput="auto(this)" placeholder="Er sorgt dafür, dass …"></textarea>
+
+    <label>Was passiert, wenn du die „sonst"-Bedingung weglässt?</label>
+    <textarea oninput="auto(this)" placeholder="Dann würde …"></textarea>
+
+    <label>Hat die Simulation funktioniert?</label>
+    <select class="ans" onchange="chk(this,'ja')">
+      <option value="">– wählen –</option>
+      <option value="ja">Ja, auf Anhieb</option>
+      <option value="nein">Nein, erst nach Fehlersuche</option>
+    </select>
+  </div>
+
+  <div class="card">
+    <h3>✅ Checkliste Übung 3</h3>
+    <ul class="checklist">
+      <li><input type="checkbox" id="c3a"><label for="c3a">Taster korrekt verdrahtet</label></li>
+      <li><input type="checkbox" id="c3b"><label for="c3b">Pull-down-Widerstand (10kΩ) eingebaut</label></li>
+      <li><input type="checkbox" id="c3c"><label for="c3c">„wenn–dann–sonst"-Block verwendet</label></li>
+      <li><input type="checkbox" id="c3d"><label for="c3d">LED leuchtet nur beim Drücken</label></li>
+    </ul>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ SEITE 5 – ÜBUNG 4 ══════════════════════════════ -->
+<div class="page" id="page5">
+  <div class="card">
+    <h1>🌗 Übung 4 – Nachtlicht (LDR)</h1>
+    <div class="pills">
+      <span class="pill">LDR (Fotowiderstand)</span>
+      <span class="pill">Widerstand 10kΩ</span>
+      <span class="pill">LED</span>
+      <span class="pill">Widerstand 220Ω</span>
+      <span class="pill">Arduino Uno</span>
+    </div>
+    <p><strong>Aufgabe:</strong> Wird es dunkel, schaltet sich die LED automatisch ein – wie eine Straßenlaterne.</p>
+  </div>
+
+  <div class="card green">
+    <h2>🖥️ Schaltung &amp; Simulation</h2>
+
+    <label>Screenshot deiner Tinkercad-Schaltung:</label>
+    <div class="screenshot-area" id="ss4" onclick="triggerPaste('ss4')" ondragover="event.preventDefault()" ondrop="dropImg(event,'ss4')">
+      <span>📷 Klicken, Strg+V oder Bild hierher ziehen</span>
+    </div>
+
+    <label>Welchen Schwellenwert hast du gewählt? Wie bist du auf diesen Wert gekommen?</label>
+    <textarea oninput="auto(this)" placeholder="Schwellenwert: ___ · Ich habe ihn gewählt, weil …"></textarea>
+
+    <label>Schreibe deine Bedingung auf (so wie sie im Blockcode steht):</label>
+    <input type="text" placeholder='z.B. "Analogen Anschluss A0 lesen < 300"'>
+
+    <label>Was passiert mit dem Messwert an A0, wenn es heller wird? Was wenn es dunkler wird?</label>
+    <textarea oninput="auto(this)" placeholder="Bei mehr Licht … · Bei weniger Licht …"></textarea>
+
+    <label>Erkläre kurz das Prinzip des Spannungsteilers (LDR + 10kΩ) in eigenen Worten:</label>
+    <textarea oninput="auto(this)" placeholder="Die zwei Widerstände teilen die Spannung so auf, dass …"></textarea>
+
+    <label>Hat die Simulation funktioniert?</label>
+    <select class="ans" onchange="chk(this,'ja')">
+      <option value="">– wählen –</option>
+      <option value="ja">Ja, auf Anhieb</option>
+      <option value="nein">Nein, erst nach Fehlersuche</option>
+    </select>
+  </div>
+
+  <div class="card">
+    <h3>✅ Checkliste Übung 4</h3>
+    <ul class="checklist">
+      <li><input type="checkbox" id="c4a"><label for="c4a">LDR und 10kΩ als Spannungsteiler aufgebaut</label></li>
+      <li><input type="checkbox" id="c4b"><label for="c4b">Analogwert direkt in der Bedingung verwendet</label></li>
+      <li><input type="checkbox" id="c4c"><label for="c4c">Schwellenwert getestet und angepasst</label></li>
+      <li><input type="checkbox" id="c4d"><label for="c4d">LED geht bei Dunkelheit zuverlässig an</label></li>
+    </ul>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ SEITE 6 – REFLEXION ══════════════════════════════ -->
+<div class="page" id="page6">
+  <div class="card">
+    <h1>🧠 Abschlussreflexion</h1>
+
+    <label>Was war der Unterschied zwischen Übung 1/2 (nur Ausgabe) und Übung 3/4 (Eingabe + Bedingung)?</label>
+    <textarea oninput="auto(this)" placeholder="Bei Übung 1 und 2 … · Bei Übung 3 und 4 …"></textarea>
+
+    <label>Was ist eine Schleife – und warum braucht man sie in fast jedem Programm?</label>
+    <textarea oninput="auto(this)" placeholder="Eine Schleife ist … · Man braucht sie, weil …"></textarea>
+
+    <label>Erkläre den Unterschied zwischen digitalem und analogem Eingang an einem Beispiel aus den Übungen:</label>
+    <textarea oninput="auto(this)" placeholder="Digital bedeutet … (Beispiel: Taster) · Analog bedeutet … (Beispiel: LDR)"></textarea>
+
+    <label>Welche Übung war am schwierigsten für dich – und warum?</label>
+    <textarea oninput="auto(this)" placeholder="Am schwierigsten war Übung ___, weil …"></textarea>
+
+    <label>Was würdest du als nächsten Schritt gerne ausprobieren?</label>
+    <textarea oninput="auto(this)" placeholder="Als nächstes würde ich gerne …"></textarea>
+  </div>
+
+  <div class="card blue">
+    <h2>📊 Gesamtübersicht</h2>
+    <div class="progress-bar"><div class="progress-fill" id="progressBar2" style="width:0%"></div></div>
+    <p class="progress-label" id="progressLabel2">0 von 4 Übungen abgehakt</p>
+    <p style="margin-top:12px;font-size:14px;color:#666;">Protokollheft · BVO Schwanau · Arduino Blockcoding in Tinkercad</p>
+  </div>
+</div>
+
+<script>
+// ── NAVIGATION ──────────────────────────────────────────────────────────────
+function showPage(n) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page' + n).classList.add('active');
+  document.querySelector(`.nav-btn[data-page="${n}"]`)?.classList.add('active');
+  updateProgress();
+}
+
+// ── AUTO-RESIZE TEXTAREA ────────────────────────────────────────────────────
+function auto(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
+// ── DROPDOWN CHECK ──────────────────────────────────────────────────────────
+function chk(el, correct) {
+  el.classList.remove('correct', 'wrong');
+  if (el.value === '') return;
+  el.classList.add(el.value === correct ? 'correct' : 'wrong');
+  save();
+}
+
+// ── SCREENSHOT ──────────────────────────────────────────────────────────────
+function triggerPaste(id) {
+  navigator.clipboard.read().then(items => {
+    for (const item of items) {
+      const imgType = item.types.find(t => t.startsWith('image/'));
+      if (imgType) {
+        item.getType(imgType).then(blob => setScreenshot(id, blob));
+        return;
+      }
+    }
+  }).catch(() => {
+    alert('Strg+V direkt ins Feld einfügen klappt in manchen Browsern nicht. Ziehe das Bild direkt hierher oder nutze Strg+V nach einem Klick auf das Feld.');
+  });
+}
+
+function dropImg(e, id) {
+  e.preventDefault();
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) setScreenshot(id, file);
+}
+
+document.addEventListener('paste', e => {
+  const active = document.querySelector('.page.active');
+  if (!active) return;
+  const area = active.querySelector('.screenshot-area');
+  if (!area) return;
+  const items = e.clipboardData.items;
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      setScreenshot(area.id, item.getAsFile());
+      return;
+    }
+  }
+});
+
+function setScreenshot(id, blob) {
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const area = document.getElementById(id);
+    area.innerHTML = `<img src="${ev.target.result}"><button class="remove-btn" onclick="removeScreenshot('${id}')">✕</button>`;
+    ssData[id] = ev.target.result;
+    save();
+  };
+  reader.readAsDataURL(blob);
+}
+
+function removeScreenshot(id) {
+  const area = document.getElementById(id);
+  area.innerHTML = '<span>📷 Klicken, Strg+V oder Bild hierher ziehen</span>';
+  delete ssData[id];
+  save();
+}
+
+// ── PROGRESS ────────────────────────────────────────────────────────────────
+function updateProgress() {
+  const checks = [
+    ['c1a','c1b','c1c','c1d'],
+    ['c2a','c2b','c2c','c2d'],
+    ['c3a','c3b','c3c','c3d'],
+    ['c4a','c4b','c4c','c4d'],
+  ];
+  let done = 0;
+  checks.forEach(group => {
+    if (group.every(id => document.getElementById(id)?.checked)) done++;
+  });
+  const pct = (done / 4 * 100) + '%';
+  const label = `${done} von 4 Übungen abgehakt`;
+  ['progressBar','progressBar2'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.width = pct;
+  });
+  ['progressLabel','progressLabel2'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = label;
+  });
+}
+
+// ── COLLECT / APPLY DATA ────────────────────────────────────────────────────
+let ssData = {};
+
+function collectData() {
+  const fields = {};
+  document.querySelectorAll('input[type=text], textarea').forEach((el, i) => {
+    fields[i + '_' + (el.id || 'f')] = el.value;
+  });
+  const checks = {};
+  document.querySelectorAll('input[type=checkbox]').forEach(cb => {
+    checks[cb.id] = cb.checked;
+  });
+  const selects = [];
+  document.querySelectorAll('select.ans').forEach(sel => {
+    selects.push({ val: sel.value, cls: sel.className.replace('ans','').trim() });
+  });
+  return { fields, checks, selects, screenshots: ssData, ts: Date.now() };
+}
+
+function applyData(data) {
+  if (!data) return;
+  if (data.fields) {
+    document.querySelectorAll('input[type=text], textarea').forEach((el, i) => {
+      const key = i + '_' + (el.id || 'f');
+      if (data.fields[key] !== undefined) {
+        el.value = data.fields[key];
+        if (el.tagName === 'TEXTAREA') {
+          const page = el.closest('.page');
+          const wasHidden = page && !page.classList.contains('active');
+          if (wasHidden) page.style.display = 'block';
+          el.style.height = 'auto';
+          el.style.height = el.scrollHeight + 'px';
+          if (wasHidden) page.style.display = '';
+        }
+      }
+    });
+  }
+  if (data.checks) {
+    document.querySelectorAll('input[type=checkbox]').forEach(cb => {
+      if (data.checks[cb.id] !== undefined) cb.checked = data.checks[cb.id];
+    });
+  }
+  if (data.selects) {
+    document.querySelectorAll('select.ans').forEach((sel, i) => {
+      if (data.selects[i]) {
+        sel.value = data.selects[i].val;
+        sel.className = 'ans ' + (data.selects[i].cls || '');
+      }
+    });
+  }
+  if (data.screenshots) {
+    ssData = data.screenshots;
+    Object.entries(ssData).forEach(([id, src]) => {
+      const area = document.getElementById(id);
+      if (area) area.innerHTML = `<img src="${src}"><button class="remove-btn" onclick="removeScreenshot('${id}')">✕</button>`;
+    });
+  }
+  updateProgress();
+}
+
+// ── AUTO-SAVE ───────────────────────────────────────────────────────────────
+function save() {
+  try { localStorage.setItem('arduino_protokoll', JSON.stringify(collectData())); } catch(e) {}
+  updateProgress();
+}
+
+document.addEventListener('input', save);
+document.addEventListener('change', save);
+
+window.addEventListener('load', () => {
+  try {
+    const saved = localStorage.getItem('arduino_protokoll');
+    if (saved) applyData(JSON.parse(saved));
+  } catch(e) {}
+  updateProgress();
+});
+
+// ── EXPORT / IMPORT ─────────────────────────────────────────────────────────
+function exportData() {
+  const data = collectData();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const name  = document.getElementById('f-name')?.value.trim().replace(/\s+/g,'_') || '';
+  const klass = document.getElementById('f-klasse')?.value.trim() || '';
+  a.download = 'protokoll_arduino' + (name ? '_'+name : '') + (klass ? '_'+klass : '') + '.json';
+  a.href = url; a.click(); URL.revokeObjectURL(url);
+}
+
+function importData() { document.getElementById('fileImport').click(); }
+
+function loadFile(input) {
+  const file = input.files[0]; if (!file) return;
+  const r = new FileReader();
+  r.onload = e => { try { applyData(JSON.parse(e.target.result)); } catch(ex) { alert('Datei konnte nicht geladen werden.'); } };
+  r.readAsText(file);
+  input.value = '';
+}
+
+// ── PRINT ───────────────────────────────────────────────────────────────────
+function printSingle() {
+  document.body.classList.remove('print-all');
+  window.print();
+}
+
+function printAll() {
+  const activePage = document.querySelector('.page.active')?.id;
+  document.querySelectorAll('.page').forEach(p => p.style.display = 'block');
+  document.body.classList.add('print-all');
+  document.querySelectorAll('textarea').forEach(ta => {
+    ta.style.height = 'auto';
+    ta.style.height = ta.scrollHeight + 'px';
+  });
+  setTimeout(() => {
+    window.print();
+    setTimeout(() => {
+      document.body.classList.remove('print-all');
+      document.querySelectorAll('.page').forEach(p => p.style.display = '');
+      if (activePage) document.getElementById(activePage)?.classList.add('active');
+    }, 500);
+  }, 300);
+}
+</script>
+</body>
+</html>
