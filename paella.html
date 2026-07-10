@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paella Valenciana – Rezept & Einkaufsliste</title>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org/",
+  "@type": "Recipe",
+  "name": "Paella Valenciana",
+  "description": "Klassische spanische Paella mit Fleisch und Meeresfrüchten, zubereitet in einer großen Paella-Pfanne.",
+  "recipeYield": "8 Portionen",
+  "recipeCategory": "Hauptgericht",
+  "recipeCuisine": "Spanisch",
+  "recipeIngredient": [
+    "800 g Arroz bomba (Paellareis, ersatzweise Langkornreis)",
+    "1900 ml Wasser oder Brühe",
+    "1 Prise Safranfäden (oder colorante alimentario / Kurkuma)",
+    "800 g Hähnchen- und/oder Kaninchenfleisch, in Stücken",
+    "450 g Meeresfrüchte (Garnelen, Miesmuscheln, Tintenfisch)",
+    "400 g grüne Bohnen oder Riesenbohnen (garrofó)",
+    "3 reife Tomaten, gerieben oder gehackt",
+    "2 rote Paprika",
+    "175 ml Olivenöl",
+    "2 TL Salz",
+    "3 Knoblauchzehen",
+    "Rosmarinzweige zum Bedecken",
+    "2 Zitronen, in Spalten, zum Servieren"
+  ],
+  "recipeInstructions": [
+    { "@type": "HowToStep", "text": "Fleisch (und ggf. Meeresfrüchte) in reichlich Olivenöl in der Paella-Pfanne kräftig anbraten." },
+    { "@type": "HowToStep", "text": "Bohnen und Tomaten zugeben, kurz mitschmoren, bis das Tomatenwasser verdampft ist." },
+    { "@type": "HowToStep", "text": "Reis kreuzförmig über Fleisch und Gemüse verteilen." },
+    { "@type": "HowToStep", "text": "Wasser oder Brühe angießen, Safran oder Farbstoff zugeben." },
+    { "@type": "HowToStep", "text": "Sobald die Flüssigkeit siedet, Hitze reduzieren, damit sie nicht verkocht, bevor der Reis gar ist." },
+    { "@type": "HowToStep", "text": "Am Ende die Hitze noch einige Minuten hochlassen, damit sich der Socarrat (Kruste) am Boden bildet. Reis soll körnig bleiben, leichter Biss." },
+    { "@type": "HowToStep", "text": "Fertige Paella lose mit einem Küchentuch, einer Zeitung oder Rosmarinzweigen bedecken (oder unbedeckt) und einige Minuten ruhen lassen." },
+    { "@type": "HowToStep", "text": "Direkt aus der Pfanne oder auf Teller servieren, am besten mittags gegen 15 Uhr." }
+  ]
+}
+</script>
+
+<style>
+  :root {
+    --bordeaux: #6B1A2A;
+    --terrakotta: #C0603A;
+    --lachs: #F3D9CE;
+    --cremeweiss: #FBF6F1;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Barlow Condensed', Arial, sans-serif;
+    background: var(--cremeweiss);
+    color: #2a2a2a;
+    margin: 0;
+    padding: 0 0 3rem 0;
+  }
+  header {
+    background: var(--bordeaux);
+    color: white;
+    padding: 1.5rem 1rem 1rem;
+    text-align: center;
+  }
+  header h1 {
+    margin: 0;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  header p {
+    margin: 0.3rem 0 0;
+    color: var(--lachs);
+    font-size: 0.95rem;
+  }
+  .container {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 1rem;
+  }
+  .servings-box {
+    background: white;
+    border-radius: 12px;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    margin-bottom: 1.5rem;
+  }
+  .servings-box button {
+    background: var(--terrakotta);
+    color: white;
+    border: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    font-size: 1.4rem;
+    cursor: pointer;
+  }
+  .servings-box button:active {
+    background: var(--bordeaux);
+  }
+  .servings-box .count {
+    font-size: 1.4rem;
+    font-weight: 700;
+    min-width: 90px;
+    text-align: center;
+  }
+  h2 {
+    color: var(--bordeaux);
+    border-bottom: 2px solid var(--terrakotta);
+    padding-bottom: 0.3rem;
+    font-weight: 700;
+  }
+  ul.ingredients {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  ul.ingredients li {
+    background: white;
+    padding: 0.7rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  ul.ingredients li .amount {
+    font-weight: 700;
+    color: var(--terrakotta);
+    white-space: nowrap;
+    margin-left: 1rem;
+  }
+  ol.steps {
+    padding-left: 1.2rem;
+  }
+  ol.steps li {
+    margin-bottom: 0.9rem;
+    line-height: 1.4;
+  }
+  .note {
+    font-size: 0.85rem;
+    color: #555;
+    margin-top: 1.5rem;
+    padding: 0.8rem 1rem;
+    background: var(--lachs);
+    border-radius: 8px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Paella Valenciana</h1>
+  <p>Reis mit Fleisch &amp; Meeresfrüchten – Grundrezept für 8 Portionen</p>
+</header>
+
+<div class="container">
+
+  <div class="servings-box">
+    <button onclick="changeServings(-1)" aria-label="weniger Portionen">−</button>
+    <div class="count"><span id="servingsCount">8</span> Portionen</div>
+    <button onclick="changeServings(1)" aria-label="mehr Portionen">+</button>
+  </div>
+
+  <h2>Zutaten</h2>
+  <ul class="ingredients" id="ingredientsList"></ul>
+
+  <h2>Zubereitung</h2>
+  <ol class="steps">
+    <li>Fleisch (und ggf. Meeresfrüchte) in reichlich Olivenöl in der Paella-Pfanne kräftig anbraten.</li>
+    <li>Bohnen und Tomaten zugeben, kurz mitschmoren, bis das Tomatenwasser verdampft ist.</li>
+    <li>Reis kreuzförmig über Fleisch und Gemüse verteilen.</li>
+    <li>Wasser oder Brühe angießen, Safran oder Farbstoff zugeben.</li>
+    <li>Sobald die Flüssigkeit siedet, Hitze reduzieren, damit sie nicht verkocht, bevor der Reis gar ist.</li>
+    <li>Am Ende die Hitze noch einige Minuten hochlassen, damit sich der <strong>Socarrat</strong> (Kruste) am Boden bildet. Der Reis soll körnig bleiben und leichten Biss haben.</li>
+    <li>Fertige Paella lose mit einem Küchentuch, einer Zeitung oder Rosmarinzweigen bedecken – oder unbedeckt ruhen lassen – und einige Minuten ziehen lassen.</li>
+    <li>Direkt aus der Pfanne oder auf Teller servieren, traditionell mittags gegen 15 Uhr.</li>
+  </ol>
+
+  <div class="note">
+    💡 Tipp: Diese Seite enthält Rezeptdaten im schema.org-Format. Über die Teilen-Funktion deines Browsers (Share-Extension) kannst du die Zutaten direkt in die Bring!-App importieren.
+  </div>
+
+</div>
+
+<script>
+  const baseServings = 8;
+
+  // { text vor Menge, amount (Zahl oder null), unit (String oder ""), text nach Menge }
+  const ingredients = [
+    { amount: 800,  unit: "g",  name: "Arroz bomba (Paellareis, ersatzweise Langkornreis)" },
+    { amount: 1900, unit: "ml", name: "Wasser oder Brühe" },
+    { amount: null, unit: "",   name: "Safranfäden (1 Prise) – oder colorante alimentario / Kurkuma" },
+    { amount: 800,  unit: "g",  name: "Hähnchen- und/oder Kaninchenfleisch, in Stücken" },
+    { amount: 450,  unit: "g",  name: "Meeresfrüchte (Garnelen, Miesmuscheln, Tintenfisch)" },
+    { amount: 400,  unit: "g",  name: "Grüne Bohnen oder Riesenbohnen (garrofó)" },
+    { amount: 3,    unit: "Stk.", name: "Reife Tomaten, gerieben oder gehackt" },
+    { amount: 2,    unit: "Stk.", name: "Rote Paprika (optional)" },
+    { amount: 175,  unit: "ml", name: "Olivenöl" },
+    { amount: 2,    unit: "TL", name: "Salz" },
+    { amount: 3,    unit: "Stk.", name: "Knoblauchzehen" },
+    { amount: null, unit: "",   name: "Rosmarinzweige (zum Bedecken, optional)" },
+    { amount: 2,    unit: "Stk.", name: "Zitronen, in Spalten (zum Servieren)" }
+  ];
+
+  let currentServings = baseServings;
+
+  function formatAmount(value) {
+    // sinnvoll runden: ab 10 auf ganze Zahlen, sonst 1 Nachkommastelle
+    if (Math.abs(value) >= 10) return Math.round(value).toString();
+    const rounded = Math.round(value * 10) / 10;
+    return rounded.toString().replace(".", ",");
+  }
+
+  function renderIngredients() {
+    const factor = currentServings / baseServings;
+    const list = document.getElementById("ingredientsList");
+    list.innerHTML = "";
+    ingredients.forEach(ing => {
+      const li = document.createElement("li");
+      const nameSpan = document.createElement("span");
+      nameSpan.textContent = ing.name;
+      const amountSpan = document.createElement("span");
+      amountSpan.className = "amount";
+      if (ing.amount === null) {
+        amountSpan.textContent = "n. B.";
+      } else {
+        amountSpan.textContent = formatAmount(ing.amount * factor) + " " + ing.unit;
+      }
+      li.appendChild(nameSpan);
+      li.appendChild(amountSpan);
+      list.appendChild(li);
+    });
+  }
+
+  function changeServings(delta) {
+    const next = currentServings + delta;
+    if (next < 1 || next > 30) return;
+    currentServings = next;
+    document.getElementById("servingsCount").textContent = currentServings;
+    renderIngredients();
+  }
+
+  renderIngredients();
+</script>
+
+</body>
+</html>
