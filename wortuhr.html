@@ -144,12 +144,15 @@
     justify-content: center;
     padding: clamp(0.8rem, 3vmin, 2rem);
   }
-  body.fullscreen-mode .word {
-    font-size: clamp(1rem, 6vmin, 3.4rem);
+  body.fullscreen-mode .grid {
+    gap: 0.3em;
   }
-  body.fullscreen-mode .digital-time {
-    font-size: clamp(0.8rem, 3.2vmin, 1.4rem);
-    margin-top: clamp(0.8rem, 3vmin, 2rem);
+  body.fullscreen-mode .row {
+    flex-wrap: nowrap;
+    gap: 0.4em;
+  }
+  body.fullscreen-mode .word {
+    font-size: 1em;
   }
 
   header { text-align: center; margin-bottom: 1.4rem; }
@@ -599,6 +602,53 @@
   // Vollbildmodus
   const clockCard = document.getElementById('clockCard');
   const fullscreenBtn = document.getElementById('fullscreenBtn');
+  const clockGrid = document.getElementById('clockGrid');
+  const digitalTimeEl = document.getElementById('digitalTime');
+
+  // Skaliert die Wortuhr im Vollbildmodus so, dass sie die verfügbare
+  // Breite UND Höhe des Displays maximal ausfüllt (die knappere Dimension
+  // bestimmt den Faktor), statt an feste Größen gebunden zu sein.
+  function fitWordClock() {
+    if (!document.body.classList.contains('fullscreen-mode')) return;
+
+    const digitalVisible = !digitalTimeEl.classList.contains('hidden');
+    const baseline = 200; // px Referenzgröße zum Ausmessen der natürlichen Proportionen
+
+    clockGrid.style.fontSize = baseline + 'px';
+    if (digitalVisible) {
+      digitalTimeEl.style.fontSize = (baseline * 0.3) + 'px';
+      digitalTimeEl.style.marginTop = (baseline * 0.12) + 'px';
+    }
+
+    const cardStyle = getComputedStyle(clockCard);
+    const padX = parseFloat(cardStyle.paddingLeft) + parseFloat(cardStyle.paddingRight);
+    const padY = parseFloat(cardStyle.paddingTop) + parseFloat(cardStyle.paddingBottom);
+
+    const naturalWidth = clockGrid.scrollWidth;
+    const naturalHeight = clockGrid.scrollHeight +
+      (digitalVisible ? digitalTimeEl.offsetHeight + parseFloat(getComputedStyle(digitalTimeEl).marginTop) : 0);
+
+    const availableWidth = clockCard.clientWidth - padX;
+    const availableHeight = clockCard.clientHeight - padY;
+
+    const scale = Math.max(0.15, Math.min(availableWidth / naturalWidth, availableHeight / naturalHeight));
+    const newSize = baseline * scale;
+
+    clockGrid.style.fontSize = newSize + 'px';
+    if (digitalVisible) {
+      digitalTimeEl.style.fontSize = (newSize * 0.3) + 'px';
+      digitalTimeEl.style.marginTop = (newSize * 0.12) + 'px';
+    } else {
+      digitalTimeEl.style.fontSize = '';
+      digitalTimeEl.style.marginTop = '';
+    }
+  }
+
+  let fitDebounce = null;
+  function scheduleFit() {
+    clearTimeout(fitDebounce);
+    fitDebounce = setTimeout(fitWordClock, 120);
+  }
 
   function enterDisplayMode() {
     document.body.classList.add('fullscreen-mode');
@@ -607,6 +657,7 @@
     if (req) { try { req.call(el).catch(() => {}); } catch (e) {} }
     localStorage.setItem('wortuhr_mode', 'fullscreen');
     resetIdleTimer();
+    fitWordClock();
   }
 
   function exitDisplayMode() {
@@ -617,6 +668,9 @@
     }
     localStorage.setItem('wortuhr_mode', 'settings');
     resetIdleTimer();
+    clockGrid.style.fontSize = '';
+    digitalTimeEl.style.fontSize = '';
+    digitalTimeEl.style.marginTop = '';
   }
 
   clockCard.addEventListener('dblclick', (e) => {
@@ -631,11 +685,21 @@
     if (!document.fullscreenElement && document.body.classList.contains('fullscreen-mode')) {
       document.body.classList.remove('fullscreen-mode');
       localStorage.setItem('wortuhr_mode', 'settings');
+      clockGrid.style.fontSize = '';
+      digitalTimeEl.style.fontSize = '';
+      digitalTimeEl.style.marginTop = '';
+    } else {
+      scheduleFit();
     }
   });
 
+  window.addEventListener('resize', scheduleFit);
+  window.addEventListener('orientationchange', scheduleFit);
+  document.getElementById('showDigital').addEventListener('change', scheduleFit);
+
   if (localStorage.getItem('wortuhr_mode') === 'fullscreen') {
     document.body.classList.add('fullscreen-mode');
+    scheduleFit();
   }
 
   // Display-Timeout (Abdunkeln bei Inaktivität)
