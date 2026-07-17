@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Wortuhr – Die Uhrzeit in Worten</title>
 <style>
   :root {
@@ -107,6 +107,8 @@
 
   * { box-sizing: border-box; }
 
+  html, body { touch-action: manipulation; }
+
   body {
     margin: 0;
     min-height: 100vh;
@@ -120,6 +122,33 @@
     padding: 1.6rem 1rem 2.5rem;
   }
 
+  body.fullscreen-mode {
+    padding: 0;
+    justify-content: center;
+  }
+  body.fullscreen-mode header,
+  body.fullscreen-mode .controls {
+    display: none;
+  }
+  body.fullscreen-mode .clock-card {
+    max-width: none;
+    width: 100vw;
+    min-height: 100vh;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  body.fullscreen-mode .word {
+    font-size: clamp(1.6rem, 6vw, 3.4rem);
+  }
+  body.fullscreen-mode .digital-time {
+    font-size: 1.4rem;
+    margin-top: 2rem;
+  }
+
   header { text-align: center; margin-bottom: 1.4rem; }
   header h1 {
     margin: 0 0 0.25rem;
@@ -128,6 +157,7 @@
   header p { margin: 0; color: var(--sub); font-size: 1rem; }
 
   .clock-card {
+    position: relative;
     background: var(--card-bg);
     border: 1px solid var(--card-border);
     border-radius: 18px;
@@ -136,6 +166,37 @@
     width: 100%;
     box-shadow: 0 10px 30px rgba(0,0,0,0.08);
     transition: background 0.3s ease, border-color 0.3s ease;
+  }
+
+  .minute-dots .dot {
+    position: absolute;
+    width: clamp(8px, 2vw, 13px);
+    height: clamp(8px, 2vw, 13px);
+    border-radius: 50%;
+    background: var(--dim);
+    transition: background 0.25s ease, box-shadow 0.25s ease;
+  }
+  .minute-dots .dot.active {
+    background: var(--active);
+    box-shadow: var(--active-shadow);
+  }
+  .dot-tl { top: 16px; left: 16px; }
+  .dot-tr { top: 16px; right: 16px; }
+  .dot-bl { bottom: 16px; left: 16px; }
+  .dot-br { bottom: 16px; right: 16px; }
+
+  .dim-overlay {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 2s ease;
+    z-index: 999;
+  }
+  .dim-overlay.active {
+    opacity: 0.94;
+    pointer-events: auto;
   }
 
   .grid { display: flex; flex-direction: column; gap: clamp(0.4rem, 1.5vw, 0.9rem); }
@@ -208,7 +269,8 @@
     color: var(--text);
   }
   .toggle-row label { display: flex; align-items: center; gap: 0.4rem; cursor: pointer; }
-  .toggle-row input[type="time"] {
+  .toggle-row input[type="time"],
+  .toggle-row select {
     font-family: inherit;
     font-size: 0.95rem;
     padding: 0.25rem 0.4rem;
@@ -216,6 +278,28 @@
     border: 1px solid var(--btn-border);
     background: var(--btn-bg);
     color: var(--btn-text);
+  }
+
+  .fs-btn {
+    font-family: inherit;
+    font-size: 0.95rem;
+    padding: 0.6rem 1.1rem;
+    border-radius: 999px;
+    border: 2px solid var(--btn-border);
+    background: var(--btn-bg);
+    color: var(--btn-text);
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+  }
+  .fs-btn:hover { border-color: var(--accent); }
+
+  .fs-hint {
+    max-width: 720px;
+    width: 100%;
+    text-align: center;
+    color: var(--sub);
+    font-size: 0.85rem;
+    margin: 0;
   }
 
   details.info {
@@ -250,10 +334,16 @@
 
 <header>
   <h1>🕐 Wortuhr</h1>
-  <p>Die Uhrzeit in Worten – für den Unterricht</p>
+  <p>Die Uhrzeit in Worten</p>
 </header>
 
-<div class="clock-card">
+<div class="clock-card" id="clockCard">
+  <div class="minute-dots">
+    <span class="dot dot-tl" id="dot1"></span>
+    <span class="dot dot-tr" id="dot2"></span>
+    <span class="dot dot-bl" id="dot3"></span>
+    <span class="dot dot-br" id="dot4"></span>
+  </div>
   <div class="grid" id="clockGrid">
     <div class="row">
       <span class="word" id="es">ES</span>
@@ -294,6 +384,8 @@
   <div class="sr-only" id="srAnnounce" aria-live="polite"></div>
 </div>
 
+<div class="dim-overlay" id="dimOverlay"></div>
+
 <div class="controls">
   <div class="theme-picker" id="themePicker" role="group" aria-label="Design wählen">
     <button data-theme="hell">☀️ Hell</button>
@@ -309,31 +401,47 @@
     <input type="time" id="manualTime" value="12:00" disabled>
   </div>
 
+  <div class="toggle-row">
+    <label for="displayTimeout">🌙 Display-Timeout</label>
+    <select id="displayTimeout">
+      <option value="0">Aus (immer an)</option>
+      <option value="15">15 Sekunden</option>
+      <option value="30">30 Sekunden</option>
+      <option value="60">1 Minute</option>
+      <option value="120">2 Minuten</option>
+      <option value="300">5 Minuten</option>
+      <option value="600">10 Minuten</option>
+    </select>
+  </div>
+
+  <div class="toggle-row">
+    <button class="fs-btn" id="fullscreenBtn">🖥️ Vollbildmodus starten</button>
+  </div>
+  <p class="fs-hint">Tipp: Doppelklick / Doppeltipp auf die Anzeige wechselt zwischen Vollbild und Einstellungen.</p>
+
   <details class="info">
     <summary>ℹ️ Wie liest man die Wortuhr?</summary>
-    <p>Die Wortuhr zeigt die Uhrzeit auf 5 Minuten genau in Worten an. Beispiele:</p>
+    <p>Die Wortuhr zeigt die Uhrzeit auf 5 Minuten genau in Worten an, die restlichen 1–4 Minuten werden durch Punkte in den vier Ecken angezeigt (oben links → oben rechts → unten links → unten rechts). Beispiele:</p>
     <ul>
       <li><strong>10:00</strong> → „Es ist zehn Uhr"</li>
       <li><strong>10:15</strong> → „Es ist viertel nach zehn"</li>
       <li><strong>10:30</strong> → „Es ist halb elf" (schon halb auf dem Weg zur nächsten Stunde!)</li>
       <li><strong>10:45</strong> → „Es ist viertel vor elf"</li>
       <li><strong>10:25</strong> → „Es ist fünf vor halb elf"</li>
+      <li><strong>10:17</strong> → „Es ist viertel nach zehn" + 2 Eckpunkte</li>
     </ul>
   </details>
 </div>
-
-<footer>
-  Teil der <a href="index.html">Unterrichtsmaterialien</a>
-</footer>
 
 <script>
 (function () {
   const hourIds = { 1:'h1', 2:'h2', 3:'h3', 4:'h4', 5:'h5', 6:'h6', 7:'h7', 8:'h8', 9:'h9', 10:'h10', 11:'h11', 12:'h12' };
   const allIds = ['es','ist','minFuenf','minZehn','zwanzig','viertel','nach','vor','halb','uhr',
     'h1','h2','h3','h4','h5','h6','h7','h8','h9','h10','h11','h12'];
+  const dotIds = ['dot1','dot2','dot3','dot4'];
 
   const els = {};
-  allIds.forEach(id => els[id] = document.getElementById(id));
+  allIds.concat(dotIds).forEach(id => els[id] = document.getElementById(id));
 
   let lastSentence = '';
 
@@ -353,13 +461,10 @@
     const now = getEffectiveDate();
     const manual = document.getElementById('manualMode').checked;
 
-    let rawHour = now.getHours();
+    const rawHour = now.getHours();
     const rawMinute = now.getMinutes();
-    let roundedMinute = Math.round(rawMinute / 5) * 5;
-    if (roundedMinute === 60) {
-      roundedMinute = 0;
-      rawHour = (rawHour + 1) % 24;
-    }
+    const roundedMinute = Math.floor(rawMinute / 5) * 5;
+    const minuteRemainder = rawMinute - roundedMinute;
 
     let h12 = rawHour % 12;
     if (h12 === 0) h12 = 12;
@@ -428,6 +533,7 @@
     active.add(hourIds[referencedHour]);
 
     allIds.forEach(id => els[id].classList.toggle('active', active.has(id)));
+    dotIds.forEach((id, i) => els[id].classList.toggle('active', i < minuteRemainder));
 
     if (sentence !== lastSentence) {
       document.getElementById('srAnnounce').textContent = sentence;
@@ -435,7 +541,7 @@
     }
 
     const digital = document.getElementById('digitalTime');
-    const hh = String(rawHour === 24 ? 0 : now.getHours()).padStart(2, '0');
+    const hh = String(now.getHours()).padStart(2, '0');
     const mm = String(rawMinute).padStart(2, '0');
     if (manual) {
       digital.textContent = `${hh}:${mm}`;
@@ -486,6 +592,77 @@
     updateClock();
   });
   manualInput.addEventListener('input', updateClock);
+
+  // Vollbildmodus
+  const clockCard = document.getElementById('clockCard');
+  const fullscreenBtn = document.getElementById('fullscreenBtn');
+
+  function enterDisplayMode() {
+    document.body.classList.add('fullscreen-mode');
+    const el = document.documentElement;
+    const req = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (req) { try { req.call(el).catch(() => {}); } catch (e) {} }
+    localStorage.setItem('wortuhr_mode', 'fullscreen');
+    resetIdleTimer();
+  }
+
+  function exitDisplayMode() {
+    document.body.classList.remove('fullscreen-mode');
+    if (document.fullscreenElement) {
+      const exit = document.exitFullscreen || document.webkitExitFullscreen;
+      if (exit) { try { exit.call(document).catch(() => {}); } catch (e) {} }
+    }
+    localStorage.setItem('wortuhr_mode', 'settings');
+    resetIdleTimer();
+  }
+
+  clockCard.addEventListener('dblclick', (e) => {
+    e.preventDefault();
+    if (document.body.classList.contains('fullscreen-mode')) exitDisplayMode();
+    else enterDisplayMode();
+  });
+
+  fullscreenBtn.addEventListener('click', enterDisplayMode);
+
+  document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement && document.body.classList.contains('fullscreen-mode')) {
+      document.body.classList.remove('fullscreen-mode');
+      localStorage.setItem('wortuhr_mode', 'settings');
+    }
+  });
+
+  if (localStorage.getItem('wortuhr_mode') === 'fullscreen') {
+    document.body.classList.add('fullscreen-mode');
+  }
+
+  // Display-Timeout (Abdunkeln bei Inaktivität)
+  const dimOverlay = document.getElementById('dimOverlay');
+  const timeoutSelect = document.getElementById('displayTimeout');
+  const savedTimeout = localStorage.getItem('wortuhr_timeout');
+  if (savedTimeout !== null) timeoutSelect.value = savedTimeout;
+
+  let idleTimer = null;
+  function resetIdleTimer() {
+    clearTimeout(idleTimer);
+    dimOverlay.classList.remove('active');
+    const seconds = parseInt(timeoutSelect.value, 10);
+    if (seconds > 0) {
+      idleTimer = setTimeout(() => dimOverlay.classList.add('active'), seconds * 1000);
+    }
+  }
+
+  timeoutSelect.addEventListener('change', () => {
+    localStorage.setItem('wortuhr_timeout', timeoutSelect.value);
+    resetIdleTimer();
+  });
+
+  ['mousemove', 'mousedown', 'touchstart', 'keydown'].forEach(evt =>
+    document.addEventListener(evt, resetIdleTimer, { passive: true })
+  );
+  dimOverlay.addEventListener('click', (e) => { e.stopPropagation(); resetIdleTimer(); });
+  dimOverlay.addEventListener('touchstart', (e) => { e.stopPropagation(); resetIdleTimer(); }, { passive: true });
+
+  resetIdleTimer();
 
   updateClock();
   setInterval(updateClock, 1000);
