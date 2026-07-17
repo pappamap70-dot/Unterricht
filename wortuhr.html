@@ -137,24 +137,25 @@
     width: 100vw;
     height: var(--app-vh, 100vh);
     max-height: var(--app-vh, 100vh);
-    overflow-y: auto;
+    overflow: hidden;
     border-radius: 0;
     border: none;
     box-shadow: none;
     display: flex;
     flex-direction: column;
     justify-content: center;
+    align-items: center;
     padding: clamp(0.8rem, 3vmin, 2rem);
-  }
-  body.fullscreen-mode .grid {
-    gap: 0.3em;
   }
   body.fullscreen-mode .row {
     flex-wrap: nowrap;
-    gap: 0.4em;
   }
-  body.fullscreen-mode .word {
-    font-size: 1em;
+
+  .clock-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transform-origin: center center;
   }
 
   header { text-align: center; margin-bottom: 1.4rem; }
@@ -352,43 +353,45 @@
     <span class="dot dot-bl" id="dot3"></span>
     <span class="dot dot-br" id="dot4"></span>
   </div>
-  <div class="grid" id="clockGrid">
-    <div class="row">
-      <span class="word" id="es">ES</span>
-      <span class="word" id="ist">IST</span>
+  <div class="clock-content" id="clockContent">
+    <div class="grid" id="clockGrid">
+      <div class="row">
+        <span class="word" id="es">ES</span>
+        <span class="word" id="ist">IST</span>
+      </div>
+      <div class="row">
+        <span class="word" id="minFuenf">FÜNF</span>
+        <span class="word" id="minZehn">ZEHN</span>
+        <span class="word" id="zwanzig">ZWANZIG</span>
+        <span class="word" id="viertel">VIERTEL</span>
+      </div>
+      <div class="row">
+        <span class="word" id="nach">NACH</span>
+        <span class="word" id="vor">VOR</span>
+        <span class="word" id="halb">HALB</span>
+      </div>
+      <div class="row">
+        <span class="word" id="h12">ZWÖLF</span>
+        <span class="word" id="h1">EINS</span>
+        <span class="word" id="h2">ZWEI</span>
+        <span class="word" id="h3">DREI</span>
+        <span class="word" id="h4">VIER</span>
+        <span class="word" id="h5">FÜNF</span>
+      </div>
+      <div class="row">
+        <span class="word" id="h6">SECHS</span>
+        <span class="word" id="h7">SIEBEN</span>
+        <span class="word" id="h8">ACHT</span>
+        <span class="word" id="h9">NEUN</span>
+        <span class="word" id="h10">ZEHN</span>
+        <span class="word" id="h11">ELF</span>
+      </div>
+      <div class="row">
+        <span class="word" id="uhr">UHR</span>
+      </div>
     </div>
-    <div class="row">
-      <span class="word" id="minFuenf">FÜNF</span>
-      <span class="word" id="minZehn">ZEHN</span>
-      <span class="word" id="zwanzig">ZWANZIG</span>
-      <span class="word" id="viertel">VIERTEL</span>
-    </div>
-    <div class="row">
-      <span class="word" id="nach">NACH</span>
-      <span class="word" id="vor">VOR</span>
-      <span class="word" id="halb">HALB</span>
-    </div>
-    <div class="row">
-      <span class="word" id="h12">ZWÖLF</span>
-      <span class="word" id="h1">EINS</span>
-      <span class="word" id="h2">ZWEI</span>
-      <span class="word" id="h3">DREI</span>
-      <span class="word" id="h4">VIER</span>
-      <span class="word" id="h5">FÜNF</span>
-    </div>
-    <div class="row">
-      <span class="word" id="h6">SECHS</span>
-      <span class="word" id="h7">SIEBEN</span>
-      <span class="word" id="h8">ACHT</span>
-      <span class="word" id="h9">NEUN</span>
-      <span class="word" id="h10">ZEHN</span>
-      <span class="word" id="h11">ELF</span>
-    </div>
-    <div class="row">
-      <span class="word" id="uhr">UHR</span>
-    </div>
+    <div class="digital-time" id="digitalTime">--:--:--</div>
   </div>
-  <div class="digital-time" id="digitalTime">--:--:--</div>
   <div class="sr-only" id="srAnnounce" aria-live="polite"></div>
 </div>
 
@@ -604,8 +607,7 @@
   // Vollbildmodus
   const clockCard = document.getElementById('clockCard');
   const fullscreenBtn = document.getElementById('fullscreenBtn');
-  const clockGrid = document.getElementById('clockGrid');
-  const digitalTimeEl = document.getElementById('digitalTime');
+  const clockContent = document.getElementById('clockContent');
 
   // Ältere Android-Browser (z.B. Moto G4) rechnen bei 100vh die Fläche
   // hinter der Adressleiste mit ein, wodurch der untere Teil abgeschnitten
@@ -617,43 +619,30 @@
 
   // Skaliert die Wortuhr im Vollbildmodus so, dass sie die verfügbare
   // Breite UND Höhe des Displays maximal ausfüllt (die knappere Dimension
-  // bestimmt den Faktor), statt an feste Größen gebunden zu sein.
+  // bestimmt den Faktor), statt an feste Größen gebunden zu sein. Der Inhalt
+  // wird dazu in seiner natürlichen Größe gemessen und dann per
+  // transform: scale() gleichmäßig herunter- oder hochskaliert – das
+  // verhält sich über Browser hinweg zuverlässiger als eine Skalierung
+  // über Schriftgrößen/Flexbox.
   function fitWordClock() {
     if (!document.body.classList.contains('fullscreen-mode')) return;
 
     updateAppViewportHeight();
-
-    const digitalVisible = !digitalTimeEl.classList.contains('hidden');
-    const baseline = 200; // px Referenzgröße zum Ausmessen der natürlichen Proportionen
-
-    clockGrid.style.fontSize = baseline + 'px';
-    if (digitalVisible) {
-      digitalTimeEl.style.fontSize = (baseline * 0.3) + 'px';
-      digitalTimeEl.style.marginTop = (baseline * 0.12) + 'px';
-    }
+    clockContent.style.transform = 'none';
 
     const cardStyle = getComputedStyle(clockCard);
     const padX = parseFloat(cardStyle.paddingLeft) + parseFloat(cardStyle.paddingRight);
     const padY = parseFloat(cardStyle.paddingTop) + parseFloat(cardStyle.paddingBottom);
 
-    const naturalWidth = clockGrid.scrollWidth;
-    const naturalHeight = clockGrid.scrollHeight +
-      (digitalVisible ? digitalTimeEl.offsetHeight + parseFloat(getComputedStyle(digitalTimeEl).marginTop) : 0);
-
     const availableWidth = clockCard.clientWidth - padX;
     const availableHeight = clockCard.clientHeight - padY;
 
-    const scale = Math.max(0.15, Math.min(availableWidth / naturalWidth, availableHeight / naturalHeight));
-    const newSize = baseline * scale;
+    const naturalWidth = clockContent.offsetWidth;
+    const naturalHeight = clockContent.offsetHeight;
+    if (!naturalWidth || !naturalHeight) return;
 
-    clockGrid.style.fontSize = newSize + 'px';
-    if (digitalVisible) {
-      digitalTimeEl.style.fontSize = (newSize * 0.3) + 'px';
-      digitalTimeEl.style.marginTop = (newSize * 0.12) + 'px';
-    } else {
-      digitalTimeEl.style.fontSize = '';
-      digitalTimeEl.style.marginTop = '';
-    }
+    const scale = Math.max(0.15, Math.min(availableWidth / naturalWidth, availableHeight / naturalHeight));
+    clockContent.style.transform = `scale(${scale})`;
   }
 
   let fitDebounce = null;
@@ -683,9 +672,7 @@
     }
     localStorage.setItem('wortuhr_mode', 'settings');
     resetIdleTimer();
-    clockGrid.style.fontSize = '';
-    digitalTimeEl.style.fontSize = '';
-    digitalTimeEl.style.marginTop = '';
+    clockContent.style.transform = '';
   }
 
   clockCard.addEventListener('dblclick', (e) => {
@@ -700,9 +687,7 @@
     if (!document.fullscreenElement && document.body.classList.contains('fullscreen-mode')) {
       document.body.classList.remove('fullscreen-mode');
       localStorage.setItem('wortuhr_mode', 'settings');
-      clockGrid.style.fontSize = '';
-      digitalTimeEl.style.fontSize = '';
-      digitalTimeEl.style.marginTop = '';
+      clockContent.style.transform = '';
     } else {
       scheduleFit();
     }
