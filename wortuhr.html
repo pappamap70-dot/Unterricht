@@ -23,6 +23,7 @@
     --btn-active-text: #ffffff;
     --font-main: 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
     --word-weight: 700;
+    --app-vh: 100vh;
   }
 
   [data-theme="dunkel"] {
@@ -125,6 +126,7 @@
   body.fullscreen-mode {
     padding: 0;
     justify-content: center;
+    min-height: var(--app-vh, 100vh);
   }
   body.fullscreen-mode header,
   body.fullscreen-mode .controls {
@@ -133,8 +135,8 @@
   body.fullscreen-mode .clock-card {
     max-width: none;
     width: 100vw;
-    height: 100vh;
-    max-height: 100vh;
+    height: var(--app-vh, 100vh);
+    max-height: var(--app-vh, 100vh);
     overflow-y: auto;
     border-radius: 0;
     border: none;
@@ -605,11 +607,21 @@
   const clockGrid = document.getElementById('clockGrid');
   const digitalTimeEl = document.getElementById('digitalTime');
 
+  // Ältere Android-Browser (z.B. Moto G4) rechnen bei 100vh die Fläche
+  // hinter der Adressleiste mit ein, wodurch der untere Teil abgeschnitten
+  // wirkt. window.innerHeight liefert dagegen zuverlässig die tatsächlich
+  // sichtbare Höhe, die wir hier als CSS-Variable bereitstellen.
+  function updateAppViewportHeight() {
+    document.documentElement.style.setProperty('--app-vh', window.innerHeight + 'px');
+  }
+
   // Skaliert die Wortuhr im Vollbildmodus so, dass sie die verfügbare
   // Breite UND Höhe des Displays maximal ausfüllt (die knappere Dimension
   // bestimmt den Faktor), statt an feste Größen gebunden zu sein.
   function fitWordClock() {
     if (!document.body.classList.contains('fullscreen-mode')) return;
+
+    updateAppViewportHeight();
 
     const digitalVisible = !digitalTimeEl.classList.contains('hidden');
     const baseline = 200; // px Referenzgröße zum Ausmessen der natürlichen Proportionen
@@ -658,6 +670,9 @@
     localStorage.setItem('wortuhr_mode', 'fullscreen');
     resetIdleTimer();
     fitWordClock();
+    // Adressleiste mancher Android-Browser blendet sich erst zeitversetzt
+    // aus, daher nach kurzer Verzögerung nochmal nachmessen.
+    setTimeout(fitWordClock, 350);
   }
 
   function exitDisplayMode() {
