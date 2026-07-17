@@ -133,26 +133,29 @@
   body.fullscreen-mode .clock-card {
     max-width: none;
     width: 100vw;
-    min-height: 100vh;
+    height: 100vh;
+    max-height: 100vh;
+    overflow-y: auto;
     border-radius: 0;
     border: none;
     box-shadow: none;
     display: flex;
     flex-direction: column;
     justify-content: center;
+    padding: clamp(0.8rem, 3vmin, 2rem);
   }
   body.fullscreen-mode .word {
-    font-size: clamp(1.6rem, 6vw, 3.4rem);
+    font-size: clamp(1rem, 6vmin, 3.4rem);
   }
   body.fullscreen-mode .digital-time {
-    font-size: 1.4rem;
-    margin-top: 2rem;
+    font-size: clamp(0.8rem, 3.2vmin, 1.4rem);
+    margin-top: clamp(0.8rem, 3vmin, 2rem);
   }
 
   header { text-align: center; margin-bottom: 1.4rem; }
   header h1 {
     margin: 0 0 0.25rem;
-    font-size: clamp(1.5rem, 4vw, 2.1rem);
+    font-size: clamp(1.5rem, 4vmin, 2.1rem);
   }
   header p { margin: 0; color: var(--sub); font-size: 1rem; }
 
@@ -161,7 +164,7 @@
     background: var(--card-bg);
     border: 1px solid var(--card-border);
     border-radius: 18px;
-    padding: clamp(1.2rem, 4vw, 2.4rem);
+    padding: clamp(1.2rem, 4vmin, 2.4rem);
     max-width: 720px;
     width: 100%;
     box-shadow: 0 10px 30px rgba(0,0,0,0.08);
@@ -170,8 +173,8 @@
 
   .minute-dots .dot {
     position: absolute;
-    width: clamp(8px, 2vw, 13px);
-    height: clamp(8px, 2vw, 13px);
+    width: clamp(8px, 2vmin, 13px);
+    height: clamp(8px, 2vmin, 13px);
     border-radius: 50%;
     background: var(--dim);
     transition: background 0.25s ease, box-shadow 0.25s ease;
@@ -199,11 +202,11 @@
     pointer-events: auto;
   }
 
-  .grid { display: flex; flex-direction: column; gap: clamp(0.4rem, 1.5vw, 0.9rem); }
-  .row { display: flex; flex-wrap: wrap; justify-content: center; gap: clamp(0.4rem, 1.8vw, 0.9rem); }
+  .grid { display: flex; flex-direction: column; gap: clamp(0.3rem, 1.5vmin, 0.9rem); }
+  .row { display: flex; flex-wrap: wrap; justify-content: center; gap: clamp(0.3rem, 1.8vmin, 0.9rem); }
 
   .word {
-    font-size: clamp(1.1rem, 4vw, 1.9rem);
+    font-size: clamp(0.85rem, 4vmin, 1.9rem);
     font-weight: var(--word-weight);
     letter-spacing: 0.5px;
     color: var(--dim);
