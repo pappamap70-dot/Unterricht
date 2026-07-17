@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wortuhr – Die Uhrzeit in Worten</title>
+<style>
+  :root {
+    --bg: #eef1f6;
+    --bg2: #dde3ee;
+    --card-bg: #ffffff;
+    --card-border: #d8dee8;
+    --text: #1c2430;
+    --sub: #5b6472;
+    --dim: #c7cdd6;
+    --active: #c7502f;
+    --active-shadow: none;
+    --accent: #c7502f;
+    --btn-bg: #ffffff;
+    --btn-border: #d8dee8;
+    --btn-text: #1c2430;
+    --btn-active-bg: #c7502f;
+    --btn-active-text: #ffffff;
+    --font-main: 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
+    --word-weight: 700;
+  }
+
+  [data-theme="dunkel"] {
+    --bg: #05070c;
+    --bg2: #0a0d14;
+    --card-bg: #0d1117;
+    --card-border: #1c2431;
+    --text: #dfe6f0;
+    --sub: #8792a3;
+    --dim: #262d38;
+    --active: #57e0e0;
+    --active-shadow: 0 0 12px rgba(87,224,224,0.65), 0 0 2px rgba(87,224,224,0.9);
+    --accent: #57e0e0;
+    --btn-bg: #101620;
+    --btn-border: #232b38;
+    --btn-text: #cdd6e3;
+    --btn-active-bg: #57e0e0;
+    --btn-active-text: #05070c;
+    --font-main: 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
+    --word-weight: 700;
+  }
+
+  [data-theme="holz"] {
+    --bg: #7c5a3a;
+    --bg2: #6a4a2e;
+    --card-bg: #d8b382;
+    --card-border: #b98f57;
+    --text: #3b2412;
+    --sub: #5c4326;
+    --dim: #b99968;
+    --active: #3b2412;
+    --active-shadow: none;
+    --accent: #7c3f1d;
+    --btn-bg: #e7c89a;
+    --btn-border: #b98f57;
+    --btn-text: #3b2412;
+    --btn-active-bg: #7c3f1d;
+    --btn-active-text: #f3e2c6;
+    --font-main: Georgia, 'Times New Roman', serif;
+    --word-weight: 700;
+  }
+
+  [data-theme="kontrast"] {
+    --bg: #000000;
+    --bg2: #000000;
+    --card-bg: #000000;
+    --card-border: #ffee00;
+    --text: #ffffff;
+    --sub: #ffee00;
+    --dim: #595959;
+    --active: #ffee00;
+    --active-shadow: none;
+    --accent: #ffee00;
+    --btn-bg: #000000;
+    --btn-border: #ffee00;
+    --btn-text: #ffee00;
+    --btn-active-bg: #ffee00;
+    --btn-active-text: #000000;
+    --font-main: 'Segoe UI', system-ui, Arial, sans-serif;
+    --word-weight: 800;
+  }
+
+  [data-theme="pastell"] {
+    --bg: #fef6e4;
+    --bg2: #f3d9d0;
+    --card-bg: #fffaf3;
+    --card-border: #f0d9cf;
+    --text: #5b3a3a;
+    --sub: #9a7d78;
+    --dim: #e6d4cd;
+    --active: #b5495b;
+    --active-shadow: none;
+    --accent: #b5495b;
+    --btn-bg: #ffffff;
+    --btn-border: #f0d9cf;
+    --btn-text: #5b3a3a;
+    --btn-active-bg: #b5495b;
+    --btn-active-text: #ffffff;
+    --font-main: 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
+    --word-weight: 700;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: var(--font-main);
+    background: linear-gradient(160deg, var(--bg), var(--bg2));
+    color: var(--text);
+    transition: background 0.3s ease, color 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.6rem 1rem 2.5rem;
+  }
+
+  header { text-align: center; margin-bottom: 1.4rem; }
+  header h1 {
+    margin: 0 0 0.25rem;
+    font-size: clamp(1.5rem, 4vw, 2.1rem);
+  }
+  header p { margin: 0; color: var(--sub); font-size: 1rem; }
+
+  .clock-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 18px;
+    padding: clamp(1.2rem, 4vw, 2.4rem);
+    max-width: 720px;
+    width: 100%;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    transition: background 0.3s ease, border-color 0.3s ease;
+  }
+
+  .grid { display: flex; flex-direction: column; gap: clamp(0.4rem, 1.5vw, 0.9rem); }
+  .row { display: flex; flex-wrap: wrap; justify-content: center; gap: clamp(0.4rem, 1.8vw, 0.9rem); }
+
+  .word {
+    font-size: clamp(1.1rem, 4vw, 1.9rem);
+    font-weight: var(--word-weight);
+    letter-spacing: 0.5px;
+    color: var(--dim);
+    transition: color 0.25s ease, text-shadow 0.25s ease;
+    white-space: nowrap;
+  }
+  .word.active {
+    color: var(--active);
+    text-shadow: var(--active-shadow);
+  }
+
+  .digital-time {
+    text-align: center;
+    margin-top: 1.4rem;
+    font-size: 1.1rem;
+    letter-spacing: 1px;
+    color: var(--sub);
+    font-variant-numeric: tabular-nums;
+  }
+  .digital-time.hidden { display: none; }
+
+  .controls {
+    max-width: 720px;
+    width: 100%;
+    margin-top: 1.4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    align-items: center;
+  }
+
+  .theme-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+  }
+  .theme-picker button {
+    font-family: inherit;
+    font-size: 0.95rem;
+    padding: 0.5rem 0.9rem;
+    border-radius: 999px;
+    border: 2px solid var(--btn-border);
+    background: var(--btn-bg);
+    color: var(--btn-text);
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+  }
+  .theme-picker button:hover { border-color: var(--accent); }
+  .theme-picker button.active {
+    background: var(--btn-active-bg);
+    color: var(--btn-active-text);
+    border-color: var(--btn-active-bg);
+  }
+
+  .toggle-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.2rem;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.95rem;
+    color: var(--text);
+  }
+  .toggle-row label { display: flex; align-items: center; gap: 0.4rem; cursor: pointer; }
+  .toggle-row input[type="time"] {
+    font-family: inherit;
+    font-size: 0.95rem;
+    padding: 0.25rem 0.4rem;
+    border-radius: 6px;
+    border: 1px solid var(--btn-border);
+    background: var(--btn-bg);
+    color: var(--btn-text);
+  }
+
+  details.info {
+    max-width: 720px;
+    width: 100%;
+    margin-top: 1.2rem;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 0.8rem 1.1rem;
+    color: var(--text);
+    font-size: 0.92rem;
+    line-height: 1.5;
+  }
+  details.info summary { cursor: pointer; color: var(--accent); font-weight: 600; }
+
+  .sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  footer { margin-top: 1.6rem; color: var(--sub); font-size: 0.82rem; text-align: center; }
+  footer a { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🕐 Wortuhr</h1>
+  <p>Die Uhrzeit in Worten – für den Unterricht</p>
+</header>
+
+<div class="clock-card">
+  <div class="grid" id="clockGrid">
+    <div class="row">
+      <span class="word" id="es">ES</span>
+      <span class="word" id="ist">IST</span>
+    </div>
+    <div class="row">
+      <span class="word" id="minFuenf">FÜNF</span>
+      <span class="word" id="minZehn">ZEHN</span>
+      <span class="word" id="zwanzig">ZWANZIG</span>
+      <span class="word" id="viertel">VIERTEL</span>
+    </div>
+    <div class="row">
+      <span class="word" id="nach">NACH</span>
+      <span class="word" id="vor">VOR</span>
+      <span class="word" id="halb">HALB</span>
+    </div>
+    <div class="row">
+      <span class="word" id="h12">ZWÖLF</span>
+      <span class="word" id="h1">EINS</span>
+      <span class="word" id="h2">ZWEI</span>
+      <span class="word" id="h3">DREI</span>
+      <span class="word" id="h4">VIER</span>
+      <span class="word" id="h5">FÜNF</span>
+    </div>
+    <div class="row">
+      <span class="word" id="h6">SECHS</span>
+      <span class="word" id="h7">SIEBEN</span>
+      <span class="word" id="h8">ACHT</span>
+      <span class="word" id="h9">NEUN</span>
+      <span class="word" id="h10">ZEHN</span>
+      <span class="word" id="h11">ELF</span>
+    </div>
+    <div class="row">
+      <span class="word" id="uhr">UHR</span>
+    </div>
+  </div>
+  <div class="digital-time" id="digitalTime">--:--:--</div>
+  <div class="sr-only" id="srAnnounce" aria-live="polite"></div>
+</div>
+
+<div class="controls">
+  <div class="theme-picker" id="themePicker" role="group" aria-label="Design wählen">
+    <button data-theme="hell">☀️ Hell</button>
+    <button data-theme="dunkel">🌙 Dunkel</button>
+    <button data-theme="holz">🪵 Retro</button>
+    <button data-theme="kontrast">⬛ Kontrast</button>
+    <button data-theme="pastell">🎨 Pastell</button>
+  </div>
+
+  <div class="toggle-row">
+    <label><input type="checkbox" id="showDigital" checked> Digitalzeit anzeigen</label>
+    <label><input type="checkbox" id="manualMode"> Uhrzeit manuell einstellen</label>
+    <input type="time" id="manualTime" value="12:00" disabled>
+  </div>
+
+  <details class="info">
+    <summary>ℹ️ Wie liest man die Wortuhr?</summary>
+    <p>Die Wortuhr zeigt die Uhrzeit auf 5 Minuten genau in Worten an. Beispiele:</p>
+    <ul>
+      <li><strong>10:00</strong> → „Es ist zehn Uhr"</li>
+      <li><strong>10:15</strong> → „Es ist viertel nach zehn"</li>
+      <li><strong>10:30</strong> → „Es ist halb elf" (schon halb auf dem Weg zur nächsten Stunde!)</li>
+      <li><strong>10:45</strong> → „Es ist viertel vor elf"</li>
+      <li><strong>10:25</strong> → „Es ist fünf vor halb elf"</li>
+    </ul>
+  </details>
+</div>
+
+<footer>
+  Teil der <a href="index.html">Unterrichtsmaterialien</a>
+</footer>
+
+<script>
+(function () {
+  const hourIds = { 1:'h1', 2:'h2', 3:'h3', 4:'h4', 5:'h5', 6:'h6', 7:'h7', 8:'h8', 9:'h9', 10:'h10', 11:'h11', 12:'h12' };
+  const allIds = ['es','ist','minFuenf','minZehn','zwanzig','viertel','nach','vor','halb','uhr',
+    'h1','h2','h3','h4','h5','h6','h7','h8','h9','h10','h11','h12'];
+
+  const els = {};
+  allIds.forEach(id => els[id] = document.getElementById(id));
+
+  let lastSentence = '';
+
+  function getEffectiveDate() {
+    const manual = document.getElementById('manualMode').checked;
+    if (manual) {
+      const val = document.getElementById('manualTime').value || '12:00';
+      const [h, m] = val.split(':').map(Number);
+      const d = new Date();
+      d.setHours(h, m, 0, 0);
+      return d;
+    }
+    return new Date();
+  }
+
+  function updateClock() {
+    const now = getEffectiveDate();
+    const manual = document.getElementById('manualMode').checked;
+
+    let rawHour = now.getHours();
+    const rawMinute = now.getMinutes();
+    let roundedMinute = Math.round(rawMinute / 5) * 5;
+    if (roundedMinute === 60) {
+      roundedMinute = 0;
+      rawHour = (rawHour + 1) % 24;
+    }
+
+    let h12 = rawHour % 12;
+    if (h12 === 0) h12 = 12;
+
+    const nextHour = (h12 === 12) ? 1 : h12 + 1;
+    const referencedHour = (roundedMinute <= 20) ? h12 : nextHour;
+    const exact = roundedMinute === 0;
+
+    // EIN vs EINS
+    els.h1.textContent = (exact && referencedHour === 1) ? 'EIN' : 'EINS';
+
+    let active = new Set(['es', 'ist']);
+    let sentence = 'Es ist ';
+
+    switch (roundedMinute) {
+      case 0:
+        active.add('uhr');
+        sentence += `${hourLabel(referencedHour, true)} Uhr`;
+        break;
+      case 5:
+        active.add('minFuenf'); active.add('nach');
+        sentence += `fünf nach ${hourLabel(referencedHour)}`;
+        break;
+      case 10:
+        active.add('minZehn'); active.add('nach');
+        sentence += `zehn nach ${hourLabel(referencedHour)}`;
+        break;
+      case 15:
+        active.add('viertel'); active.add('nach');
+        sentence += `viertel nach ${hourLabel(referencedHour)}`;
+        break;
+      case 20:
+        active.add('zwanzig'); active.add('nach');
+        sentence += `zwanzig nach ${hourLabel(referencedHour)}`;
+        break;
+      case 25:
+        active.add('minFuenf'); active.add('vor'); active.add('halb');
+        sentence += `fünf vor halb ${hourLabel(referencedHour)}`;
+        break;
+      case 30:
+        active.add('halb');
+        sentence += `halb ${hourLabel(referencedHour)}`;
+        break;
+      case 35:
+        active.add('minFuenf'); active.add('nach'); active.add('halb');
+        sentence += `fünf nach halb ${hourLabel(referencedHour)}`;
+        break;
+      case 40:
+        active.add('zwanzig'); active.add('vor');
+        sentence += `zwanzig vor ${hourLabel(referencedHour)}`;
+        break;
+      case 45:
+        active.add('viertel'); active.add('vor');
+        sentence += `viertel vor ${hourLabel(referencedHour)}`;
+        break;
+      case 50:
+        active.add('minZehn'); active.add('vor');
+        sentence += `zehn vor ${hourLabel(referencedHour)}`;
+        break;
+      case 55:
+        active.add('minFuenf'); active.add('vor');
+        sentence += `fünf vor ${hourLabel(referencedHour)}`;
+        break;
+    }
+
+    active.add(hourIds[referencedHour]);
+
+    allIds.forEach(id => els[id].classList.toggle('active', active.has(id)));
+
+    if (sentence !== lastSentence) {
+      document.getElementById('srAnnounce').textContent = sentence;
+      lastSentence = sentence;
+    }
+
+    const digital = document.getElementById('digitalTime');
+    const hh = String(rawHour === 24 ? 0 : now.getHours()).padStart(2, '0');
+    const mm = String(rawMinute).padStart(2, '0');
+    if (manual) {
+      digital.textContent = `${hh}:${mm}`;
+    } else {
+      const ss = String(now.getSeconds()).padStart(2, '0');
+      digital.textContent = `${hh}:${mm}:${ss}`;
+    }
+  }
+
+  function hourLabel(h) {
+    const labels = { 1: (els.h1.textContent === 'EIN' ? 'ein' : 'eins'), 2:'zwei', 3:'drei', 4:'vier', 5:'fünf',
+      6:'sechs', 7:'sieben', 8:'acht', 9:'neun', 10:'zehn', 11:'elf', 12:'zwölf' };
+    return labels[h];
+  }
+
+  // Theme handling
+  const themePicker = document.getElementById('themePicker');
+  const savedTheme = localStorage.getItem('wortuhr_theme') || 'hell';
+  setTheme(savedTheme);
+
+  themePicker.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-theme]');
+    if (!btn) return;
+    setTheme(btn.dataset.theme);
+  });
+
+  function setTheme(theme) {
+    if (theme === 'hell') {
+      document.documentElement.removeAttribute('data-theme');
+    } else {
+      document.documentElement.setAttribute('data-theme', theme);
+    }
+    localStorage.setItem('wortuhr_theme', theme);
+    themePicker.querySelectorAll('button').forEach(b => {
+      b.classList.toggle('active', b.dataset.theme === theme);
+    });
+  }
+
+  // Controls
+  document.getElementById('showDigital').addEventListener('change', (e) => {
+    document.getElementById('digitalTime').classList.toggle('hidden', !e.target.checked);
+  });
+
+  const manualCheckbox = document.getElementById('manualMode');
+  const manualInput = document.getElementById('manualTime');
+  manualCheckbox.addEventListener('change', () => {
+    manualInput.disabled = !manualCheckbox.checked;
+    updateClock();
+  });
+  manualInput.addEventListener('input', updateClock);
+
+  updateClock();
+  setInterval(updateClock, 1000);
+})();
+</script>
+
+</body>
+</html>
