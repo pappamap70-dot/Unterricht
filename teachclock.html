@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Uhr lernen – Analoguhr & Wortuhr üben</title>
+<style>
+  :root {
+    --bg: #eef1f6;
+    --bg2: #dde3ee;
+    --card-bg: #ffffff;
+    --card-border: #d8dee8;
+    --text: #1c2430;
+    --sub: #5b6472;
+    --dim: #c7cdd6;
+    --accent: #3b6fd6;
+    --selected: #3b6fd6;
+    --correct: #2e9e5b;
+    --missed: #d68c1f;
+    --wrong: #d64545;
+    --btn-bg: #ffffff;
+    --btn-border: #d8dee8;
+    --btn-text: #1c2430;
+    --btn-active-bg: #3b6fd6;
+    --btn-active-text: #ffffff;
+    --font-main: 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: var(--font-main);
+    background: linear-gradient(160deg, var(--bg), var(--bg2));
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.6rem 1rem 2.5rem;
+  }
+
+  header { text-align: center; margin-bottom: 1.2rem; }
+  header h1 { margin: 0 0 0.25rem; font-size: clamp(1.4rem, 4vw, 2rem); }
+  header p { margin: 0; color: var(--sub); font-size: 1rem; }
+
+  .picker-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-bottom: 0.7rem;
+  }
+  .picker-row button {
+    font-family: inherit;
+    font-size: 0.95rem;
+    padding: 0.5rem 0.9rem;
+    border-radius: 999px;
+    border: 2px solid var(--btn-border);
+    background: var(--btn-bg);
+    color: var(--btn-text);
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+  }
+  .picker-row button:hover { border-color: var(--accent); }
+  .picker-row button.active {
+    background: var(--btn-active-bg);
+    color: var(--btn-active-text);
+    border-color: var(--btn-active-bg);
+  }
+
+  .score-row {
+    text-align: center;
+    color: var(--sub);
+    font-size: 0.9rem;
+    margin-bottom: 1.2rem;
+  }
+
+  details.info-box {
+    max-width: 640px;
+    width: 100%;
+    margin: 0 0 1.4rem;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 0.7rem 1.1rem;
+    color: var(--text);
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  details.info-box summary { cursor: pointer; color: var(--accent); font-weight: 600; }
+  details.info-box ul { margin: 0.5rem 0 0.2rem; padding-left: 1.2rem; }
+  details.info-box li { margin-bottom: 0.4rem; }
+
+  .trainer-card {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    justify-content: center;
+    align-items: flex-start;
+    max-width: 900px;
+    width: 100%;
+  }
+
+  .analog-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.7rem;
+    flex: 0 0 auto;
+  }
+
+  .analog-clock { width: min(60vw, 240px); height: min(60vw, 240px); }
+
+  .clock-face { fill: var(--card-bg); stroke: var(--card-border); stroke-width: 2; }
+  .tick { stroke: var(--sub); stroke-width: 1; }
+  .tick-hour { stroke-width: 2.5; stroke: var(--text); }
+  .clock-number {
+    text-anchor: middle;
+    dominant-baseline: central;
+    font-size: 14px;
+    font-weight: 600;
+    fill: var(--text);
+    user-select: none;
+  }
+  .hand { stroke: var(--text); stroke-linecap: round; }
+  .hour-hand { stroke-width: 6; }
+  .minute-hand { stroke-width: 4; }
+  .hand.ghost { stroke: var(--correct); stroke-dasharray: 5 4; opacity: 0.8; }
+  .ghost-hands { display: none; }
+  .ghost-hands.show { display: block; }
+  .center-dot { fill: var(--text); }
+  .grip { fill: var(--accent); opacity: 0; pointer-events: none; touch-action: none; }
+  .analog-clock.interactive .grip { opacity: 0.2; cursor: grab; pointer-events: auto; }
+  .analog-clock.interactive .grip:active { opacity: 0.4; cursor: grabbing; }
+
+  .analog-controls {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .stepper { display: flex; align-items: center; gap: 0.6rem; }
+  .stepper-label { min-width: 4.2rem; font-size: 0.85rem; color: var(--sub); text-align: right; }
+  .stepper button {
+    width: 2.1rem;
+    height: 2.1rem;
+    border-radius: 50%;
+    border: 2px solid var(--btn-border);
+    background: var(--btn-bg);
+    color: var(--btn-text);
+    font-size: 1.15rem;
+    cursor: pointer;
+  }
+  .stepper button:hover { border-color: var(--accent); }
+  .drag-hint { font-size: 0.78rem; color: var(--sub); margin: 0.2rem 0 0; text-align: center; max-width: 14rem; }
+
+  .wortuhr-wrap {
+    flex: 1 1 320px;
+    max-width: 480px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 1.1rem 1.2rem;
+  }
+
+  .grid { display: flex; flex-direction: column; gap: 0.45rem; }
+  .row { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.45rem; }
+
+  .word {
+    font-size: clamp(0.9rem, 3vw, 1.1rem);
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    color: var(--dim);
+    padding: 0.15rem 0.35rem;
+    border-radius: 6px;
+    white-space: nowrap;
+    transition: color 0.15s ease, background 0.15s ease;
+  }
+  .word.given { opacity: 0.5; }
+  .word.clickable { cursor: pointer; }
+  .word.clickable:hover { background: rgba(59, 111, 214, 0.1); }
+  .word.active { color: var(--accent); }
+  .word.selected { color: var(--selected); background: rgba(59, 111, 214, 0.14); }
+  .word.correct { color: var(--correct); background: rgba(46, 158, 91, 0.16); }
+  .word.missed { color: var(--missed); outline: 2px dashed var(--missed); outline-offset: 2px; }
+  .word.wrong { color: var(--wrong); background: rgba(214, 69, 69, 0.16); text-decoration: line-through; }
+
+  .mc-wrap {
+    display: none;
+    max-width: 720px;
+    width: 100%;
+    margin: 1.4rem auto 0;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.7rem;
+  }
+  .mc-option {
+    font-family: inherit;
+    font-size: 0.98rem;
+    padding: 0.85rem 1rem;
+    border-radius: 10px;
+    border: 2px solid var(--btn-border);
+    background: var(--btn-bg);
+    color: var(--btn-text);
+    cursor: pointer;
+    text-align: left;
+  }
+  .mc-option:hover:not(:disabled) { border-color: var(--accent); }
+  .mc-option.correct { border-color: var(--correct); background: rgba(46, 158, 91, 0.12); }
+  .mc-option.wrong { border-color: var(--wrong); background: rgba(214, 69, 69, 0.12); }
+  .mc-option:disabled { cursor: default; }
+
+  .feedback {
+    min-height: 1.6rem;
+    text-align: center;
+    font-weight: 600;
+    margin-top: 1.2rem;
+    max-width: 600px;
+  }
+  .feedback-correct { color: var(--correct); }
+  .feedback-wrong { color: var(--wrong); }
+
+  .actions { display: flex; gap: 0.8rem; justify-content: center; margin-top: 1rem; }
+  .primary-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 0.7rem 1.4rem;
+    border-radius: 999px;
+    font-size: 1rem;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .secondary-btn {
+    background: var(--btn-bg);
+    border: 2px solid var(--btn-border);
+    color: var(--btn-text);
+    padding: 0.65rem 1.3rem;
+    border-radius: 999px;
+    font-size: 1rem;
+    font-family: inherit;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🕰️ Uhr lernen</h1>
+  <p>Übe das Ablesen der Uhrzeit – Analoguhr &amp; Wortuhr</p>
+</header>
+
+<div class="picker-row" id="modePicker" role="group" aria-label="Übungsmodus">
+  <button data-mode="A" class="active">🕰️→🔤 Analog ablesen</button>
+  <button data-mode="B">🔤→🕰️ Uhr einstellen</button>
+  <button data-mode="C">🎯 Multiple Choice</button>
+</div>
+<div class="picker-row" id="difficultyPicker" role="group" aria-label="Schwierigkeit">
+  <button data-diff="leicht" class="active">Leicht</button>
+  <button data-diff="mittel">Mittel</button>
+  <button data-diff="schwer">Schwer</button>
+</div>
+
+<div class="score-row" id="scoreRow">Richtig: 0/0 · Serie: 0 · Beste Serie: 0</div>
+
+<details class="info-box">
+  <summary>ℹ️ Kurz erklärt</summary>
+  <ul>
+    <li><strong>„ES IST" musst du nicht anklicken</strong> – die beiden Wörter gehören immer zum Satz dazu und sind schon vorausgewählt (etwas blasser dargestellt).</li>
+    <li><strong>Für dieselbe Uhrzeit gibt es oft zwei richtige Sprechweisen:</strong> die genaue „digitale" Variante (z. B. „Es ist neun Uhr 30") und die Wortuhr-Variante (z. B. „Es ist halb zehn"). Beide meinen dasselbe – diese Übung trainiert die Wortuhr-Variante, weil sie beim Ablesen einer echten Analoguhr meist schwerer fällt.</li>
+  </ul>
+</details>
+
+<div class="trainer-card">
+  <div class="analog-wrap">
+    <svg id="analogClock" class="analog-clock" viewBox="0 0 200 200" aria-label="Analoguhr">
+      <circle cx="100" cy="100" r="96" class="clock-face"></circle>
+      <g id="ticks"></g>
+      <g id="numbers"></g>
+      <g id="ghostHands" class="ghost-hands">
+        <g id="ghostHourGroup">
+          <line class="hand hour-hand ghost" x1="100" y1="100" x2="100" y2="62"></line>
+        </g>
+        <g id="ghostMinuteGroup">
+          <line class="hand minute-hand ghost" x1="100" y1="100" x2="100" y2="32"></line>
+        </g>
+      </g>
+      <g id="hourGroup">
+        <line class="hand hour-hand" x1="100" y1="100" x2="100" y2="62"></line>
+        <circle id="hourGrip" class="grip" cx="100" cy="62" r="12"></circle>
+      </g>
+      <g id="minuteGroup">
+        <line class="hand minute-hand" x1="100" y1="100" x2="100" y2="32"></line>
+        <circle id="minuteGrip" class="grip" cx="100" cy="32" r="12"></circle>
+      </g>
+      <circle cx="100" cy="100" r="4" class="center-dot"></circle>
+    </svg>
+    <div class="analog-controls" id="analogControls">
+      <div class="stepper">
+        <span class="stepper-label">Stunde</span>
+        <button type="button" data-adjust="hour" data-dir="-1" aria-label="Stunde zurück">−</button>
+        <button type="button" data-adjust="hour" data-dir="1" aria-label="Stunde vor">+</button>
+      </div>
+      <div class="stepper">
+        <span class="stepper-label">Minute</span>
+        <button type="button" data-adjust="minute" data-dir="-1" aria-label="5 Minuten zurück">−</button>
+        <button type="button" data-adjust="minute" data-dir="1" aria-label="5 Minuten vor">+</button>
+      </div>
+      <p class="drag-hint">Tipp: Du kannst die Zeiger auch direkt ziehen.</p>
+    </div>
+  </div>
+
+  <div class="wortuhr-wrap">
+    <div class="grid">
+      <div class="row">
+        <span class="word given" id="es">ES</span>
+        <span class="word given" id="ist">IST</span>
+      </div>
+      <div class="row">
+        <span class="word" id="minFuenf">FÜNF</span>
+        <span class="word" id="minZehn">ZEHN</span>
+        <span class="word" id="zwanzig">ZWANZIG</span>
+        <span class="word" id="viertel">VIERTEL</span>
+      </div>
+      <div class="row">
+        <span class="word" id="nach">NACH</span>
+        <span class="word" id="vor">VOR</span>
+        <span class="word" id="halb">HALB</span>
+      </div>
+      <div class="row">
+        <span class="word" id="h12">ZWÖLF</span>
+        <span class="word" id="h1">EINS</span>
+        <span class="word" id="h2">ZWEI</span>
+        <span class="word" id="h3">DREI</span>
+        <span class="word" id="h4">VIER</span>
+        <span class="word" id="h5">FÜNF</span>
+      </div>
+      <div class="row">
+        <span class="word" id="h6">SECHS</span>
+        <span class="word" id="h7">SIEBEN</span>
+        <span class="word" id="h8">ACHT</span>
+        <span class="word" id="h9">NEUN</span>
+        <span class="word" id="h10">ZEHN</span>
+        <span class="word" id="h11">ELF</span>
+      </div>
+      <div class="row">
+        <span class="word" id="uhr">UHR</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mc-wrap" id="mcWrap">
+  <button class="mc-option" type="button" data-idx="0"></button>
+  <button class="mc-option" type="button" data-idx="1"></button>
+  <button class="mc-option" type="button" data-idx="2"></button>
+  <button class="mc-option" type="button" data-idx="3"></button>
+</div>
+
+<div class="feedback" id="feedback"></div>
+<div class="actions">
+  <button id="checkBtn" class="primary-btn" type="button">Prüfen</button>
+  <button id="nextBtn" class="secondary-btn" type="button">Neue Aufgabe</button>
+</div>
+
+<script>
+(function () {
+  const hourIds = { 1:'h1',2:'h2',3:'h3',4:'h4',5:'h5',6:'h6',7:'h7',8:'h8',9:'h9',10:'h10',11:'h11',12:'h12' };
+  const wordIds = ['minFuenf','minZehn','zwanzig','viertel','nach','vor','halb','uhr',
+    'h1','h2','h3','h4','h5','h6','h7','h8','h9','h10','h11','h12'];
+
+  function hourLabel(h, einActive) {
+    const labels = { 1: einActive ? 'ein' : 'eins', 2:'zwei', 3:'drei', 4:'vier', 5:'fünf',
+      6:'sechs', 7:'sieben', 8:'acht', 9:'neun', 10:'zehn', 11:'elf', 12:'zwölf' };
+    return labels[h];
+  }
+
+  // Baut aus einer Uhrzeit (Minute muss Vielfaches von 5 sein) die Menge der
+  // aktiven Wortuhr-Begriffe plus den passenden deutschen Satz.
+  function computeWordClock(hour, minute) {
+    let h12 = hour % 12; if (h12 === 0) h12 = 12;
+    const nextHour = (h12 === 12) ? 1 : h12 + 1;
+    const referencedHour = (minute <= 20) ? h12 : nextHour;
+    const exact = minute === 0;
+    const einActive = exact && referencedHour === 1;
+    const active = new Set(['es', 'ist', hourIds[referencedHour]]);
+    let sentence = 'Es ist ';
+
+    switch (minute) {
+      case 0: active.add('uhr'); sentence += `${hourLabel(referencedHour, einActive)} Uhr`; break;
+      case 5: active.add('minFuenf'); active.add('nach'); sentence += `fünf nach ${hourLabel(referencedHour)}`; break;
+      case 10: active.add('minZehn'); active.add('nach'); sentence += `zehn nach ${hourLabel(referencedHour)}`; break;
+      case 15: active.add('viertel'); active.add('nach'); sentence += `viertel nach ${hourLabel(referencedHour)}`; break;
+      case 20: active.add('zwanzig'); active.add('nach'); sentence += `zwanzig nach ${hourLabel(referencedHour)}`; break;
+      case 25: active.add('minFuenf'); active.add('vor'); active.add('halb'); sentence += `fünf vor halb ${hourLabel(referencedHour)}`; break;
+      case 30: active.add('halb'); sentence += `halb ${hourLabel(referencedHour)}`; break;
+      case 35: active.add('minFuenf'); active.add('nach'); active.add('halb'); sentence += `fünf nach halb ${hourLabel(referencedHour)}`; break;
+      case 40: active.add('zwanzig'); active.add('vor'); sentence += `zwanzig vor ${hourLabel(referencedHour)}`; break;
+      case 45: active.add('viertel'); active.add('vor'); sentence += `viertel vor ${hourLabel(referencedHour)}`; break;
+      case 50: active.add('minZehn'); active.add('vor'); sentence += `zehn vor ${hourLabel(referencedHour)}`; break;
+      case 55: active.add('minFuenf'); active.add('vor'); sentence += `fünf vor ${hourLabel(referencedHour)}`; break;
+      default: throw new Error('Minute muss ein Vielfaches von 5 sein: ' + minute);
+    }
+    return { active, sentence, einActive };
+  }
+
+  function setsEqual(a, b) {
+    if (a.size !== b.size) return false;
+    for (const v of a) if (!b.has(v)) return false;
+    return true;
+  }
+
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  const MINUTE_POOLS = {
+    leicht: [0, 30],
+    mittel: [0, 15, 30, 45],
+    schwer: [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]
+  };
+
+  function randomTime(difficulty) {
+    const pool = MINUTE_POOLS[difficulty];
+    const hour = 1 + Math.floor(Math.random() * 12);
+    const minute = pool[Math.floor(Math.random() * pool.length)];
+    return { hour, minute };
+  }
+
+  function buildDistractors(hour, minute, correctSentence, count) {
+    const deltas = [-30,-25,-20,-15,-10,-5,5,10,15,20,25,30,-45,45,-60,60,-90,90,-120,120];
+    const seen = new Set([correctSentence]);
+    const out = [];
+    for (const d of deltas) {
+      if (out.length >= count) break;
+      let total = hour * 60 + minute + d;
+      total = ((total % 720) + 720) % 720;
+      let h = Math.floor(total / 60); if (h === 0) h = 12;
+      const m = Math.round((total % 60) / 5) * 5 % 60;
+      const { sentence } = computeWordClock(h, m);
+      if (!seen.has(sentence)) { seen.add(sentence); out.push(sentence); }
+    }
+    let guard = 0;
+    while (out.length < count && guard < 200) {
+      guard++;
+      const t = randomTime('schwer');
+      const { sentence } = computeWordClock(t.hour, t.minute);
+      if (!seen.has(sentence)) { seen.add(sentence); out.push(sentence); }
+    }
+    return out;
+  }
+
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  // ---- DOM ----
+  const modePicker = document.getElementById('modePicker');
+  const difficultyPicker = document.getElementById('difficultyPicker');
+  const scoreRow = document.getElementById('scoreRow');
+  const analogSvg = document.getElementById('analogClock');
+  const hourGroup = document.getElementById('hourGroup');
+  const minuteGroup = document.getElementById('minuteGroup');
+  const ghostHands = document.getElementById('ghostHands');
+  const ghostHourGroup = document.getElementById('ghostHourGroup');
+  const ghostMinuteGroup = document.getElementById('ghostMinuteGroup');
+  const hourGrip = document.getElementById('hourGrip');
+  const minuteGrip = document.getElementById('minuteGrip');
+  const analogControls = document.getElementById('analogControls');
+  const wortuhrWrap = document.querySelector('.wortuhr-wrap');
+  const mcWrap = document.getElementById('mcWrap');
+  const mcButtons = Array.from(mcWrap.querySelectorAll('.mc-option'));
+  const feedbackEl = document.getElementById('feedback');
+  const checkBtn = document.getElementById('checkBtn');
+  const nextBtn = document.getElementById('nextBtn');
+
+  const state = {
+    mode: 'A',
+    difficulty: 'leicht',
+    target: null,
+    selected: new Set(),
+    userClock: { hour: 12, minute: 0 },
+    score: { correct: 0, total: 0, streak: 0, best: 0 }
+  };
+  state.score.best = parseInt(localStorage.getItem('teachclock_best_streak') || '0', 10);
+
+  // ---- Zifferblatt aufbauen ----
+  function polar(cx, cy, r, angleDeg) {
+    const rad = angleDeg * Math.PI / 180;
+    return { x: cx + r * Math.sin(rad), y: cy - r * Math.cos(rad) };
+  }
+
+  function buildClockFace() {
+    const ticksG = document.getElementById('ticks');
+    const numbersG = document.getElementById('numbers');
+    for (let i = 0; i < 60; i++) {
+      const angle = i * 6;
+      const isHour = i % 5 === 0;
+      const outer = polar(100, 100, 94, angle);
+      const inner = polar(100, 100, isHour ? 83 : 89, angle);
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', outer.x); line.setAttribute('y1', outer.y);
+      line.setAttribute('x2', inner.x); line.setAttribute('y2', inner.y);
+      line.setAttribute('class', isHour ? 'tick tick-hour' : 'tick tick-minute');
+      ticksG.appendChild(line);
+    }
+    for (let h = 1; h <= 12; h++) {
+      const pos = polar(100, 100, 72, h * 30);
+      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      text.setAttribute('x', pos.x);
+      text.setAttribute('y', pos.y);
+      text.setAttribute('class', 'clock-number');
+      text.textContent = String(h);
+      numbersG.appendChild(text);
+    }
+  }
+  buildClockFace();
+
+  // Rotation über das native SVG-transform-Attribut (rotate um festen Punkt),
+  // das ist zuverlässiger als CSS transform-origin auf SVG-Elementen.
+  function renderAnalog(hour, minute) {
+    const minuteDeg = minute * 6;
+    const hourDeg = (hour % 12) * 30 + minute * 0.5;
+    hourGroup.setAttribute('transform', `rotate(${hourDeg} 100 100)`);
+    minuteGroup.setAttribute('transform', `rotate(${minuteDeg} 100 100)`);
+  }
+
+  function renderGhost(hour, minute) {
+    const minuteDeg = minute * 6;
+    const hourDeg = (hour % 12) * 30 + minute * 0.5;
+    ghostHourGroup.setAttribute('transform', `rotate(${hourDeg} 100 100)`);
+    ghostMinuteGroup.setAttribute('transform', `rotate(${minuteDeg} 100 100)`);
+    ghostHands.classList.add('show');
+  }
+  function hideGhost() { ghostHands.classList.remove('show'); }
+
+  // ---- Wortuhr-Gitter ----
+  function clearWordFeedback() {
+    wordIds.forEach(id => document.getElementById(id).classList.remove('selected', 'correct', 'missed', 'wrong'));
+  }
+  function clearStaticActive() {
+    wordIds.forEach(id => document.getElementById(id).classList.remove('active'));
+  }
+  function renderStaticActive(activeSet) {
+    clearWordFeedback();
+    wordIds.forEach(id => document.getElementById(id).classList.toggle('active', activeSet.has(id)));
+  }
+
+  function onWordClick(e) {
+    if (state.mode !== 'A') return;
+    const el = e.currentTarget;
+    const id = el.id;
+    wordIds.forEach(wid => document.getElementById(wid).classList.remove('correct', 'missed', 'wrong'));
+    if (state.selected.has(id)) {
+      state.selected.delete(id);
+      el.classList.remove('selected');
+    } else {
+      state.selected.add(id);
+      el.classList.add('selected');
+    }
+  }
+  wordIds.forEach(id => document.getElementById(id).addEventListener('click', onWordClick));
+
+  // ---- Multiple Choice ----
+  function renderMc() {
+    const correctSentence = state.target.sentence;
+    const distractors = buildDistractors(state.target.hour, state.target.minute, correctSentence, 3);
+    const options = shuffle([correctSentence, ...distractors]);
+    mcButtons.forEach((btn, i) => {
+      btn.textContent = options[i];
+      btn.dataset.correct = options[i] === correctSentence ? 'true' : 'false';
+      btn.disabled = false;
+      btn.classList.remove('correct', 'wrong');
+    });
+  }
+  mcButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (state.mode !== 'C' || btn.disabled) return;
+      const correct = btn.dataset.correct === 'true';
+      mcButtons.forEach(b => {
+        b.disabled = true;
+        if (b.dataset.correct === 'true') b.classList.add('correct');
+      });
+      if (!correct) btn.classList.add('wrong');
+      showFeedback(correct, correct ? 'Richtig!' : `Nicht ganz. Richtig wäre: „${state.target.sentence}".`);
+      updateScore(correct);
+    });
+  });
+
+  // ---- Stunden/Minuten-Buttons ----
+  document.querySelectorAll('[data-adjust]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (state.mode !== 'B') return;
+      const dir = parseInt(btn.dataset.dir, 10);
+      if (btn.dataset.adjust === 'hour') adjustHour(dir);
+      else adjustMinute(dir * 5);
+    });
+  });
+  function adjustHour(delta) {
+    const h = ((state.userClock.hour - 1 + delta) % 12 + 12) % 12 + 1;
+    state.userClock.hour = h;
+    renderAnalog(h, state.userClock.minute);
+  }
+  function adjustMinute(delta) {
+    const m = ((state.userClock.minute + delta) % 60 + 60) % 60;
+    state.userClock.minute = m;
+    renderAnalog(state.userClock.hour, m);
+  }
+
+  // ---- Zeiger ziehen ----
+  let dragging = null;
+  function angleFromCenter(clientX, clientY) {
+    const rect = analogSvg.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const dx = clientX - cx;
+    const dy = clientY - cy;
+    let deg = Math.atan2(dx, -dy) * 180 / Math.PI;
+    if (deg < 0) deg += 360;
+    return deg;
+  }
+  function addDragHandlers(grip, which) {
+    grip.addEventListener('pointerdown', (e) => {
+      if (state.mode !== 'B') return;
+      dragging = which;
+      grip.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    });
+    grip.addEventListener('pointermove', (e) => {
+      if (dragging !== which) return;
+      const deg = angleFromCenter(e.clientX, e.clientY);
+      const idx = Math.round(deg / 30) % 12;
+      if (which === 'minute') {
+        state.userClock.minute = (idx * 5) % 60;
+      } else {
+        state.userClock.hour = idx === 0 ? 12 : idx;
+      }
+      renderAnalog(state.userClock.hour, state.userClock.minute);
+    });
+    grip.addEventListener('pointerup', () => { dragging = null; });
+    grip.addEventListener('pointercancel', () => { dragging = null; });
+  }
+  addDragHandlers(hourGrip, 'hour');
+  addDragHandlers(minuteGrip, 'minute');
+
+  // ---- Punktestand ----
+  function updateScore(correct) {
+    state.score.total++;
+    if (correct) {
+      state.score.correct++;
+      state.score.streak++;
+      if (state.score.streak > state.score.best) {
+        state.score.best = state.score.streak;
+        localStorage.setItem('teachclock_best_streak', String(state.score.best));
+      }
+    } else {
+      state.score.streak = 0;
+    }
+    renderScore();
+  }
+  function renderScore() {
+    scoreRow.textContent = `Richtig: ${state.score.correct}/${state.score.total} · Serie: ${state.score.streak} · Beste Serie: ${state.score.best}`;
+  }
+
+  function showFeedback(correct, text) {
+    feedbackEl.textContent = text;
+    feedbackEl.classList.remove('feedback-correct', 'feedback-wrong');
+    feedbackEl.classList.add(correct ? 'feedback-correct' : 'feedback-wrong');
+  }
+  function clearFeedback() {
+    feedbackEl.textContent = '';
+    feedbackEl.classList.remove('feedback-correct', 'feedback-wrong');
+  }
+
+  // ---- Modus/Schwierigkeit ----
+  function applyModeVisibility() {
+    analogControls.style.display = state.mode === 'B' ? 'flex' : 'none';
+    analogSvg.classList.toggle('interactive', state.mode === 'B');
+    mcWrap.style.display = state.mode === 'C' ? 'grid' : 'none';
+    wortuhrWrap.style.display = state.mode === 'C' ? 'none' : 'block';
+    checkBtn.style.display = state.mode === 'C' ? 'none' : 'inline-block';
+    wordIds.forEach(id => document.getElementById(id).classList.toggle('clickable', state.mode === 'A'));
+  }
+
+  function newQuestion() {
+    dragging = null;
+    const t = randomTime(state.difficulty);
+    state.target = Object.assign({ hour: t.hour, minute: t.minute }, computeWordClock(t.hour, t.minute));
+    state.selected = new Set();
+    clearWordFeedback();
+    clearStaticActive();
+    hideGhost();
+    clearFeedback();
+    document.getElementById('h1').textContent = state.target.einActive ? 'EIN' : 'EINS';
+
+    if (state.mode === 'A') {
+      renderAnalog(state.target.hour, state.target.minute);
+    } else if (state.mode === 'B') {
+      renderStaticActive(state.target.active);
+      state.userClock = { hour: 12, minute: 0 };
+      renderAnalog(12, 0);
+    } else if (state.mode === 'C') {
+      renderAnalog(state.target.hour, state.target.minute);
+      renderMc();
+    }
+  }
+
+  function checkAnswer() {
+    if (state.mode === 'A') {
+      const expected = state.target.active;
+      const selected = new Set(state.selected);
+      selected.add('es'); selected.add('ist');
+      const correct = setsEqual(expected, selected);
+      wordIds.forEach(id => {
+        const el = document.getElementById(id);
+        el.classList.remove('correct', 'missed', 'wrong');
+        const inExpected = expected.has(id);
+        const inSelected = selected.has(id);
+        if (inExpected && inSelected) el.classList.add('correct');
+        else if (inExpected && !inSelected) el.classList.add('missed');
+        else if (!inExpected && inSelected) el.classList.add('wrong');
+      });
+      showFeedback(correct, correct ? 'Richtig!' : `Nicht ganz. Richtig wäre: „${state.target.sentence}".`);
+      updateScore(correct);
+    } else if (state.mode === 'B') {
+      const correct = state.userClock.hour === state.target.hour && state.userClock.minute === state.target.minute;
+      if (correct) hideGhost(); else renderGhost(state.target.hour, state.target.minute);
+      showFeedback(correct, correct ? 'Richtig!' : `Nicht ganz. Richtig wäre ${pad(state.target.hour)}:${pad(state.target.minute)} Uhr (gestrichelt zu sehen).`);
+      updateScore(correct);
+    }
+  }
+
+  checkBtn.addEventListener('click', checkAnswer);
+  nextBtn.addEventListener('click', newQuestion);
+
+  modePicker.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-mode]');
+    if (!btn) return;
+    state.mode = btn.dataset.mode;
+    modePicker.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+    applyModeVisibility();
+    newQuestion();
+  });
+
+  difficultyPicker.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-diff]');
+    if (!btn) return;
+    state.difficulty = btn.dataset.diff;
+    difficultyPicker.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+    newQuestion();
+  });
+
+  renderScore();
+  applyModeVisibility();
+  newQuestion();
+})();
+</script>
+
+</body>
+</html>
