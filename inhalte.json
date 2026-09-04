@@ -1,6 +1,6 @@
 {
   "hinweis": "Diese Datei steuert die Uebersichtsseite. Sie wird ueber verwalten.html gepflegt - Handarbeit ist moeglich, aber nicht noetig.",
-  "aktualisiert": "2026-09-04T11:28:57.334Z",
+  "aktualisiert": "2026-09-04T11:43:27.732Z",
   "rubriken": [
     {
       "name": "Arduino",
@@ -28,14 +28,9 @@
       "sichtbar": true,
       "eintraege": [
         {
-          "datei": "teachclock.html",
-          "titel": "Uhrzeit üben",
-          "sichtbar": true
-        },
-        {
           "datei": "wortuhr.html",
           "titel": "Wortuhr",
-          "sichtbar": true
+          "sichtbar": false
         }
       ]
     },
@@ -54,6 +49,11 @@
           "sichtbar": true
         }
       ]
+    },
+    {
+      "name": "Übungsspiele",
+      "sichtbar": true,
+      "eintraege": []
     }
   ]
 }
