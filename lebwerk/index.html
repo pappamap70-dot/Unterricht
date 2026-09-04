@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LebWerk – Download &amp; erste Schritte</title>
+<style>
+  :root{
+    --bg:#faf7f2; --card:#fff; --ink:#2a2724; --ink-soft:#6b645c;
+    --accent:#8a5a2b; --accent-soft:#f2e6d8; --border:#e6ded3;
+    --warn:#9a5b1c; --warn-bg:#fdf3e3; --green:#3f7a4a; --green-bg:#eaf4ec;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    background:var(--bg); color:var(--ink); line-height:1.6;
+    padding:32px 16px 64px;
+  }
+  .wrap{max-width:720px;margin:0 auto}
+  header{text-align:center;margin-bottom:32px}
+  h1{font-family:Georgia,'Times New Roman',serif;font-size:2.1rem;font-weight:700;margin-bottom:6px}
+  .untertitel{color:var(--ink-soft);font-size:1rem}
+  .karte{
+    background:var(--card);border:1px solid var(--border);border-radius:14px;
+    padding:24px;margin-bottom:20px;
+  }
+  h2{font-size:1.15rem;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  h3{font-size:.95rem;font-weight:700;margin:16px 0 6px}
+  p{margin-bottom:10px}
+  ul,ol{margin:0 0 10px 22px}
+  li{margin-bottom:6px}
+  .download{
+    display:block;text-align:center;background:var(--accent);color:#fff;
+    text-decoration:none;font-size:1.05rem;font-weight:700;
+    padding:16px 24px;border-radius:11px;margin:6px 0 12px;
+  }
+  .download:hover{filter:brightness(1.08)}
+  .meta{text-align:center;font-size:.85rem;color:var(--ink-soft)}
+  .hinweis{
+    background:var(--warn-bg);border-left:4px solid var(--warn);
+    border-radius:0 9px 9px 0;padding:14px 16px;margin:14px 0;font-size:.92rem;
+  }
+  .hinweis strong{color:var(--warn)}
+  .gut{background:var(--green-bg);border-left-color:var(--green)}
+  .gut strong{color:var(--green)}
+  code{
+    background:var(--accent-soft);padding:1px 6px;border-radius:5px;
+    font-family:ui-monospace,Consolas,monospace;font-size:.88em;
+  }
+  .schritte{counter-reset:s;list-style:none;margin-left:0}
+  .schritte li{counter-increment:s;position:relative;padding-left:34px;margin-bottom:12px}
+  .schritte li::before{
+    content:counter(s);position:absolute;left:0;top:1px;
+    width:24px;height:24px;border-radius:50%;background:var(--accent-soft);
+    color:var(--accent);font-weight:700;font-size:.82rem;
+    display:flex;align-items:center;justify-content:center;
+  }
+  footer{text-align:center;color:var(--ink-soft);font-size:.85rem;margin-top:28px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>LebWerk</h1>
+    <p class="untertitel">Notenverwaltung und Lernberichte – läuft komplett auf deinem eigenen Rechner</p>
+  </header>
+
+  <div class="karte">
+    <a class="download" id="downloadLink" href="https://github.com/pappamap70-dot/Unterricht/releases">
+      LebWerk für Windows herunterladen
+    </a>
+    <p class="meta">Version <span id="versionAnzeige">1.1.27</span> · Windows 10/11 · rund 22 MB · keine Installation von Administratorrechten nötig</p>
+  </div>
+
+  <div class="karte">
+    <h2>⚠️ Windows wird dich warnen – das ist normal</h2>
+    <p>
+      Der Installer ist nicht bei Microsoft registriert (dafür bräuchte es ein kostenpflichtiges
+      Zertifikat). Deshalb blendet Windows beim Start einen blauen Kasten ein:
+      <em>„Der Computer wurde durch Windows geschützt"</em>.
+    </p>
+    <ol class="schritte">
+      <li>Im blauen Fenster auf <strong>„Weitere Informationen"</strong> klicken.</li>
+      <li>Dann erscheint der Knopf <strong>„Trotzdem ausführen"</strong> – darauf klicken.</li>
+      <li>Die Installation läuft danach ganz normal durch.</li>
+    </ol>
+    <p>Falls dein Browser den Download blockiert: im Download-Bereich auf „Beibehalten" gehen.</p>
+  </div>
+
+  <div class="karte">
+    <h2>🚀 Die ersten Minuten</h2>
+    <ol class="schritte">
+      <li>LebWerk starten. Beim ersten Start fragt es dich, welche Fächer du unterrichtest.</li>
+      <li>Zum Ausprobieren: <strong>Einstellungen → Musterdaten laden</strong>. Damit hast du eine
+          Beispielklasse mit Noten, ohne eigene Daten eintippen zu müssen.</li>
+      <li>Erst danach eigene Klassen anlegen – oder Schülerlisten als CSV importieren.</li>
+      <li>Bewertungen erfassen, Noten ansehen, Lernberichte erzeugen.</li>
+    </ol>
+    <div class="hinweis gut">
+      <strong>Deine Daten bleiben bei dir.</strong> LebWerk sendet nichts ins Internet – keine Cloud,
+      kein Konto, keine KI-Dienste. Alles liegt in <code>Dokumente\LebWerk</code> auf deinem Rechner.
+      Die Lernberichte entstehen aus hinterlegten Mustersätzen, nicht aus einem Online-Dienst.
+    </div>
+  </div>
+
+  <div class="karte">
+    <h2>🔐 Passwortschutz – bitte vorher lesen</h2>
+    <p>
+      Du kannst deine Daten mit einem Passwort verschlüsseln (Einstellungen → Sicherheit).
+      Das ist sinnvoll, weil es um Schülerdaten geht.
+    </p>
+    <div class="hinweis">
+      <strong>Wichtig:</strong> Dieses Passwort kann niemand zurücksetzen – ich auch nicht.
+      Wenn du es vergisst, sind die Daten unwiederbringlich verloren. Schreib es dir auf,
+      bevor du es vergibst.
+    </div>
+  </div>
+
+  <div class="karte">
+    <h2>💾 Sicherung einrichten</h2>
+    <p>
+      LebWerk legt automatisch Backups an. Zusätzlich lohnt sich ein zweiter Ort:
+      <strong>Einstellungen → Daten &amp; Backup → Ordner wählen</strong>, dort einen
+      USB-Stick oder ein Netzlaufwerk eintragen. Dann liegt der Arbeitsstand nicht nur
+      auf einem Gerät.
+    </p>
+  </div>
+
+  <div class="karte">
+    <h2>🔄 Updates</h2>
+    <p>
+      Beim Start schaut LebWerk nach, ob eine neuere Version bereitliegt, und fragt dich dann.
+      Ein Klick genügt – Herunterladen und Installieren passieren von selbst, deine Daten bleiben
+      unangetastet. Du kannst die Frage jederzeit mit „Später" wegklicken.
+    </p>
+  </div>
+
+  <div class="karte">
+    <h2>🧪 Du testest – worauf ich hoffe</h2>
+    <p>Das hier ist eine Testversion. Besonders hilfreich sind Rückmeldungen zu:</p>
+    <ul>
+      <li>Stellen, an denen du nicht weiterwusstest oder etwas anderes erwartet hast</li>
+      <li>Fehlermeldungen (gern mit Screenshot)</li>
+      <li>Dinge, die für deinen Unterricht fehlen</li>
+      <li>ob die Lernberichte sprachlich brauchbar sind</li>
+    </ul>
+    <div class="hinweis">
+      <strong>Für den ersten Durchgang:</strong> bitte mit den Musterdaten oder mit abgekürzten
+      Namen arbeiten, nicht gleich mit dem vollständigen echten Klassensatz.
+    </div>
+  </div>
+
+  <footer>
+    LebWerk entsteht nebenbei für den eigenen Unterricht – Rückmeldungen sind ausdrücklich erwünscht.
+  </footer>
+
+</div>
+</body>
+</html>
