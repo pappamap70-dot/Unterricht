@@ -1,6 +1,6 @@
 {
   "hinweis": "Diese Datei steuert die Uebersichtsseite. Sie wird ueber verwalten.html gepflegt - Handarbeit ist moeglich, aber nicht noetig.",
-  "aktualisiert": "2026-09-04T11:43:27.732Z",
+  "aktualisiert": "2026-09-04T11:46:04.774Z",
   "rubriken": [
     {
       "name": "Arduino",
@@ -42,18 +42,30 @@
           "datei": "paella.html",
           "titel": "Paella",
           "sichtbar": true
-        },
-        {
-          "datei": "prompt_lernbox_mit_chatlink.html",
-          "titel": "Lernbox mit Chat-Link",
-          "sichtbar": true
         }
       ]
     },
     {
       "name": "Übungsspiele",
       "sichtbar": true,
-      "eintraege": []
+      "eintraege": [
+        {
+          "datei": "teachclock.html",
+          "titel": "Teachclock",
+          "sichtbar": true
+        }
+      ]
+    },
+    {
+      "name": "Informatik",
+      "sichtbar": true,
+      "eintraege": [
+        {
+          "datei": "prompt_lernbox_mit_chatlink.html",
+          "titel": "Prompt Lernbox Mit Chatlink",
+          "sichtbar": true
+        }
+      ]
     }
   ]
 }
