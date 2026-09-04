@@ -226,43 +226,75 @@ const OWNER = 'pappamap70-dot';
 const REPO  = 'Unterricht';
 const BRANCH = 'main';
 const PAGES_BASE = `https://${OWNER}.github.io/${REPO}/`;
-const CACHE_KEY = 'unterricht_index_cache_v1';
+const CACHE_KEY = 'unterricht_index_cache_v2';
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 Minuten
 
 let allFiles = [];
+let rubrikReihenfolge = [];   // gewuenschte Reihenfolge aus inhalte.json
 
 async function loadFiles(forceRefresh = false) {
-  const statusEl = document.getElementById('status');
   const contentEl = document.getElementById('content');
 
   if (!forceRefresh) {
     const cached = getCache();
     if (cached) {
-      allFiles = cached;
+      allFiles = cached.files || cached;          // altes Format bleibt lesbar
+      rubrikReihenfolge = cached.rubriken || [];
       renderFiles();
       return;
     }
   }
 
-  contentEl.innerHTML = '<div class="status" id="status">Lade Dateiliste von GitHub…</div>';
+  contentEl.innerHTML = '<div class="status" id="status">Lade Übersicht…</div>';
 
+  // Bevorzugt die gepflegte Gliederung. Sie entsteht über verwalten.html und
+  // bestimmt Reihenfolge, Titel und was überhaupt angezeigt wird.
+  try {
+    const res = await fetch('inhalte.json?t=' + Date.now(), { cache: 'no-store' });
+    if (res.ok) {
+      const daten = await res.json();
+      if (daten && Array.isArray(daten.rubriken)) {
+        const dateien = [];
+        const reihenfolge = [];
+        daten.rubriken
+          .filter(r => r.sichtbar !== false)
+          .forEach(r => {
+            reihenfolge.push(r.name);
+            (r.eintraege || [])
+              .filter(e => e.sichtbar !== false)
+              .forEach(e => dateien.push({
+                path: e.datei,
+                name: e.titel || e.datei.split('/').pop(),
+                folder: r.name
+              }));
+          });
+        allFiles = dateien;
+        rubrikReihenfolge = reihenfolge;
+        setCache(dateien, reihenfolge);
+        renderFiles();
+        return;
+      }
+    }
+  } catch (err) {
+    // Steuerdatei fehlt oder ist unbrauchbar - dann eben der Dateibaum
+  }
+
+  await ladeAusDateibaum();
+}
+
+/** Notweg: listet einfach alles auf, was im Repo liegt. */
+async function ladeAusDateibaum() {
+  const contentEl = document.getElementById('content');
   try {
     const treeUrl = `https://api.github.com/repos/${OWNER}/${REPO}/git/trees/${BRANCH}?recursive=1`;
     const res = await fetch(treeUrl);
-
-    if (!res.ok) {
-      throw new Error(`GitHub API antwortete mit Status ${res.status}`);
-    }
-
+    if (!res.ok) throw new Error(`GitHub API antwortete mit Status ${res.status}`);
     const data = await res.json();
-
-    if (!data.tree) {
-      throw new Error('Unerwartete Antwortstruktur von GitHub');
-    }
+    if (!data.tree) throw new Error('Unerwartete Antwortstruktur von GitHub');
 
     const htmlFiles = data.tree
       .filter(item => item.type === 'blob' && item.path.toLowerCase().endsWith('.html'))
-      .filter(item => item.path.toLowerCase() !== 'index.html')
+      .filter(item => !['index.html', 'verwalten.html'].includes(item.path.toLowerCase()))
       .map(item => ({
         path: item.path,
         name: item.path.split('/').pop(),
@@ -271,15 +303,15 @@ async function loadFiles(forceRefresh = false) {
       .sort((a, b) => a.path.localeCompare(b.path, 'de'));
 
     allFiles = htmlFiles;
-    setCache(htmlFiles);
+    rubrikReihenfolge = [];
+    setCache(htmlFiles, []);
     renderFiles();
-
   } catch (err) {
     contentEl.innerHTML = `
       <div class="status error">
-        ⚠️ Dateiliste konnte nicht geladen werden.<br>
+        ⚠️ Übersicht konnte nicht geladen werden.<br>
         <small>${escapeHtml(err.message)}</small><br><br>
-        Möglich, dass GitHub gerade nicht erreichbar ist oder das Repository-Limit für nicht angemeldete Abfragen erreicht wurde.
+        Möglich, dass GitHub gerade nicht erreichbar ist oder das Abfragelimit erreicht wurde.
         Versuche es in ein paar Minuten erneut, oder besuche das
         <a href="https://github.com/${OWNER}/${REPO}" target="_blank">Repository direkt</a>.
       </div>`;
@@ -292,13 +324,13 @@ function getCache() {
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (Date.now() - parsed.ts > CACHE_TTL_MS) return null;
-    return parsed.files;
+    return { files: parsed.files, rubriken: parsed.rubriken || [] };
   } catch { return null; }
 }
 
-function setCache(files) {
+function setCache(files, rubriken) {
   try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), files }));
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), files, rubriken: rubriken || [] }));
   } catch { /* localStorage evtl. voll - ignorieren */ }
 }
 
@@ -328,7 +360,14 @@ function renderFiles() {
     groups[key].push(f);
   });
 
+  // Steht eine gepflegte Reihenfolge bereit, gilt sie - sonst alphabetisch
   const folderNames = Object.keys(groups).sort((a, b) => {
+    if (rubrikReihenfolge.length) {
+      const ia = rubrikReihenfolge.indexOf(a), ib = rubrikReihenfolge.indexOf(b);
+      if (ia !== -1 && ib !== -1) return ia - ib;
+      if (ia !== -1) return -1;
+      if (ib !== -1) return 1;
+    }
     if (a === '(Hauptverzeichnis)') return -1;
     if (b === '(Hauptverzeichnis)') return 1;
     return a.localeCompare(b, 'de');

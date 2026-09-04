@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Material verwalten</title>
+<style>
+  :root {
+    --bordeaux:   #6B1A2A;
+    --terrakotta: #C0603A;
+    --lachs:      #E8906A;
+    --creme:      #FBF5F0;
+    --text-dark:  #2A1A1A;
+    --grau:       #8a7a75;
+    --border:     #e8dcd4;
+    --gruen:      #3f7a4a;
+    --gruen-bg:   #eaf4ec;
+    --warn:       #9a3412;
+    --warn-bg:    #fdf0e7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+    background: var(--creme);
+    color: var(--text-dark);
+  }
+  header {
+    background: linear-gradient(135deg, var(--bordeaux), var(--terrakotta));
+    color: white;
+    padding: 1.4rem 1.5rem;
+    display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+  }
+  header h1 { margin: 0; font-size: 1.4rem; font-weight: 700; flex: 1; }
+  main { max-width: 900px; margin: 0 auto; padding: 1.4rem 1.2rem 4rem; }
+
+  .btn {
+    font-family: inherit; font-size: .95rem; font-weight: 600;
+    padding: .45rem .9rem; border-radius: 7px; cursor: pointer;
+    border: 1.5px solid var(--border); background: white; color: var(--text-dark);
+  }
+  .btn:hover { border-color: var(--terrakotta); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .btn-haupt { background: var(--bordeaux); color: white; border-color: var(--bordeaux); }
+  .btn-haupt:hover { background: var(--terrakotta); border-color: var(--terrakotta); }
+  .btn-klein { font-size: .82rem; padding: .25rem .5rem; }
+  .btn-gefahr { color: var(--warn); }
+
+  .karte {
+    background: white; border: 1px solid var(--border); border-radius: 11px;
+    padding: 1rem 1.1rem; margin-bottom: 1.1rem;
+  }
+  .karte h2 {
+    margin: 0 0 .3rem; font-size: 1.1rem; color: var(--bordeaux);
+    display: flex; align-items: center; gap: .6rem; flex-wrap: wrap;
+  }
+  .hinweis { font-size: .88rem; color: var(--grau); margin: 0 0 .8rem; line-height: 1.5; }
+
+  .rubrik { border: 1px solid var(--border); border-radius: 9px; margin-bottom: .9rem; overflow: hidden; }
+  .rubrik-kopf {
+    background: #f7efe9; padding: .5rem .7rem;
+    display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
+  }
+  .rubrik-kopf input.name {
+    font-family: inherit; font-size: 1rem; font-weight: 700; color: var(--bordeaux);
+    border: 1px solid transparent; background: transparent; border-radius: 5px;
+    padding: .2rem .4rem; flex: 1; min-width: 120px;
+  }
+  .rubrik-kopf input.name:focus { border-color: var(--border); background: white; outline: none; }
+
+  .eintrag {
+    display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
+    padding: .45rem .7rem; border-top: 1px solid var(--border);
+  }
+  .eintrag input.titel {
+    font-family: inherit; font-size: .95rem; flex: 1; min-width: 140px;
+    border: 1px solid transparent; background: transparent; border-radius: 5px; padding: .25rem .4rem;
+  }
+  .eintrag input.titel:focus { border-color: var(--border); background: #fdfaf8; outline: none; }
+  .pfad { font-size: .75rem; color: var(--grau); font-family: ui-monospace, Consolas, monospace; }
+  .eintrag.aus { opacity: .55; }
+
+  .schalter { display: inline-flex; align-items: center; gap: .3rem; font-size: .8rem; cursor: pointer; user-select: none; }
+  .pillen { display: flex; gap: .3rem; }
+
+  .liste-leer { font-size: .88rem; color: var(--grau); padding: .5rem .2rem; font-style: italic; }
+  .datei-zeile {
+    display: flex; align-items: center; gap: .5rem; flex-wrap: wrap;
+    padding: .45rem 0; border-bottom: 1px solid var(--border);
+  }
+  .datei-zeile:last-child { border-bottom: none; }
+  .datei-name { flex: 1; min-width: 150px; font-size: .92rem; }
+
+  #sperre {
+    position: fixed; inset: 0; background: var(--creme); z-index: 100;
+    display: flex; align-items: center; justify-content: center; padding: 1.5rem;
+  }
+  #sperre .box { background: white; border: 1px solid var(--border); border-radius: 13px; padding: 1.8rem; max-width: 430px; width: 100%; }
+  #sperre h2 { margin: 0 0 .5rem; color: var(--bordeaux); font-size: 1.3rem; }
+  #sperre input {
+    font-family: inherit; font-size: 1rem; width: 100%; padding: .6rem .7rem;
+    border: 1.5px solid var(--border); border-radius: 7px; margin-bottom: .7rem;
+  }
+  #sperre input:focus { border-color: var(--terrakotta); outline: none; }
+  #sperreFehler { color: var(--warn); font-size: .88rem; min-height: 1.2em; margin-bottom: .5rem; }
+
+  #meldung {
+    position: fixed; left: 50%; bottom: 1.5rem; transform: translateX(-50%);
+    background: var(--text-dark); color: white; padding: .6rem 1.1rem;
+    border-radius: 8px; font-size: .92rem; z-index: 200; display: none; max-width: 90%;
+  }
+  #meldung.warn { background: var(--warn); }
+  #meldung.ok { background: var(--gruen); }
+
+  .statuszeile { font-size: .85rem; color: var(--grau); }
+  .ungespeichert { color: var(--warn); font-weight: 700; }
+  .schutzhinweis { background: var(--warn-bg); border-left: 4px solid var(--warn); border-radius: 0 8px 8px 0; padding: .7rem .9rem; font-size: .85rem; line-height: 1.5; margin-bottom: 1rem; }
+  a { color: var(--terrakotta); }
+</style>
+</head>
+<body>
+
+<!-- ══ Sperrbildschirm ══ -->
+<div id="sperre">
+  <div class="box">
+    <h2>Material verwalten</h2>
+
+    <div id="sperreAnmelden" style="display:none">
+      <p class="hinweis">Passwort eingeben, um den hinterlegten Zugang zu entsperren.</p>
+      <input type="password" id="pwEingabe" placeholder="Passwort" autocomplete="current-password">
+      <div id="sperreFehler"></div>
+      <button class="btn btn-haupt" style="width:100%" onclick="entsperren()">Entsperren</button>
+      <p class="hinweis" style="margin-top:.9rem">
+        Passwort vergessen? <a href="#" onclick="zugangVerwerfen();return false">Zugang neu einrichten</a>
+        – dafür brauchst du den GitHub-Token erneut.
+      </p>
+    </div>
+
+    <div id="sperreEinrichten" style="display:none">
+      <p class="hinweis">
+        Einmalige Einrichtung. Der Zugang wird verschlüsselt in diesem Browser gespeichert –
+        auf jedem weiteren Gerät musst du ihn erneut eintragen.
+      </p>
+      <input type="password" id="tokenEingabe" placeholder="GitHub-Token (github_pat_…)" autocomplete="off">
+      <input type="password" id="pwNeu1" placeholder="Passwort wählen" autocomplete="new-password">
+      <input type="password" id="pwNeu2" placeholder="Passwort wiederholen" autocomplete="new-password">
+      <div id="sperreFehler2" style="color:var(--warn);font-size:.88rem;min-height:1.2em;margin-bottom:.5rem"></div>
+      <button class="btn btn-haupt" style="width:100%" onclick="einrichten()">Speichern und starten</button>
+    </div>
+  </div>
+</div>
+
+<header>
+  <h1>Material verwalten</h1>
+  <span id="statusKopf" class="statuszeile" style="color:#f6e3da"></span>
+  <button class="btn" id="btnSpeichern" onclick="alsGespeichert()" disabled>Änderungen veröffentlichen</button>
+  <button class="btn" onclick="abmelden()">Sperren</button>
+</header>
+
+<main>
+  <div class="schutzhinweis">
+    <strong>Was „sichtbar" bedeutet:</strong> Ausgeblendete Einträge verschwinden aus der Übersicht,
+    die Datei bleibt aber über ihre Adresse erreichbar. Was niemand sehen soll – Lösungen, Entwürfe –
+    gehört ins private Ablagefach weiter unten.
+  </div>
+
+  <div class="karte">
+    <h2>Übersicht der Seite
+      <button class="btn btn-klein" onclick="rubrikAnlegen()">+ Rubrik</button>
+      <button class="btn btn-klein" onclick="alleLaden()">↻ Neu laden</button>
+    </h2>
+    <p class="hinweis">
+      Reihenfolge über die Pfeile. Der Titel ist frei wählbar – der Dateiname bleibt davon unberührt.
+    </p>
+    <div id="rubriken"></div>
+  </div>
+
+  <div class="karte">
+    <h2>Noch nicht eingeordnet</h2>
+    <p class="hinweis">
+      Dateien, die im Repo liegen, aber in keiner Rubrik stehen. Sie erscheinen nicht auf der Seite,
+      bis du sie zuordnest.
+    </p>
+    <div id="unsortiert"></div>
+  </div>
+
+  <div class="karte">
+    <h2>Neue Datei hochladen</h2>
+    <p class="hinweis">HTML-Arbeitsblätter, Bilder oder PDF. Zielrubrik wählen, dann Datei auswählen.</p>
+    <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center">
+      <select id="zielRubrik" class="btn" style="font-weight:400"></select>
+      <select id="zielAblage" class="btn" style="font-weight:400">
+        <option value="oeffentlich">öffentlich sichtbar</option>
+        <option value="privat">ins private Fach</option>
+      </select>
+      <input type="file" id="dateiWahl" style="font-family:inherit;font-size:.9rem">
+      <button class="btn btn-haupt" onclick="hochladen()">Hochladen</button>
+    </div>
+  </div>
+
+  <div class="karte">
+    <h2>Privates Fach – Lösungen und Entwürfe</h2>
+    <p class="hinweis">
+      Liegt im nicht öffentlichen Repo <code id="privatName"></code>. Für Schülerinnen und Schüler
+      unerreichbar. „Veröffentlichen" schiebt eine Datei ins öffentliche Repo – von dort kannst du
+      sie jederzeit zurückholen.
+    </p>
+    <div id="privat"></div>
+  </div>
+</main>
+
+<div id="meldung"></div>
+
+<script>
+// ════════════════════════════════════════════════════════════
+// Verwaltung der Materialseite
+//
+// Die Seite selbst ist harmlos: Ohne den GitHub-Token, der verschlüsselt im
+// Browser liegt, kann sie nichts. Deshalb darf sie öffentlich erreichbar sein.
+// ════════════════════════════════════════════════════════════
+
+const BESITZER   = 'pappamap70-dot';
+const REPO_OEFF  = 'Unterricht';
+const REPO_PRIV  = 'Unterricht-intern';
+const BRANCH     = 'main';
+const STEUERDATEI = 'inhalte.json';
+const SPEICHERSCHLUESSEL = 'unterricht_zugang_v1';
+// Dateien, die zur Seite selbst gehören und nie als Material auftauchen sollen
+const EIGENE_DATEIEN = ['index.html', 'verwalten.html'];
+
+let TOKEN = null;
+let inhalt = { rubriken: [] };   // Steuerdatei im Arbeitsspeicher
+let inhaltSha = null;            // für das Zurückschreiben nötig
+let dateienOeff = [];            // Pfade im öffentlichen Repo
+let dateienPriv = [];            // Pfade im privaten Repo
+let veraendert = false;
+
+// ── Verschlüsselung des Tokens ──────────────────────────────
+async function schluesselAus(passwort, salz) {
+  const roh = await crypto.subtle.importKey(
+    'raw', new TextEncoder().encode(passwort), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt: salz, iterations: 250000, hash: 'SHA-256' },
+    roh, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+}
+
+const zuB64 = puffer => btoa(String.fromCharCode(...new Uint8Array(puffer)));
+const ausB64 = text => Uint8Array.from(atob(text), z => z.charCodeAt(0));
+
+async function tokenSichern(token, passwort) {
+  const salz = crypto.getRandomValues(new Uint8Array(16));
+  const iv   = crypto.getRandomValues(new Uint8Array(12));
+  const s    = await schluesselAus(passwort, salz);
+  const geheim = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv }, s, new TextEncoder().encode(token));
+  localStorage.setItem(SPEICHERSCHLUESSEL, JSON.stringify({
+    salz: zuB64(salz), iv: zuB64(iv), inhalt: zuB64(geheim)
+  }));
+}
+
+async function tokenLesen(passwort) {
+  const roh = localStorage.getItem(SPEICHERSCHLUESSEL);
+  if (!roh) return null;
+  const d = JSON.parse(roh);
+  const s = await schluesselAus(passwort, ausB64(d.salz));
+  const klar = await crypto.subtle.decrypt(
+    { name: 'AES-GCM', iv: ausB64(d.iv) }, s, ausB64(d.inhalt));
+  return new TextDecoder().decode(klar);
+}
+
+// ── Sperrbildschirm ─────────────────────────────────────────
+function sperrbildschirmZeigen() {
+  const vorhanden = !!localStorage.getItem(SPEICHERSCHLUESSEL);
+  document.getElementById('sperreAnmelden').style.display   = vorhanden ? 'block' : 'none';
+  document.getElementById('sperreEinrichten').style.display = vorhanden ? 'none'  : 'block';
+  document.getElementById('sperre').style.display = 'flex';
+  setTimeout(() => document.getElementById(vorhanden ? 'pwEingabe' : 'tokenEingabe').focus(), 80);
+}
+
+async function entsperren() {
+  const pw = document.getElementById('pwEingabe').value;
+  const fehler = document.getElementById('sperreFehler');
+  fehler.textContent = '';
+  try {
+    TOKEN = await tokenLesen(pw);
+  } catch (e) {
+    fehler.textContent = 'Passwort stimmt nicht.';
+    return;
+  }
+  document.getElementById('sperre').style.display = 'none';
+  document.getElementById('pwEingabe').value = '';
+  alleLaden();
+}
+
+async function einrichten() {
+  const token = document.getElementById('tokenEingabe').value.trim();
+  const pw1 = document.getElementById('pwNeu1').value;
+  const pw2 = document.getElementById('pwNeu2').value;
+  const fehler = document.getElementById('sperreFehler2');
+  if (!token) { fehler.textContent = 'Bitte den Token eintragen.'; return; }
+  if (pw1.length < 6) { fehler.textContent = 'Das Passwort sollte mindestens 6 Zeichen haben.'; return; }
+  if (pw1 !== pw2) { fehler.textContent = 'Die Passwörter stimmen nicht überein.'; return; }
+  fehler.textContent = 'Zugang wird geprüft …';
+  TOKEN = token;
+  try {
+    await api('/repos/' + BESITZER + '/' + REPO_OEFF);
+  } catch (e) {
+    fehler.textContent = 'Der Token funktioniert nicht: ' + e.message;
+    TOKEN = null;
+    return;
+  }
+  await tokenSichern(token, pw1);
+  document.getElementById('sperre').style.display = 'none';
+  ['tokenEingabe','pwNeu1','pwNeu2'].forEach(id => document.getElementById(id).value = '');
+  alleLaden();
+}
+
+function abmelden() {
+  if (veraendert && !confirm('Es gibt noch nicht veröffentlichte Änderungen. Trotzdem sperren?')) return;
+  TOKEN = null;
+  location.reload();
+}
+
+function zugangVerwerfen() {
+  if (!confirm('Den gespeicherten Zugang aus diesem Browser löschen?')) return;
+  localStorage.removeItem(SPEICHERSCHLUESSEL);
+  location.reload();
+}
+
+// ── GitHub-Zugriff ──────────────────────────────────────────
+async function api(pfad, optionen = {}) {
+  const antwort = await fetch('https://api.github.com' + pfad, {
+    ...optionen,
+    headers: {
+      'Authorization': 'Bearer ' + TOKEN,
+      'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+      ...(optionen.headers || {})
+    }
+  });
+  if (!antwort.ok) {
+    let text = antwort.status + ' ' + antwort.statusText;
+    try { const f = await antwort.json(); if (f.message) text = f.message; } catch (e) {}
+    throw new Error(text);
+  }
+  return antwort.status === 204 ? null : antwort.json();
+}
+
+async function baumLesen(repo) {
+  try {
+    const baum = await api(`/repos/${BESITZER}/${repo}/git/trees/${BRANCH}?recursive=1`);
+    return (baum.tree || [])
+      .filter(e => e.type === 'blob')
+      .map(e => e.path)
+      .filter(p => !EIGENE_DATEIEN.includes(p) && p !== STEUERDATEI && !p.endsWith('.md'))
+      .sort((a, b) => a.localeCompare(b, 'de'));
+  } catch (e) {
+    // Leeres Repo hat noch keinen Baum – das ist kein Fehler
+    if (/empty|not found|409/i.test(e.message)) return [];
+    throw e;
+  }
+}
+
+function textAusB64(b64) {
+  return new TextDecoder().decode(ausB64(b64.replace(/\n/g, '')));
+}
+
+function b64AusText(text) {
+  const bytes = new TextEncoder().encode(text);
+  let s = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  }
+  return btoa(s);
+}
+
+// ── Laden ───────────────────────────────────────────────────
+async function alleLaden() {
+  if (!TOKEN) return;
+  melden('Wird geladen …');
+  try {
+    dateienOeff = await baumLesen(REPO_OEFF);
+    dateienPriv = await baumLesen(REPO_PRIV);
+
+    try {
+      const d = await api(`/repos/${BESITZER}/${REPO_OEFF}/contents/${STEUERDATEI}?ref=${BRANCH}`);
+      inhalt = JSON.parse(textAusB64(d.content));
+      inhaltSha = d.sha;
+    } catch (e) {
+      // Noch keine Steuerdatei: aus den vorhandenen Dateien eine erste Gliederung bauen
+      inhalt = ersteGliederung(dateienOeff);
+      inhaltSha = null;
+    }
+    if (!Array.isArray(inhalt.rubriken)) inhalt.rubriken = [];
+    veraendert = false;
+    zeichnen();
+    melden('Geladen.', 'ok');
+  } catch (e) {
+    melden('Laden fehlgeschlagen: ' + e.message, 'warn');
+  }
+}
+
+/** Aus einer flachen Dateiliste eine Gliederung nach Ordnern bauen. */
+function ersteGliederung(dateien) {
+  const nachOrdner = {};
+  dateien.forEach(pfad => {
+    const teile = pfad.split('/');
+    const ordner = teile.length > 1 ? teile.slice(0, -1).join(' / ') : 'Allgemein';
+    (nachOrdner[ordner] = nachOrdner[ordner] || []).push(pfad);
+  });
+  return {
+    rubriken: Object.keys(nachOrdner).sort((a, b) => a.localeCompare(b, 'de')).map(name => ({
+      name,
+      sichtbar: true,
+      eintraege: nachOrdner[name].map(p => ({ datei: p, titel: titelAusPfad(p), sichtbar: true }))
+    }))
+  };
+}
+
+function titelAusPfad(pfad) {
+  return pfad.split('/').pop()
+    .replace(/\.[a-z0-9]+$/i, '')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\b\w/g, z => z.toUpperCase());
+}
+
+// ── Darstellung ─────────────────────────────────────────────
+function zeichnen() {
+  zeichneRubriken();
+  zeichneUnsortiert();
+  zeichnePrivat();
+  zielRubrikenFuellen();
+  document.getElementById('privatName').textContent = BESITZER + '/' + REPO_PRIV;
+  document.getElementById('btnSpeichern').disabled = !veraendert;
+  document.getElementById('statusKopf').innerHTML = veraendert
+    ? '<span class="ungespeichert">nicht veröffentlicht</span>'
+    : 'alles veröffentlicht';
+}
+
+function esc(t) {
+  return String(t).replace(/[&<>"']/g, z =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[z]));
+}
+
+function zeichneRubriken() {
+  const ziel = document.getElementById('rubriken');
+  if (!inhalt.rubriken.length) {
+    ziel.innerHTML = '<p class="liste-leer">Noch keine Rubrik. Lege oben eine an.</p>';
+    return;
+  }
+  ziel.innerHTML = inhalt.rubriken.map((r, ri) => `
+    <div class="rubrik">
+      <div class="rubrik-kopf">
+        <div class="pillen">
+          <button class="btn btn-klein" onclick="rubrikSchieben(${ri},-1)" ${ri === 0 ? 'disabled' : ''} title="nach oben">▲</button>
+          <button class="btn btn-klein" onclick="rubrikSchieben(${ri},1)" ${ri === inhalt.rubriken.length - 1 ? 'disabled' : ''} title="nach unten">▼</button>
+        </div>
+        <input class="name" value="${esc(r.name)}" onchange="rubrikUmbenennen(${ri}, this.value)">
+        <label class="schalter">
+          <input type="checkbox" ${r.sichtbar !== false ? 'checked' : ''} onchange="rubrikSichtbar(${ri}, this.checked)">
+          sichtbar
+        </label>
+        <button class="btn btn-klein btn-gefahr" onclick="rubrikLoeschen(${ri})">Rubrik auflösen</button>
+      </div>
+      ${(r.eintraege || []).map((e, ei) => `
+        <div class="eintrag ${e.sichtbar === false || r.sichtbar === false ? 'aus' : ''}">
+          <div class="pillen">
+            <button class="btn btn-klein" onclick="eintragSchieben(${ri},${ei},-1)" ${ei === 0 ? 'disabled' : ''}>▲</button>
+            <button class="btn btn-klein" onclick="eintragSchieben(${ri},${ei},1)" ${ei === r.eintraege.length - 1 ? 'disabled' : ''}>▼</button>
+          </div>
+          <input class="titel" value="${esc(e.titel || '')}" onchange="eintragUmbenennen(${ri},${ei},this.value)">
+          <span class="pfad">${esc(e.datei)}</span>
+          <label class="schalter">
+            <input type="checkbox" ${e.sichtbar !== false ? 'checked' : ''} onchange="eintragSichtbar(${ri},${ei},this.checked)">
+            sichtbar
+          </label>
+          <button class="btn btn-klein" onclick="eintragHerausnehmen(${ri},${ei})" title="aus der Rubrik nehmen, Datei bleibt">↑ raus</button>
+          <button class="btn btn-klein" onclick="insPrivateFach('${esc(e.datei)}')" title="ins private Fach verschieben">→ privat</button>
+        </div>`).join('') || '<div class="eintrag"><span class="liste-leer">leer</span></div>'}
+    </div>`).join('');
+}
+
+function zeichneUnsortiert() {
+  const zugeordnet = new Set();
+  inhalt.rubriken.forEach(r => (r.eintraege || []).forEach(e => zugeordnet.add(e.datei)));
+  const offen = dateienOeff.filter(p => !zugeordnet.has(p));
+  const ziel = document.getElementById('unsortiert');
+  if (!offen.length) { ziel.innerHTML = '<p class="liste-leer">Alles eingeordnet.</p>'; return; }
+  const auswahl = inhalt.rubriken.map((r, i) => `<option value="${i}">${esc(r.name)}</option>`).join('');
+  ziel.innerHTML = offen.map(p => `
+    <div class="datei-zeile">
+      <span class="datei-name">${esc(p)}</span>
+      <a class="btn btn-klein" href="${esc(p)}" target="_blank">ansehen</a>
+      ${inhalt.rubriken.length
+        ? `<select class="btn btn-klein" style="font-weight:400" id="zu_${esc(p).replace(/[^a-zA-Z0-9]/g, '_')}">${auswahl}</select>
+           <button class="btn btn-klein" onclick="einordnen('${esc(p)}')">einordnen</button>`
+        : '<span class="liste-leer">erst eine Rubrik anlegen</span>'}
+      <button class="btn btn-klein" onclick="insPrivateFach('${esc(p)}')">→ privat</button>
+      <button class="btn btn-klein btn-gefahr" onclick="dateiLoeschen('${esc(p)}', 'oeffentlich')">löschen</button>
+    </div>`).join('');
+}
+
+function zeichnePrivat() {
+  const ziel = document.getElementById('privat');
+  if (!dateienPriv.length) { ziel.innerHTML = '<p class="liste-leer">Das private Fach ist leer.</p>'; return; }
+  ziel.innerHTML = dateienPriv.map(p => `
+    <div class="datei-zeile">
+      <span class="datei-name">${esc(p)}</span>
+      <button class="btn btn-klein" onclick="veroeffentlichen('${esc(p)}')">→ veröffentlichen</button>
+      <button class="btn btn-klein btn-gefahr" onclick="dateiLoeschen('${esc(p)}', 'privat')">löschen</button>
+    </div>`).join('');
+}
+
+function zielRubrikenFuellen() {
+  const s = document.getElementById('zielRubrik');
+  const vorher = s.value;
+  s.innerHTML = inhalt.rubriken.map((r, i) => `<option value="${i}">${esc(r.name)}</option>`).join('')
+    || '<option value="">(keine Rubrik)</option>';
+  if (vorher && s.querySelector(`option[value="${vorher}"]`)) s.value = vorher;
+}
+
+// ── Gliederung ändern (nur im Arbeitsspeicher) ──────────────
+function markiereGeaendert() { veraendert = true; zeichnen(); }
+
+function rubrikAnlegen() {
+  const name = prompt('Wie soll die Rubrik heißen?');
+  if (!name) return;
+  inhalt.rubriken.push({ name: name.trim(), sichtbar: true, eintraege: [] });
+  markiereGeaendert();
+}
+
+function rubrikUmbenennen(i, wert) { inhalt.rubriken[i].name = wert.trim(); markiereGeaendert(); }
+function rubrikSichtbar(i, an)     { inhalt.rubriken[i].sichtbar = an; markiereGeaendert(); }
+
+function rubrikSchieben(i, richtung) {
+  const j = i + richtung;
+  if (j < 0 || j >= inhalt.rubriken.length) return;
+  [inhalt.rubriken[i], inhalt.rubriken[j]] = [inhalt.rubriken[j], inhalt.rubriken[i]];
+  markiereGeaendert();
+}
+
+function rubrikLoeschen(i) {
+  const r = inhalt.rubriken[i];
+  const anzahl = (r.eintraege || []).length;
+  if (!confirm(`Rubrik „${r.name}" auflösen?\n\n${anzahl} Eintrag/Einträge wandern zurück nach „Noch nicht eingeordnet". Es wird keine Datei gelöscht.`)) return;
+  inhalt.rubriken.splice(i, 1);
+  markiereGeaendert();
+}
+
+function eintragSchieben(ri, ei, richtung) {
+  const liste = inhalt.rubriken[ri].eintraege;
+  const j = ei + richtung;
+  if (j < 0 || j >= liste.length) return;
+  [liste[ei], liste[j]] = [liste[j], liste[ei]];
+  markiereGeaendert();
+}
+
+function eintragUmbenennen(ri, ei, wert) { inhalt.rubriken[ri].eintraege[ei].titel = wert.trim(); markiereGeaendert(); }
+function eintragSichtbar(ri, ei, an)     { inhalt.rubriken[ri].eintraege[ei].sichtbar = an; markiereGeaendert(); }
+function eintragHerausnehmen(ri, ei)     { inhalt.rubriken[ri].eintraege.splice(ei, 1); markiereGeaendert(); }
+
+function einordnen(pfad) {
+  const s = document.getElementById('zu_' + pfad.replace(/[^a-zA-Z0-9]/g, '_'));
+  if (!s) return;
+  const ri = Number(s.value);
+  inhalt.rubriken[ri].eintraege.push({ datei: pfad, titel: titelAusPfad(pfad), sichtbar: true });
+  markiereGeaendert();
+}
+
+// ── Schreibende Aktionen ────────────────────────────────────
+async function alsGespeichert() {
+  if (!veraendert) return;
+  const knopf = document.getElementById('btnSpeichern');
+  knopf.disabled = true;
+  melden('Wird veröffentlicht …');
+  try {
+    inhalt.aktualisiert = new Date().toISOString();
+    const koerper = {
+      message: 'Übersicht aktualisiert',
+      content: b64AusText(JSON.stringify(inhalt, null, 2) + '\n'),
+      branch: BRANCH
+    };
+    if (inhaltSha) koerper.sha = inhaltSha;
+    const erg = await api(`/repos/${BESITZER}/${REPO_OEFF}/contents/${STEUERDATEI}`,
+      { method: 'PUT', body: JSON.stringify(koerper) });
+    inhaltSha = erg.content.sha;
+    veraendert = false;
+    zeichnen();
+    melden('Veröffentlicht. Die Seite zeigt es in etwa einer Minute.', 'ok');
+  } catch (e) {
+    melden('Fehlgeschlagen: ' + e.message, 'warn');
+    knopf.disabled = false;
+  }
+}
+
+async function hochladen() {
+  const feld = document.getElementById('dateiWahl');
+  const datei = feld.files[0];
+  if (!datei) { melden('Erst eine Datei auswählen.', 'warn'); return; }
+  const ablage = document.getElementById('zielAblage').value;
+  const repo = ablage === 'privat' ? REPO_PRIV : REPO_OEFF;
+
+  melden('Wird hochgeladen …');
+  try {
+    const puffer = await datei.arrayBuffer();
+    let s = '';
+    const bytes = new Uint8Array(puffer);
+    for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+
+    await api(`/repos/${BESITZER}/${repo}/contents/${encodeURIComponent(datei.name)}`, {
+      method: 'PUT',
+      body: JSON.stringify({ message: 'Datei hinzugefügt: ' + datei.name, content: btoa(s), branch: BRANCH })
+    });
+
+    if (ablage !== 'privat' && inhalt.rubriken.length) {
+      const ri = Number(document.getElementById('zielRubrik').value) || 0;
+      inhalt.rubriken[ri].eintraege.push({ datei: datei.name, titel: titelAusPfad(datei.name), sichtbar: true });
+      veraendert = true;
+    }
+    feld.value = '';
+    await alleLadenLeise();
+    melden('Hochgeladen.', 'ok');
+  } catch (e) {
+    melden('Hochladen fehlgeschlagen: ' + e.message, 'warn');
+  }
+}
+
+/** Wie alleLaden, behält aber ungespeicherte Gliederungsänderungen. */
+async function alleLadenLeise() {
+  const gemerkt = JSON.parse(JSON.stringify(inhalt));
+  const warVeraendert = veraendert;
+  dateienOeff = await baumLesen(REPO_OEFF);
+  dateienPriv = await baumLesen(REPO_PRIV);
+  inhalt = gemerkt;
+  veraendert = warVeraendert;
+  zeichnen();
+}
+
+async function dateiVerschieben(pfad, vonRepo, nachRepo, meldungstext) {
+  const quelle = await api(`/repos/${BESITZER}/${vonRepo}/contents/${pfad}?ref=${BRANCH}`);
+  await api(`/repos/${BESITZER}/${nachRepo}/contents/${pfad}`, {
+    method: 'PUT',
+    body: JSON.stringify({ message: meldungstext, content: quelle.content.replace(/\n/g, ''), branch: BRANCH })
+  });
+  await api(`/repos/${BESITZER}/${vonRepo}/contents/${pfad}`, {
+    method: 'DELETE',
+    body: JSON.stringify({ message: meldungstext, sha: quelle.sha, branch: BRANCH })
+  });
+}
+
+async function insPrivateFach(pfad) {
+  if (!confirm(`„${pfad}" ins private Fach verschieben?\n\nDie Datei ist danach nicht mehr öffentlich erreichbar.`)) return;
+  melden('Wird verschoben …');
+  try {
+    await dateiVerschieben(pfad, REPO_OEFF, REPO_PRIV, 'Ins private Fach verschoben: ' + pfad);
+    inhalt.rubriken.forEach(r => {
+      r.eintraege = (r.eintraege || []).filter(e => e.datei !== pfad);
+    });
+    veraendert = true;
+    await alleLadenLeise();
+    melden('Ins private Fach verschoben. Nicht vergessen: Änderungen veröffentlichen.', 'ok');
+  } catch (e) {
+    melden('Verschieben fehlgeschlagen: ' + e.message, 'warn');
+  }
+}
+
+async function veroeffentlichen(pfad) {
+  if (!confirm(`„${pfad}" öffentlich stellen?\n\nDie Datei ist danach über ihre Adresse für jeden erreichbar.`)) return;
+  melden('Wird veröffentlicht …');
+  try {
+    await dateiVerschieben(pfad, REPO_PRIV, REPO_OEFF, 'Veröffentlicht: ' + pfad);
+    await alleLadenLeise();
+    melden('Öffentlich. Sie steht jetzt unter „Noch nicht eingeordnet".', 'ok');
+  } catch (e) {
+    melden('Veröffentlichen fehlgeschlagen: ' + e.message, 'warn');
+  }
+}
+
+async function dateiLoeschen(pfad, wo) {
+  if (!confirm(`„${pfad}" endgültig löschen?\n\nDas lässt sich über diese Seite nicht rückgängig machen.`)) return;
+  const repo = wo === 'privat' ? REPO_PRIV : REPO_OEFF;
+  melden('Wird gelöscht …');
+  try {
+    const d = await api(`/repos/${BESITZER}/${repo}/contents/${pfad}?ref=${BRANCH}`);
+    await api(`/repos/${BESITZER}/${repo}/contents/${pfad}`, {
+      method: 'DELETE',
+      body: JSON.stringify({ message: 'Gelöscht: ' + pfad, sha: d.sha, branch: BRANCH })
+    });
+    inhalt.rubriken.forEach(r => { r.eintraege = (r.eintraege || []).filter(e => e.datei !== pfad); });
+    veraendert = true;
+    await alleLadenLeise();
+    melden('Gelöscht.', 'ok');
+  } catch (e) {
+    melden('Löschen fehlgeschlagen: ' + e.message, 'warn');
+  }
+}
+
+// ── Kleinkram ───────────────────────────────────────────────
+let meldungsUhr = null;
+function melden(text, art = '') {
+  const m = document.getElementById('meldung');
+  m.textContent = text;
+  m.className = art;
+  m.style.display = 'block';
+  clearTimeout(meldungsUhr);
+  meldungsUhr = setTimeout(() => m.style.display = 'none', 4000);
+}
+
+window.addEventListener('beforeunload', e => {
+  if (veraendert) { e.preventDefault(); e.returnValue = ''; }
+});
+
+document.getElementById('pwEingabe').addEventListener('keydown', e => {
+  if (e.key === 'Enter') entsperren();
+});
+
+sperrbildschirmZeigen();
+</script>
+</body>
+</html>

@@ -1,0 +1,59 @@
+{
+  "hinweis": "Diese Datei steuert die Uebersichtsseite. Sie wird ueber verwalten.html gepflegt - Handarbeit ist moeglich, aber nicht noetig.",
+  "aktualisiert": "2026-09-04T11:08:28Z",
+  "rubriken": [
+    {
+      "name": "Arduino",
+      "sichtbar": true,
+      "eintraege": [
+        {
+          "datei": "arduino_uno_arbeitsblatt.html",
+          "titel": "Arduino Uno – Arbeitsblatt",
+          "sichtbar": true
+        },
+        {
+          "datei": "arduino_uebungen1.html",
+          "titel": "Arduino – Übungen 1",
+          "sichtbar": true
+        },
+        {
+          "datei": "arduino_uebungen_protokoll.html",
+          "titel": "Arduino – Übungsprotokoll",
+          "sichtbar": true
+        }
+      ]
+    },
+    {
+      "name": "Werkzeuge",
+      "sichtbar": true,
+      "eintraege": [
+        {
+          "datei": "teachclock.html",
+          "titel": "Uhrzeit üben",
+          "sichtbar": true
+        },
+        {
+          "datei": "wortuhr.html",
+          "titel": "Wortuhr",
+          "sichtbar": true
+        }
+      ]
+    },
+    {
+      "name": "Weiteres",
+      "sichtbar": true,
+      "eintraege": [
+        {
+          "datei": "paella.html",
+          "titel": "Paella",
+          "sichtbar": true
+        },
+        {
+          "datei": "prompt_lernbox_mit_chatlink.html",
+          "titel": "Lernbox mit Chat-Link",
+          "sichtbar": true
+        }
+      ]
+    }
+  ]
+}
