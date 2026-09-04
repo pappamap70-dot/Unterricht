@@ -234,21 +234,11 @@ let rubrikReihenfolge = [];   // gewuenschte Reihenfolge aus inhalte.json
 
 async function loadFiles(forceRefresh = false) {
   const contentEl = document.getElementById('content');
-
-  if (!forceRefresh) {
-    const cached = getCache();
-    if (cached) {
-      allFiles = cached.files || cached;          // altes Format bleibt lesbar
-      rubrikReihenfolge = cached.rubriken || [];
-      renderFiles();
-      return;
-    }
-  }
-
   contentEl.innerHTML = '<div class="status" id="status">Lade Übersicht…</div>';
 
-  // Bevorzugt die gepflegte Gliederung. Sie entsteht über verwalten.html und
-  // bestimmt Reihenfolge, Titel und was überhaupt angezeigt wird.
+  // Die Gliederung wird immer frisch geholt - sie liegt auf derselben Seite,
+  // kostet nichts und soll Änderungen sofort zeigen. Zwischengespeichert wird
+  // nur der Notweg über die GitHub-API, der ein Abfragelimit hat.
   try {
     const res = await fetch('inhalte.json?t=' + Date.now(), { cache: 'no-store' });
     if (res.ok) {
@@ -270,7 +260,6 @@ async function loadFiles(forceRefresh = false) {
           });
         allFiles = dateien;
         rubrikReihenfolge = reihenfolge;
-        setCache(dateien, reihenfolge);
         renderFiles();
         return;
       }
@@ -279,12 +268,23 @@ async function loadFiles(forceRefresh = false) {
     // Steuerdatei fehlt oder ist unbrauchbar - dann eben der Dateibaum
   }
 
-  await ladeAusDateibaum();
+  await ladeAusDateibaum(forceRefresh);
 }
 
 /** Notweg: listet einfach alles auf, was im Repo liegt. */
-async function ladeAusDateibaum() {
+async function ladeAusDateibaum(forceRefresh = false) {
   const contentEl = document.getElementById('content');
+
+  if (!forceRefresh) {
+    const cached = getCache();
+    if (cached && (cached.files || []).length) {
+      allFiles = cached.files;
+      rubrikReihenfolge = cached.rubriken || [];
+      renderFiles();
+      return;
+    }
+  }
+
   try {
     const treeUrl = `https://api.github.com/repos/${OWNER}/${REPO}/git/trees/${BRANCH}?recursive=1`;
     const res = await fetch(treeUrl);
