@@ -1,10 +1,10 @@
 {
   "hinweis": "Diese Datei steuert die Uebersichtsseite. Sie wird ueber verwalten.html gepflegt - Handarbeit ist moeglich, aber nicht noetig.",
-  "aktualisiert": "2026-09-04T11:08:28Z",
+  "aktualisiert": "2026-09-04T11:24:11.092Z",
   "rubriken": [
     {
       "name": "Arduino",
-      "sichtbar": true,
+      "sichtbar": false,
       "eintraege": [
         {
           "datei": "arduino_uno_arbeitsblatt.html",
