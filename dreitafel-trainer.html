@@ -158,7 +158,7 @@ input[type=text],input[type=number],select{font-family:inherit;font-size:20px;pa
       <button id="m-pick" onclick="setMode('pick')">Körper wählen</button>
       <button id="m-draw" onclick="setMode('draw')">Ansicht zeichnen</button>
       <button id="m-proj" onclick="setMode('proj')">Projektion zeigen</button>
-      <button id="m-wett" onclick="setMode('wett')">Wettkampf</button>
+      <button id="m-wett" style="display:none" onclick="setMode('wett')">Wettkampf</button>
     </div>
     <div class="grp">
       <button id="k-frei" class="on" onclick="setKat('frei')">Zufallskörper</button>
@@ -699,7 +699,7 @@ const PSTEP=[
  'Blick von links: Die Sehstrahlen treffen die rechte Tafel. Dort entsteht die Seitenansicht.',
  'Blick von oben: Die Sehstrahlen treffen die untere Tafel. Dort entsteht die Draufsicht.',
  'Die beiden seitlichen Tafeln werden um die Faltachsen in die Ebene der Vorderansicht geklappt.',
- 'Fertig: Draufsicht unter der Vorderansicht, Seitenansicht rechts daneben. Ordnungslinien und die 45°-Mitnehmerlinie verbinden zusammengehörige Maße.'];
+ 'Fertig: Draufsicht unter der Vorderansicht, Seitenansicht rechts daneben. Die Ordnungslinien und die Projektionslinie unter 45° verbinden zusammengehörige Maße.'];
 
 function projBounds(n,u){
   const lo=[1e9,1e9,1e9],hi=[-1e9,-1e9,-1e9];
@@ -738,13 +738,13 @@ function drawOrd(ctx,P,n,al){
   for(let z=0;z<=n;z++)seg(ctx,pt(-0.4,z),pt(2*n+2*GAP+0.4,z));
   for(let x=0;x<=n;x++)seg(ctx,pt(x,n+0.4),pt(x,-n-2*GAP-0.4));
   ctx.setLineDash([]);ctx.strokeStyle='#C0603A';ctx.lineWidth=1.7;
-  seg(ctx,pt(E-L,-GAP+L),pt(E+L,-GAP-L));
+  seg(ctx,pt(E,-GAP),pt(E+L,-GAP-L));      // startet am Kreuz der beiden Faltachsen
   ctx.setLineDash([10,3,2,3]);ctx.strokeStyle='#6B1A2A';ctx.lineWidth=1.4;
   seg(ctx,pt(E,n+0.6),pt(E,-n-2*GAP-0.6));
   seg(ctx,pt(-0.6,-GAP),pt(2*n+2*GAP+0.6,-GAP));
   ctx.setLineDash([]);ctx.fillStyle='#C0603A';ctx.font='bold 13px Arial';
   ctx.textAlign='left';ctx.textBaseline='bottom';
-  const mp=pt(E+L*0.55,-GAP-L*0.55);ctx.fillText('45°-Mitnehmerlinie',mp[0]+7,mp[1]-3);
+  const mp=pt(E+L*0.6,-GAP-L*0.6);ctx.fillText('Projektionslinie',mp[0]+7,mp[1]-3);
   ctx.restore();
 }
 function drawProj(){
@@ -1596,7 +1596,12 @@ function wOnEnd(m){
 }
 
 /* ---------- Start ---------- */
+/* Der Wettkampf-Knopf erscheint nur, wo es auch einen Wettkampfserver gibt. So ist die
+   weitergegebene Datei von selbst die Schuelerfassung - ohne zweite Fassung zu pflegen. */
 window.addEventListener('resize',drawAll);
+wServerDa().then(da=>{
+  if(da||ISLEITUNG)document.getElementById('m-wett').style.display='';
+});
 bindDrag(document.getElementById('main'));
 bindDrag(document.getElementById('wh-cv'));
 bindDrag(document.getElementById('wp-cv'));
