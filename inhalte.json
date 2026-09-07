@@ -1,6 +1,6 @@
 {
   "hinweis": "Diese Datei steuert die Uebersichtsseite. Sie wird ueber verwalten.html gepflegt - Handarbeit ist moeglich, aber nicht noetig.",
-  "aktualisiert": "2026-09-04T11:46:15.024Z",
+  "aktualisiert": "2026-09-07T16:00:52.179Z",
   "rubriken": [
     {
       "name": "Arduino",
@@ -52,6 +52,11 @@
         {
           "datei": "teachclock.html",
           "titel": "Teachclock",
+          "sichtbar": true
+        },
+        {
+          "datei": "dreitafel-trainer.html",
+          "titel": "Dreitafelprojektion – Trainer",
           "sichtbar": true
         }
       ]
