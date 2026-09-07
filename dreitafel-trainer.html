@@ -1,0 +1,1616 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dreitafelprojektion – Trainer</title>
+<meta name="theme-color" content="#6B1A2A">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%236B1A2A'/%3E%3Cg fill='%23E8906A'%3E%3Crect x='7' y='7' width='21' height='21'/%3E%3Crect x='36' y='7' width='21' height='21'/%3E%3Crect x='7' y='36' width='21' height='21'/%3E%3C/g%3E%3Cpath d='M32 3v58M3 32h58' stroke='%23FBF5F0' stroke-width='2.5'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%236B1A2A'/%3E%3Cg fill='%23E8906A'%3E%3Crect x='7' y='7' width='21' height='21'/%3E%3Crect x='36' y='7' width='21' height='21'/%3E%3Crect x='7' y='36' width='21' height='21'/%3E%3C/g%3E%3Cpath d='M32 3v58M3 32h58' stroke='%23FBF5F0' stroke-width='2.5'/%3E%3C/svg%3E">
+<style>
+:root{--bordeaux:#6B1A2A;--terrakotta:#C0603A;--lachs:#E8906A;--creme:#FBF5F0;
+ --linie:#D9C7BC;--gruen:#3E7A5A;--rot:#B3372F}
+*{box-sizing:border-box}
+body{margin:0;background:var(--creme);color:#2b2320;
+ font-family:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;font-size:18px}
+header{background:var(--bordeaux);color:#fff;padding:10px 14px}
+header h1{margin:0;font-size:22px;font-weight:700;letter-spacing:.5px}
+header p{margin:2px 0 0;font-size:15px;opacity:.85}
+.wrap{max-width:1000px;margin:0 auto;padding:12px}
+.bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:10px}
+button{font-family:inherit;font-size:17px;padding:7px 12px;border-radius:6px;
+ border:1px solid var(--terrakotta);background:#fff;color:var(--bordeaux);cursor:pointer}
+button:hover{background:#fff2ea}
+button.prim{background:var(--terrakotta);color:#fff;border-color:var(--terrakotta)}
+button.prim:hover{background:var(--bordeaux);border-color:var(--bordeaux)}
+button.on{background:var(--bordeaux);color:#fff;border-color:var(--bordeaux)}
+button:disabled{opacity:.45;cursor:default}
+.grp{display:flex;gap:4px;border:1px solid var(--linie);border-radius:8px;padding:3px;background:#fff}
+.grp button{border:none;padding:6px 10px}
+.spacer{flex:1}
+.score{font-size:16px;color:var(--bordeaux);white-space:nowrap}
+.stage{display:flex;gap:12px;flex-wrap:wrap}
+.canvasbox{flex:1 1 380px;min-width:300px;background:#fff;border:1px solid var(--linie);
+ border-radius:10px;padding:6px;position:relative}
+.drehhint{position:absolute;right:10px;bottom:8px;font-size:14px;color:#b09c91;pointer-events:none}
+canvas{display:block;width:100%;height:auto;touch-action:none;cursor:grab}
+canvas:active{cursor:grabbing}
+.side{flex:0 0 260px;background:#fff;border:1px solid var(--linie);border-radius:10px;padding:10px}
+.side.breit{flex:0 0 430px}   /* "Körper wählen": Platz für vier lesbare Vorschläge */
+h2{font-size:17px;margin:0 0 6px;color:var(--bordeaux);text-transform:uppercase;letter-spacing:.6px}
+.layers{display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap}
+.grid{display:grid;gap:3px;margin:0 auto}
+.cell{aspect-ratio:1/1;border:1px solid var(--linie);border-radius:4px;background:#faf6f3;cursor:pointer}
+.cell.f{background:var(--terrakotta);border-color:var(--bordeaux)}
+.cell.below{background:#efe6e0;border-style:dashed}
+.cell.gut{background:var(--gruen);border-color:var(--gruen)}
+.cell.fehlt{background:#fff;border:2px dashed var(--rot)}
+.cell.zuviel{background:#f3c9c5;border-color:var(--rot)}
+.axis{font-size:14px;color:#8b7b72;text-align:center;margin:3px 0}
+.msg{margin-top:10px;padding:8px 10px;border-radius:8px;font-size:17px;display:none}
+.msg.ok{display:block;background:#e6f2eb;border:1px solid var(--gruen);color:var(--gruen)}
+.msg.no{display:block;background:#fbe9e7;border:1px solid var(--rot);color:var(--rot)}
+.msg.info{display:block;background:#fff2ea;border:1px solid var(--terrakotta);color:var(--bordeaux)}
+.choices{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.choice{background:#fff;border:2px solid var(--linie);border-radius:10px;padding:4px;position:relative}
+.choice:hover{border-color:var(--terrakotta)}
+.choice.ok{border-color:var(--gruen);background:#f2f9f5}
+.choice.no{border-color:var(--rot);background:#fdf1f0}
+.choice span{position:absolute;top:4px;left:8px;font-size:16px;font-weight:700;color:var(--bordeaux)}
+.hint{font-size:15px;color:#8b7b72;margin-top:8px;line-height:1.35}
+/* --- Projektionsmodus --- */
+.steps{list-style:none;margin:0 0 8px;padding:0;font-size:15px}
+.steps li{padding:4px 8px;border-left:3px solid var(--linie);color:#8b7b72}
+.steps li.now{border-left-color:var(--terrakotta);color:var(--bordeaux);font-weight:700;background:#fff2ea}
+.steps li.done{border-left-color:var(--gruen);color:#5c6b62}
+/* --- Wettkampf --- */
+#wett{position:fixed;inset:0;background:var(--creme);z-index:50;display:none;overflow:auto;padding:14px}
+#wett.show{display:block}
+.wsc{max-width:1100px;margin:0 auto}
+.wscreen{display:none}
+.wscreen.show{display:block}
+.wtop{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.wbig{font-size:60px;font-weight:700;color:var(--bordeaux);letter-spacing:8px;line-height:1.05}
+.wurl{font-size:24px;color:var(--terrakotta);word-break:break-all;font-weight:700}
+.card{background:#fff;border:1px solid var(--linie);border-radius:12px;padding:14px;margin-bottom:12px}
+.card h3{margin:0 0 8px;font-size:16px;text-transform:uppercase;letter-spacing:.6px;color:var(--bordeaux)}
+.plist{display:flex;flex-wrap:wrap;gap:8px}
+.qrbox{background:#fff;padding:10px;border-radius:10px;border:1px solid var(--linie);line-height:0}
+.qrbox canvas{display:block}
+.pchip{background:var(--lachs);color:#3a1a12;border-radius:20px;padding:5px 14px;font-size:19px}
+.frage{font-size:26px;font-weight:700;color:var(--bordeaux);margin:0 0 8px}
+.wstage{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start}
+.wstage .canvasbox{flex:1 1 340px}
+.ans{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+/* Das Bild ist die Antwort – es bekommt die ganze Knopfbreite,
+   der Buchstabe sitzt als kleine Marke in der Ecke. */
+.ansbtn{position:relative;border:none;border-radius:12px;color:#fff;font-size:21px;font-weight:700;
+ padding:26px 12px 12px;display:flex;align-items:center;justify-content:center;
+ gap:10px;cursor:pointer;min-height:96px}
+.ansbtn:hover{filter:brightness(1.08)}
+.a0{background:#C0392B}.a1{background:#2874A6}.a2{background:#B7950B}.a3{background:#1E8449}
+.a0:hover{background:#C0392B}.a1:hover{background:#2874A6}.a2:hover{background:#B7950B}.a3:hover{background:#1E8449}
+.ansbtn.dim{opacity:.4}
+.ansbtn.win{box-shadow:0 0 0 5px #2b2320 inset}
+.ansbtn .lbl{position:absolute;top:6px;left:13px;font-size:21px;line-height:1;opacity:.9}
+.ansbtn .cvwrap{width:100%;max-width:300px;background:#fff;border-radius:8px;padding:3px}
+.ansbtn canvas{width:100%;height:auto;cursor:pointer;display:block}
+.mini{display:grid;gap:3px;background:rgba(0,0,0,.18);padding:4px;border-radius:6px;
+ width:100%;max-width:250px}
+.mini div{aspect-ratio:1/1;border:1px solid rgba(255,255,255,.45);border-radius:3px}
+.mini div.f{background:#fff}
+/* Bei der Auflösung zählen Balken und Rangliste – die Bilder dürfen kleiner sein. */
+#wr-ans .ansbtn{min-height:70px;padding:24px 10px 10px}
+#wr-ans .ansbtn .cvwrap{max-width:190px}
+#wr-ans .mini{max-width:160px}
+/* Die Bilder dürfen nur so groß werden, dass alle vier aufs Display passen –
+   sonst rutschen C und D unter den Rand. Deshalb zusätzlich an der Fensterhöhe messen. */
+#wh-ans .ansbtn .cvwrap{max-width:min(300px,30vh)}
+#wh-ans .mini{max-width:min(250px,26vh)}
+#wp-ans .ansbtn .cvwrap{max-width:min(300px,30vh)}
+#wp-ans .mini{max-width:min(250px,26vh)}
+.tim{font-size:32px;font-weight:700;color:var(--bordeaux)}
+.tim.hot{color:var(--rot)}
+.bars{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;align-items:end;height:130px;margin-top:10px}
+.bcol{display:flex;flex-direction:column;justify-content:flex-end;height:100%}
+.bar4{border-radius:8px 8px 0 0;min-height:5px;max-height:calc(100% - 30px)}
+.bcol .cnt{text-align:center;font-size:20px;font-weight:700;color:var(--bordeaux);margin-bottom:3px}
+.lb{list-style:none;margin:0;padding:0}
+.lb li{display:flex;gap:12px;align-items:center;background:#fff;border:1px solid var(--linie);
+ border-radius:10px;padding:8px 12px;margin-bottom:6px;font-size:21px}
+.lb li.me{border-color:var(--terrakotta);background:#fff6f1}
+.lb .rk{width:34px;color:#a4938a;font-weight:700}
+.lb b{flex:1;font-weight:600}
+.lb .pt{color:var(--terrakotta);font-weight:700}
+.lb .dl{color:var(--gruen);font-size:17px}
+input[type=text],input[type=number],select{font-family:inherit;font-size:20px;padding:8px 10px;
+ border:1px solid var(--linie);border-radius:8px;width:100%;max-width:340px;background:#fff}
+.big{font-size:22px;padding:13px 22px}
+.riesig{font-size:44px;font-weight:700;color:var(--bordeaux)}
+.feld{margin-bottom:10px}
+.feld label{display:block;font-size:15px;color:#8b7b72;margin-bottom:3px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+#w-play .canvasbox{margin:0 auto}
+@media(max-width:700px){.side,.side.breit{flex:1 1 100%}
+ .wbig{font-size:44px;letter-spacing:5px}
+ .frage{font-size:20px}.tim{font-size:26px}
+ .ansbtn{min-height:72px;font-size:17px;padding:22px 7px 7px;gap:6px}
+ .ansbtn .lbl{top:4px;left:9px;font-size:17px}
+ .ansbtn .cvwrap{max-width:175px}
+ .mini{max-width:150px}
+ /* Handy: Körper und Antworten stehen untereinander, also beides an der Höhe messen. */
+ #w-play .canvasbox{max-width:min(520px,30vh)}
+ #wp-ans .ansbtn .cvwrap{max-width:min(300px,21vh)}
+ #wp-ans .mini{max-width:min(250px,19vh)}
+ .lb li{font-size:18px}.riesig{font-size:34px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Dreitafelprojektion – Trainer</h1>
+  <p id="auftrag">Alle drei Ansichten sind gegeben. Baue einen Körper, der zu allen dreien passt.</p>
+</header>
+
+<div class="wrap">
+  <div class="bar">
+    <div class="grp">
+      <button id="m-build" class="on" onclick="setMode('build')">Körper bauen</button>
+      <button id="m-pick" onclick="setMode('pick')">Körper wählen</button>
+      <button id="m-draw" onclick="setMode('draw')">Ansicht zeichnen</button>
+      <button id="m-proj" onclick="setMode('proj')">Projektion zeigen</button>
+      <button id="m-wett" onclick="setMode('wett')">Wettkampf</button>
+    </div>
+    <div class="grp">
+      <button id="k-frei" class="on" onclick="setKat('frei')">Zufallskörper</button>
+      <button id="k-soma" onclick="setKat('soma')">Soma-Teile</button>
+    </div>
+    <div class="grp">
+      <button id="n-3" class="on" onclick="setN(3)">3 × 3 × 3</button>
+      <button id="n-4" onclick="setN(4)">4 × 4 × 4</button>
+    </div>
+    <button class="prim" id="btn-neu" onclick="newTask()">Neue Aufgabe</button>
+    <button onclick="resetView()">Ansicht zurücksetzen</button>
+    <div class="spacer"></div>
+    <div class="score" id="score">0 / 0 richtig</div>
+  </div>
+
+  <div class="stage">
+    <div class="canvasbox">
+      <canvas id="main"></canvas>
+      <div class="drehhint" id="drehhint">ziehen zum Drehen</div>
+    </div>
+    <div class="side" id="side"></div>
+  </div>
+
+  <div class="msg" id="msg"></div>
+  <div class="hint" id="fusszeile">
+    Europäische Projektionsmethode (1. Winkel): Jede Tafel liegt <em>hinter</em> dem Körper.
+    Vorderansicht auf der Rückwand, Seitenansicht (Blick von links) auf der rechten Wand,
+    Draufsicht auf dem Boden. Aufgeklappt ergibt das die gewohnte Anordnung:
+    Draufsicht unter der Vorderansicht, Seitenansicht rechts daneben.
+  </div>
+</div>
+
+<!-- ==================== WETTKAMPF ==================== -->
+<div id="wett"><div class="wsc">
+
+  <div class="wtop">
+    <button onclick="setMode('build')">← Zurück zum Trainer</button>
+    <div class="spacer"></div>
+    <div id="wstatus" class="score"></div>
+  </div>
+
+  <!-- Startbildschirm -->
+  <div class="wscreen show" id="w-start">
+    <div class="card">
+      <h3>Wettkampf</h3>
+      <p style="margin:0 0 12px;font-size:19px" id="w-startText">
+        Der Lehrer startet das Spiel in der Lehrer-App. Tippe unten auf <b>Mitspielen</b>,
+        gib PIN und Namen ein – alle rätseln gleichzeitig, und wer schnell und richtig
+        antwortet, bekommt mehr Punkte.
+      </p>
+      <div class="msg info" id="w-keinserver" style="display:none">
+        Diese Seite läuft nicht auf dem Lehrer-Laptop, deshalb geht der Wettkampf von hier aus nicht.
+        Öffne stattdessen die Adresse, die vorne an der Wand steht – etwa
+        <b>http://192.168.1.42:8080/mit</b> – oder scanne den QR-Code.
+        Die vier Übungsmodi funktionieren hier natürlich weiter.
+      </div>
+      <div class="row" id="w-startknoepfe">
+        <button class="prim big" id="w-hostbtn" style="display:none"
+                onclick="wHostStart()">Spiel leiten</button>
+        <button class="prim big" onclick="wShow('w-join')">Mitspielen</button>
+      </div>
+      <p class="hint" id="w-starthint"></p>
+    </div>
+  </div>
+
+  <!-- Lehrer: Lobby -->
+  <div class="wscreen" id="w-hostlobby">
+    <div class="card">
+      <h3>Beitreten</h3>
+      <div class="row" style="align-items:center;gap:26px">
+        <div>
+          <div class="hint" style="margin:0">Spiel-PIN</div>
+          <div class="wbig" id="w-pin">------</div>
+        </div>
+        <div>
+          <div class="hint" style="margin:0">Seite auf dem Handy öffnen</div>
+          <div class="wurl" id="w-joinurl">–</div>
+          <div class="hint" style="margin-top:6px">oder einfach den Code scannen</div>
+        </div>
+        <div class="qrbox"><canvas id="w-qr"></canvas></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Einstellungen</h3>
+      <div class="row">
+        <div class="feld"><label>Körper</label>
+          <select id="w-koerper" onchange="wKoerperWechsel()">
+            <option value="frei">Zufallskörper</option>
+            <option value="soma">nur Soma-Teile</option>
+          </select></div>
+        <div class="feld"><label>Raster</label>
+          <select id="w-n"><option value="3">3 × 3 × 3</option><option value="4">4 × 4 × 4</option></select></div>
+        <div class="feld"><label>Zeit pro Frage (s)</label>
+          <input type="number" id="w-limit" value="30" min="10" max="120" style="max-width:120px"></div>
+        <div class="feld"><label>Aufgabenart</label>
+          <select id="w-art">
+            <option value="mix">gemischt</option>
+            <option value="pick">Körper zu Ansichten wählen</option>
+            <option value="view">Ansicht zum Körper wählen</option>
+          </select></div>
+        <div class="feld"><label>Anzahl Fragen</label>
+          <input type="number" id="w-anzahl" value="10" min="0" max="99" style="max-width:120px">
+          <div class="hint" style="margin-top:2px">0 = ohne Ende</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Mitspieler (<span id="w-pcount">0</span>)</h3>
+      <div class="plist" id="w-players"><span class="hint">noch niemand …</span></div>
+    </div>
+    <button class="prim big" id="w-startbtn" onclick="wNext()">Erste Frage starten</button>
+  </div>
+
+  <!-- Lehrer: Frage läuft -->
+  <div class="wscreen" id="w-hostq">
+    <div class="wtop">
+      <div class="frage" id="wh-frage" style="flex:1"></div>
+      <div class="tim" id="wh-timer">–</div>
+    </div>
+    <div class="wstage">
+      <div class="canvasbox" style="flex:1 1 280px;max-width:520px"><canvas id="wh-cv"></canvas>
+        <div class="drehhint">ziehen zum Drehen</div></div>
+      <div style="flex:1 1 380px;min-width:260px"><div class="ans" id="wh-ans"></div></div>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <div class="row">
+        <div class="riesig" id="wh-count">0</div>
+        <div style="align-self:center" class="hint">von <span id="wh-total">0</span> haben geantwortet</div>
+        <div class="spacer"></div>
+        <button class="prim big" onclick="wReveal()">Auflösen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lehrer: Auflösung -->
+  <div class="wscreen" id="w-hostrev">
+    <div class="frage" id="wr-frage"></div>
+    <div class="card">
+      <h3>Antworten</h3>
+      <div class="bars" id="wr-bars"></div>
+      <div class="ans" id="wr-ans" style="margin-top:12px"></div>
+    </div>
+    <div class="card">
+      <h3>Rangliste</h3>
+      <ul class="lb" id="wr-lb"></ul>
+    </div>
+    <div class="row">
+      <button class="prim big" id="wr-next" onclick="wNext()">Nächste Frage</button>
+      <button class="big" id="wr-end" onclick="wEnd()">Spiel beenden</button>
+    </div>
+  </div>
+
+  <!-- Lehrer: Ende -->
+  <div class="wscreen" id="w-hostend">
+    <h2 style="font-size:30px">Endstand</h2>
+    <ul class="lb" id="we-lb"></ul>
+    <div class="row">
+      <button class="prim big" onclick="wHostStart()">Neues Spiel</button>
+      <button class="big" onclick="setMode('build')">Zurück zum Trainer</button>
+    </div>
+  </div>
+
+  <!-- Schüler: Beitreten -->
+  <div class="wscreen" id="w-join">
+    <div class="card" style="max-width:460px">
+      <h3>Mitspielen</h3>
+      <div class="feld"><label>Spiel-PIN</label>
+        <input type="text" id="w-inpin" inputmode="numeric" autocomplete="off" placeholder="123456"></div>
+      <div class="feld"><label>Dein Name</label>
+        <input type="text" id="w-inname" autocomplete="off" maxlength="16" placeholder="z. B. Lena"></div>
+      <button class="prim big" onclick="wJoin()">Mitmachen</button>
+      <p class="hint" id="w-joinhint"></p>
+    </div>
+  </div>
+
+  <!-- Schüler: Warten -->
+  <div class="wscreen" id="w-wait">
+    <div class="card" style="text-align:center;padding:40px 14px">
+      <div class="riesig" id="w-myname">–</div>
+      <p style="font-size:22px" id="w-waittext">Du bist dabei. Warte auf die erste Frage …</p>
+      <div class="hint" id="w-myscore"></div>
+    </div>
+  </div>
+
+  <!-- Schüler: Frage -->
+  <div class="wscreen" id="w-play">
+    <div class="wtop">
+      <div class="frage" id="wp-frage" style="flex:1"></div>
+      <div class="tim" id="wp-timer">–</div>
+    </div>
+    <div class="wstage">
+      <div class="canvasbox" style="flex:1 1 280px;max-width:520px"><canvas id="wp-cv"></canvas>
+        <div class="drehhint">ziehen zum Drehen</div></div>
+      <div style="flex:1 1 380px;min-width:260px"><div class="ans" id="wp-ans"></div></div>
+    </div>
+  </div>
+
+  <!-- Schüler: Ergebnis -->
+  <div class="wscreen" id="w-res">
+    <div class="card" style="text-align:center;padding:34px 14px">
+      <div class="riesig" id="wres-top">–</div>
+      <div style="font-size:26px;margin-top:6px" id="wres-pt"></div>
+      <div class="hint" id="wres-rank"></div>
+    </div>
+    <ul class="lb" id="wres-lb"></ul>
+  </div>
+
+</div></div>
+<script>
+/* Koordinaten: x nach rechts, y nach hinten, z nach oben.
+   Tafeln: 0 Vorderansicht y=n+GAP | 1 Seitenansicht x=n+GAP | 2 Draufsicht z=-GAP */
+const VIEWS=[{name:'Vorderansicht',ax:0},{name:'Seitenansicht',ax:1},{name:'Draufsicht',ax:2}];
+const GAP=1.0;
+const AZ0=225,EL0=32,AZMIN=186,AZMAX=264,ELMIN=6,ELMAX=82;
+const S={n:3,kat:'frei',teil:-1,mode:'build',target:null,hidden:-1,body:new Set(),draw:null,
+  solved:false,revealed:false,right:0,total:0,layer:0,
+  choices:[],correct:0,picked:-1,az:AZ0,el:EL0,
+  pstep:0,pv:{u:0,az:AZ0,el:EL0,s0:0,s1:0,s2:0,r0:0,r1:0,r2:0,ba:1,ol:0},praf:0,pfall:0,pplay:0};
+
+const key=(x,y,z)=>x+','+y+','+z;
+const parse=k=>k.split(',').map(Number);
+const rnd=m=>Math.floor(Math.random()*m);
+const mix=(a,b,t)=>a+(b-a)*t;
+const ease=t=>t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+const DIRS=[[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]];
+
+/* ---------- Körper ---------- */
+function normalize(set){
+  let mi=[99,99,99];
+  for(const k of set){const p=parse(k);for(let i=0;i<3;i++)mi[i]=Math.min(mi[i],p[i]);}
+  const out=new Set();
+  for(const k of set){const p=parse(k);out.add(key(p[0]-mi[0],p[1]-mi[1],p[2]-mi[2]));}
+  return out;
+}
+function bbox(set){
+  let mi=[99,99,99],ma=[-1,-1,-1];
+  for(const k of set){const p=parse(k);
+    for(let i=0;i<3;i++){mi[i]=Math.min(mi[i],p[i]);ma[i]=Math.max(ma[i],p[i]);}}
+  return ma.map((v,i)=>v-mi[i]+1);
+}
+function connected(set){
+  if(set.size===0)return false;
+  const first=set.values().next().value,seen=new Set([first]),q=[parse(first)];
+  while(q.length){
+    const c=q.pop();
+    for(const d of DIRS){
+      const k=key(c[0]+d[0],c[1]+d[1],c[2]+d[2]);
+      if(set.has(k)&&!seen.has(k)){seen.add(k);q.push(parse(k));}
+    }
+  }
+  return seen.size===set.size;
+}
+const same=(a,b)=>a.size===b.size&&[...a].every(k=>b.has(k));
+const exposed=(set,k)=>{const p=parse(k);
+  return DIRS.some(d=>!set.has(key(p[0]+d[0],p[1]+d[1],p[2]+d[2])));};
+
+function maximal(t,n){ // größter Körper mit denselben drei Ansichten
+  const A=sil(t,n,0),B=sil(t,n,1),C=sil(t,n,2),out=new Set();
+  for(let x=0;x<n;x++)for(let y=0;y<n;y++)for(let z=0;z<n;z++)
+    if(A[x][z]&&B[y][z]&&C[x][y])out.add(key(x,y,z));
+  return out;
+}
+function genBody(n){
+  const min=n===3?5:8,span=n===3?4:7;
+  for(let att=0;att<400;att++){
+    const goal=min+rnd(span),set=new Set(),list=[],start=[rnd(n),rnd(n),rnd(n)];
+    set.add(key(...start));list.push(start);
+    let guard=0;
+    while(list.length<goal&&guard++<4000){
+      const b=list[rnd(list.length)],d=DIRS[rnd(6)];
+      const p=[b[0]+d[0],b[1]+d[1],b[2]+d[2]];
+      if(p.some(v=>v<0||v>=n))continue;
+      const k=key(...p);
+      if(set.has(k))continue;
+      set.add(k);list.push(p);
+    }
+    if(list.length<goal)continue;
+    const nb=normalize(set);
+    if(!bbox(nb).every(d=>d>=2))continue;
+    const mx=maximal(nb,n);
+    if(!connected(mx))continue;
+    if(mx.size>(n===3?12:22))continue;
+    return mx;
+  }
+  return normalize(new Set([key(0,0,0),key(1,0,0),key(1,1,0),key(1,1,1)]));
+}
+function mutate(body,n){
+  for(let att=0;att<200;att++){
+    const set=new Set(body),ops=1+rnd(2);
+    for(let o=0;o<ops;o++){
+      const arr=[...set];
+      if(Math.random()<0.5&&set.size>4){set.delete(arr[rnd(arr.length)]);}
+      else{
+        const b=parse(arr[rnd(arr.length)]),d=DIRS[rnd(6)];
+        const p=[b[0]+d[0],b[1]+d[1],b[2]+d[2]];
+        if(p.some(v=>v<0||v>=n))continue;
+        set.add(key(...p));
+      }
+    }
+    if(set.size<4||!connected(set))continue;
+    const nb=normalize(set);
+    if(!bbox(nb).every(d=>d<=n))continue;
+    let ok=false;
+    for(const k of nb) if(!body.has(k)&&exposed(nb,k))ok=true;
+    for(const k of body) if(!nb.has(k)&&exposed(body,k))ok=true;
+    if(ok)return nb;
+  }
+  return null;
+}
+
+/* ---------- Soma-Würfel ----------
+   Die sieben Teile nach Piet Hein: ein Dreier und sechs Vierer, zusammen 27 Würfel.
+   Nachgerechnet: die Zahl der verschiedenen Lagen ist 12/24/12/12/12/12/8, A und B
+   sind echte Spiegelbilder, und aus den sieben Teilen lässt sich der 3×3×3-Würfel
+   legen (480 Lösungen bis auf Drehung = die bekannten 240 mit Spiegelung). */
+const SOMA=[
+  {nr:1,name:'V',z:[[0,0,0],[1,0,0],[0,1,0]]},
+  {nr:2,name:'L',z:[[0,0,0],[1,0,0],[2,0,0],[0,1,0]]},
+  {nr:3,name:'T',z:[[0,0,0],[1,0,0],[2,0,0],[1,1,0]]},
+  {nr:4,name:'Z',z:[[0,0,0],[1,0,0],[1,1,0],[2,1,0]]},
+  {nr:5,name:'A',z:[[0,0,0],[1,0,0],[1,1,0],[1,1,1]]},
+  {nr:6,name:'B',z:[[0,0,0],[1,0,0],[0,1,0],[0,1,1]]},
+  {nr:7,name:'P',z:[[0,0,0],[1,0,0],[0,1,0],[0,0,1]]}];
+const somaName=i=>'Teil '+SOMA[i].nr+' („'+SOMA[i].name+'“)';
+const SOMALAGEN=(function(){
+  const achse=[p=>[p[0],p[1],p[2]],p=>[p[0],-p[2],p[1]],
+               p=>[p[0],-p[1],-p[2]],p=>[p[0],p[2],-p[1]]];
+  const seite=[p=>[p[0],p[1],p[2]],p=>[-p[0],-p[1],p[2]],p=>[p[1],-p[0],p[2]],
+               p=>[-p[1],p[0],p[2]],p=>[p[2],p[1],-p[0]],p=>[-p[2],p[1],p[0]]];
+  const dreh=[];
+  for(const s of seite)for(const a of achse)dreh.push(p=>a(s(p)));
+  return SOMA.map(t=>{
+    const gesehen=new Map();
+    for(const d of dreh){
+      const roh=t.z.map(d),mi=[99,99,99];
+      for(const p of roh)for(let i=0;i<3;i++)mi[i]=Math.min(mi[i],p[i]);
+      const set=new Set(roh.map(p=>key(p[0]-mi[0],p[1]-mi[1],p[2]-mi[2])));
+      gesehen.set([...set].sort().join(';'),set);
+    }
+    return [...gesehen.values()];
+  });
+})();
+function somaZufall(){
+  const i=rnd(SOMA.length),lagen=SOMALAGEN[i];
+  return {teil:i,koerper:new Set(lagen[rnd(lagen.length)])};
+}
+
+/* ---------- Ansichten ---------- */
+function sil(body,n,ax){
+  const g=Array.from({length:n},()=>new Array(n).fill(false));
+  for(const k of body){
+    const [x,y,z]=parse(k);
+    if(ax===0)g[x][z]=true; else if(ax===1)g[y][z]=true; else g[x][y]=true;
+  }
+  return g;
+}
+const silEq=(a,b)=>a.every((r,i)=>r.every((v,j)=>v===b[i][j]));
+const emptyGrid=n=>Array.from({length:n},()=>new Array(n).fill(false));
+
+/* ---------- Kamera ---------- */
+function cam(az,el){
+  const A=(az===undefined?S.az:az)*Math.PI/180,E=(el===undefined?S.el:el)*Math.PI/180;
+  return {sA:Math.sin(A),cA:Math.cos(A),sE:Math.sin(E),cE:Math.cos(E),
+    x:Math.cos(E)*Math.cos(A),y:Math.cos(E)*Math.sin(A),z:Math.sin(E)};
+}
+function makeProj(W,H,lo,hi,pad,c){
+  if(typeof lo==='number')lo=[lo,lo,lo];
+  if(typeof hi==='number')hi=[hi,hi,hi];
+  const f=(x,y,z)=>[-x*c.sA+y*c.cA,x*c.cA*c.sE+y*c.sA*c.sE-z*c.cE];
+  let miX=1e9,maX=-1e9,miY=1e9,maY=-1e9;
+  for(const x of [lo[0],hi[0]])for(const y of [lo[1],hi[1]])for(const z of [lo[2],hi[2]]){
+    const [a,b]=f(x,y,z);
+    miX=Math.min(miX,a);maX=Math.max(maX,a);miY=Math.min(miY,b);maY=Math.max(maY,b);
+  }
+  const s=Math.min((W-2*pad)/Math.max(1e-6,maX-miX),(H-2*pad)/Math.max(1e-6,maY-miY));
+  const ox=W/2-(miX+maX)/2*s,oy=H/2-(miY+maY)/2*s;
+  return (x,y,z)=>{const [a,b]=f(x,y,z);return [ox+a*s,oy+b*s];};
+}
+function poly(ctx,pts,fill,stroke){
+  ctx.beginPath();
+  pts.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));
+  ctx.closePath();
+  if(fill){ctx.fillStyle=fill;ctx.fill();}
+  if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1;ctx.stroke();}
+}
+function seg(ctx,a,b){ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();}
+function drawCubes(ctx,P,body,c,alpha){
+  if(alpha!==undefined){if(alpha<=0.01)return;ctx.save();ctx.globalAlpha=alpha;}
+  const list=[...body].map(parse).sort((a,b)=>
+    ((a[0]+.5)*c.x+(a[1]+.5)*c.y+(a[2]+.5)*c.z)-((b[0]+.5)*c.x+(b[1]+.5)*c.y+(b[2]+.5)*c.z));
+  for(const [x,y,z] of list){
+    const fx=c.x>0?x+1:x,fy=c.y>0?y+1:y,fz=c.z>0?z+1:z;
+    poly(ctx,[[fx,y,z],[fx,y+1,z],[fx,y+1,z+1],[fx,y,z+1]].map(p=>P(...p)),'#8F3A2E','#6B1A2A');
+    poly(ctx,[[x,fy,z],[x+1,fy,z],[x+1,fy,z+1],[x,fy,z+1]].map(p=>P(...p)),'#C0603A','#6B1A2A');
+    poly(ctx,[[x,y,fz],[x+1,y,fz],[x+1,y+1,fz],[x,y+1,fz]].map(p=>P(...p)),'#E8906A','#6B1A2A');
+  }
+  if(alpha!==undefined)ctx.restore();
+}
+
+/* ---------- Tafeln (mit Aufklapp-Parameter u) ---------- */
+function fold(v,p,u,n){
+  if(!u)return p;
+  const E=n+GAP,th=u*Math.PI/2,c=Math.cos(th),s=Math.sin(th);
+  if(v===0)return p;
+  if(v===1){ const dx=p[0]-E,dy=p[1]-E;
+    return [E+(dx*c-dy*s), E+(dx*s+dy*c), p[2]]; }
+  const dy=p[1]-E,dz=p[2]+GAP;
+  return [p[0], E+(dy*c-dz*s), -GAP+(dy*s+dz*c)];
+}
+function tafelQuad(v,a,b,n,u){
+  const W=n+GAP,F=-GAP;
+  let q;
+  if(v===0)q=[[a,W,b],[a+1,W,b],[a+1,W,b+1],[a,W,b+1]];
+  else if(v===1)q=[[W,a,b],[W,a+1,b],[W,a+1,b+1],[W,a,b+1]];
+  else q=[[a,b,F],[a+1,b,F],[a+1,b+1,F],[a,b+1,F]];
+  return u?q.map(p=>fold(v,p,u,n)):q;
+}
+/* Die Zeichnung skaliert mit der Fläche, die Beschriftung nicht – je kleiner die Fläche,
+   desto eher stoßen "Vorderansicht" und "Seitenansicht" aneinander. Statt zu raten, wird
+   vor dem Zeichnen nachgemessen: bei Kollision kleiner setzen und die rechte anheben. */
+let LBLHOCH=0, LBLFONT=15;
+function labelPos(v,n,u){
+  let p;
+  if(v===0)p=[n/2,n+GAP,n+0.5];
+  else if(v===1)p=[n+GAP,n/2,n+0.5+LBLHOCH];
+  else p=[n/2,-GAP-0.7,-GAP];
+  return u?fold(v,p,u,n):p;
+}
+function setzeBeschriftung(ctx,P,n,u){
+  LBLHOCH=0;LBLFONT=15;
+  ctx.save();ctx.font='bold 15px Arial';
+  const noetig=(ctx.measureText(VIEWS[0].name).width+ctx.measureText(VIEWS[1].name).width)/2+12;
+  ctx.restore();
+  const da=Math.abs(P(...labelPos(0,n,u))[0]-P(...labelPos(1,n,u))[0]);
+  if(da<noetig){LBLFONT=12;LBLHOCH=0.95;}
+}
+function drawTafel(ctx,P,v,n,grid,mode,opt){
+  const u=opt&&opt.u||0, alpha=opt&&opt.alpha!==undefined?opt.alpha:1, prog=opt&&opt.prog!==undefined?opt.prog:1;
+  let leer=true,filled=0,total=0;
+  if(grid)for(let a=0;a<n;a++)for(let b=0;b<n;b++)if(grid[a][b])total++;
+  const show=Math.round(total*prog);
+  for(let a=0;a<n;a++)for(let b=0;b<n;b++){
+    const q=tafelQuad(v,a,b,n,u).map(p=>P(...p));
+    let fill='#FFFFFF';
+    if(grid&&grid[a][b]){
+      leer=false;filled++;
+      if(filled<=show)
+        fill = mode==='reveal' ? '#3E7A5A' : (mode==='draw' ? '#C0603A' : '#6B1A2A');
+    }
+    if(alpha<1){ctx.save();ctx.globalAlpha=alpha;}
+    poly(ctx,q,fill,'#D9C7BC');
+    if(alpha<1)ctx.restore();
+  }
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  if(mode!=='given'&&leer){
+    const c=tafelQuad(v,n/2-0.5,n/2-0.5,n,u).map(p=>P(...p));
+    ctx.fillStyle='#C9B4A8';ctx.font='bold 34px Arial';
+    ctx.fillText('?',(c[0][0]+c[2][0])/2,(c[0][1]+c[2][1])/2);
+  }
+  const lp=P(...labelPos(v,n,u));
+  ctx.fillStyle = mode==='given' ? '#6B1A2A' : '#9c8b81';
+  ctx.font='bold '+LBLFONT+'px Arial';
+  ctx.fillText(VIEWS[v].name,lp[0],lp[1]);
+}
+
+/* ---------- Zeichnen ---------- */
+function fitCanvas(cv,ratio){
+  const w=Math.max(120,cv.parentElement.clientWidth-12),dpr=window.devicePixelRatio||1;
+  const h=Math.round(w*ratio);
+  cv.style.width=w+'px';cv.style.height=h+'px';
+  cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);
+  const ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
+  return {ctx,w,h};
+}
+function drawMain(){
+  if(S.mode==='proj'){drawProj();return;}
+  const cv=document.getElementById('main'),{ctx,w,h}=fitCanvas(cv,0.8);
+  const n=S.n,c=cam(),P=makeProj(w,h,-GAP-0.8,n+GAP+0.8,10,c);
+  setzeBeschriftung(ctx,P,n,0);
+  for(const v of [0,1,2]){
+    if(S.mode==='draw'&&v===S.hidden)
+      drawTafel(ctx,P,v,n,S.revealed?sil(S.target,n,VIEWS[v].ax):S.draw,
+                S.revealed?'reveal':'draw');
+    else drawTafel(ctx,P,v,n,sil(S.target,n,VIEWS[v].ax),'given');
+  }
+  if(S.mode==='build')drawCubes(ctx,P,S.body,c);
+  else if(S.mode==='draw')drawCubes(ctx,P,S.target,c);
+  else if(S.picked>=0)drawCubes(ctx,P,S.choices[S.picked],c);
+}
+function drawSmall(cv,body,n){
+  const {ctx,w,h}=fitCanvas(cv,0.85),c=cam(),P=makeProj(w,h,0,n,10,c);
+  for(let a=0;a<n;a++)for(let b=0;b<n;b++)
+    poly(ctx,[[a,b,0],[a+1,b,0],[a+1,b+1,0],[a,b+1,0]].map(p=>P(...p)),'#FBF5F0','#E6D7CD');
+  drawCubes(ctx,P,body,c);
+}
+/* Raum mit beliebig gefüllten Tafeln – für Wettkampf */
+function drawRoom(cv,n,grids,body,ratio){
+  const {ctx,w,h}=fitCanvas(cv,ratio||0.8),c=cam(),P=makeProj(w,h,-GAP-0.8,n+GAP+0.8,10,c);
+  setzeBeschriftung(ctx,P,n,0);
+  for(const v of [0,1,2])drawTafel(ctx,P,v,n,grids[v]||null,grids[v]?'given':'draw');
+  if(body)drawCubes(ctx,P,body,c);
+}
+function drawAll(){
+  drawMain();
+  if(S.mode==='pick')for(let i=0;i<4;i++){
+    const cv=document.getElementById('c'+i); if(cv)drawSmall(cv,S.choices[i],S.n);}
+  if(S.mode==='wett')wRedraw();
+}
+
+/* ---------- Drehen ---------- */
+let drag=null,lastMoved=false;
+function onDown(e){drag={x:e.clientX,y:e.clientY,az:S.az,el:S.el,moved:false};
+  if(e.currentTarget.setPointerCapture)e.currentTarget.setPointerCapture(e.pointerId);}
+function onMove(e){
+  if(!drag)return;
+  if(S.mode==='proj'&&(S.pstep>=4||S.praf))return;
+  const dx=e.clientX-drag.x,dy=e.clientY-drag.y;
+  if(Math.abs(dx)+Math.abs(dy)>6)drag.moved=true;
+  S.az=Math.max(AZMIN,Math.min(AZMAX,drag.az-dx*0.4));
+  S.el=Math.max(ELMIN,Math.min(ELMAX,drag.el+dy*0.4));
+  if(S.mode==='proj'){S.pv.az=S.az;S.pv.el=S.el;}
+  drawAll();
+}
+function onUp(){lastMoved=!!(drag&&drag.moved);drag=null;}
+function bindDrag(cv){
+  cv.addEventListener('pointerdown',onDown);
+  cv.addEventListener('pointermove',onMove);
+  cv.addEventListener('pointerup',onUp);
+  cv.addEventListener('pointercancel',onUp);
+}
+function resetView(){S.az=AZ0;S.el=EL0;if(S.mode==='proj'&&S.pstep<4){S.pv.az=AZ0;S.pv.el=EL0;}drawAll();}
+
+/* ================= Modus: Projektion zeigen ================= */
+const PTITLE=['Körper im Raum','Vorderansicht projizieren','Seitenansicht projizieren',
+  'Draufsicht projizieren','Tafeln aufklappen','Dreitafelbild'];
+const PSTEP=[
+ 'Der Körper steht im Raum. Hinter ihm steht die Tafel für die Vorderansicht, rechts die für die Seitenansicht, unter ihm die für die Draufsicht.',
+ 'Blick von vorn: Parallele Sehstrahlen treffen die hintere Tafel. Dort entsteht die Vorderansicht.',
+ 'Blick von links: Die Sehstrahlen treffen die rechte Tafel. Dort entsteht die Seitenansicht.',
+ 'Blick von oben: Die Sehstrahlen treffen die untere Tafel. Dort entsteht die Draufsicht.',
+ 'Die beiden seitlichen Tafeln werden um die Faltachsen in die Ebene der Vorderansicht geklappt.',
+ 'Fertig: Draufsicht unter der Vorderansicht, Seitenansicht rechts daneben. Ordnungslinien und die 45°-Mitnehmerlinie verbinden zusammengehörige Maße.'];
+
+function projBounds(n,u){
+  const lo=[1e9,1e9,1e9],hi=[-1e9,-1e9,-1e9];
+  const add=p=>{for(let i=0;i<3;i++){lo[i]=Math.min(lo[i],p[i]);hi[i]=Math.max(hi[i],p[i]);}};
+  add([0,0,0]);add([n,n,n]);
+  for(const v of [0,1,2]){
+    for(const a of [0,n-1])for(const b of [0,n-1])
+      for(const p of tafelQuad(v,a,b,n,u))add(p);
+    add(labelPos(v,n,u));
+  }
+  return [lo.map(x=>x-0.7),hi.map(x=>x+0.7)];
+}
+function drawRays(ctx,P,v,n,t){
+  const body=S.body,E=n+GAP,g=sil(body,n,VIEWS[v].ax);
+  ctx.save();ctx.globalAlpha=Math.min(1,t*1.6);
+  ctx.strokeStyle='#C0603A';ctx.lineWidth=1.7;ctx.setLineDash([5,4]);
+  for(let a=0;a<n;a++)for(let b=0;b<n;b++){
+    if(!g[a][b])continue;
+    let A,B,m;
+    if(v===0){m=-1;for(const k of body){const p=parse(k);if(p[0]===a&&p[2]===b)m=Math.max(m,p[1]);}
+      A=[a+.5,m+1,b+.5];B=[a+.5,E,b+.5];}
+    else if(v===1){m=-1;for(const k of body){const p=parse(k);if(p[1]===a&&p[2]===b)m=Math.max(m,p[0]);}
+      A=[m+1,a+.5,b+.5];B=[E,a+.5,b+.5];}
+    else{m=99;for(const k of body){const p=parse(k);if(p[0]===a&&p[1]===b)m=Math.min(m,p[2]);}
+      A=[a+.5,b+.5,m];B=[a+.5,b+.5,-GAP];}
+    const M=[0,1,2].map(i=>mix(A[i],B[i],Math.min(1,t)));
+    seg(ctx,P(...A),P(...M));
+  }
+  ctx.restore();
+}
+function drawOrd(ctx,P,n,al){
+  if(al<=0.01)return;
+  const E=n+GAP,L=n+GAP,pt=(uu,ww)=>P(uu,E,ww);
+  ctx.save();ctx.globalAlpha=al;
+  ctx.setLineDash([4,4]);ctx.strokeStyle='#B89C8E';ctx.lineWidth=1;
+  for(let z=0;z<=n;z++)seg(ctx,pt(-0.4,z),pt(2*n+2*GAP+0.4,z));
+  for(let x=0;x<=n;x++)seg(ctx,pt(x,n+0.4),pt(x,-n-2*GAP-0.4));
+  ctx.setLineDash([]);ctx.strokeStyle='#C0603A';ctx.lineWidth=1.7;
+  seg(ctx,pt(E-L,-GAP+L),pt(E+L,-GAP-L));
+  ctx.setLineDash([10,3,2,3]);ctx.strokeStyle='#6B1A2A';ctx.lineWidth=1.4;
+  seg(ctx,pt(E,n+0.6),pt(E,-n-2*GAP-0.6));
+  seg(ctx,pt(-0.6,-GAP),pt(2*n+2*GAP+0.6,-GAP));
+  ctx.setLineDash([]);ctx.fillStyle='#C0603A';ctx.font='bold 13px Arial';
+  ctx.textAlign='left';ctx.textBaseline='bottom';
+  const mp=pt(E+L*0.55,-GAP-L*0.55);ctx.fillText('45°-Mitnehmerlinie',mp[0]+7,mp[1]-3);
+  ctx.restore();
+}
+function drawProj(){
+  const cv=document.getElementById('main'),{ctx,w,h}=fitCanvas(cv,0.8);
+  const n=S.n,pv=S.pv,u=pv.u,c=cam(pv.az,pv.el);
+  const b=projBounds(n,u),P=makeProj(w,h,b[0],b[1],12,c);
+  const prog=[pv.s0,pv.s1,pv.s2],ray=[pv.r0,pv.r1,pv.r2];
+  setzeBeschriftung(ctx,P,n,u);
+  for(const v of [0,1,2])
+    drawTafel(ctx,P,v,n,sil(S.body,n,VIEWS[v].ax),'given',{u:u,prog:prog[v]});
+  drawCubes(ctx,P,S.body,c,pv.ba);
+  for(const v of [0,1,2])if(ray[v]>0.01)drawRays(ctx,P,v,n,ray[v]);
+  drawOrd(ctx,P,n,pv.ol);
+}
+function pTarget(k){
+  return {u:k>=4?1:0, az:k>=4?270:S.az, el:k>=4?0:S.el,
+    s0:k>=1?1:0, s1:k>=2?1:0, s2:k>=3?1:0,
+    r0:k===1?1:0, r1:k===2?1:0, r2:k===3?1:0,
+    ba:k>=5?0:(k===4?0.35:1), ol:k>=5?1:0};
+}
+function pGo(k){
+  k=Math.max(0,Math.min(5,k));
+  if(k>0&&S.body.size===0){say('Baue zuerst einen Körper – klicke Felder im Raster an.','no');return;}
+  S.pstep=k;
+  const from=Object.assign({},S.pv),to=pTarget(k),t0=performance.now(),D=900;
+  if(S.praf){cancelAnimationFrame(S.praf);S.praf=0;}
+  if(S.pfall){clearTimeout(S.pfall);S.pfall=0;}
+  const tick=()=>{
+    const t=Math.min(1,(performance.now()-t0)/D),e=ease(t);
+    for(const q in to)S.pv[q]=mix(from[q]===undefined?to[q]:from[q],to[q],e);
+    drawProj();
+    if(t<1)S.praf=requestAnimationFrame(tick);else S.praf=0;
+  };
+  /* Notbremse: in Hintergrund-Tabs pausiert requestAnimationFrame – dann direkt setzen */
+  S.pfall=setTimeout(()=>{
+    S.pfall=0;
+    if(!S.praf)return;
+    cancelAnimationFrame(S.praf);S.praf=0;
+    Object.assign(S.pv,to);drawProj();
+  },D+300);
+  renderSide();say(PSTEP[k],'info');tick();
+}
+function pPlay(){
+  if(S.body.size===0){say('Baue zuerst einen Körper.','no');return;}
+  if(S.pplay){clearInterval(S.pplay);S.pplay=0;}
+  let k=0;pGo(0);
+  S.pplay=setInterval(()=>{k++;if(k>5){clearInterval(S.pplay);S.pplay=0;return;}pGo(k);},1700);
+}
+function pStop(){if(S.pplay){clearInterval(S.pplay);S.pplay=0;}}
+function pRandom(){
+  pStop();
+  if(S.kat==='soma'){const z=somaZufall();S.body=z.koerper;S.teil=z.teil;}
+  else {S.body=genBody(S.n);S.teil=-1;}
+  S.pstep=0;S.pv=pTarget(0);S.pv.az=S.az;S.pv.el=S.el;
+  say(S.teil>=0?somaName(S.teil)+' - '+PSTEP[0]:PSTEP[0],'info');
+  renderSide();drawProj();
+}
+
+/* ---------- Rastermapping der Zeichentafel ---------- */
+const gridA=(v,col,n)=> v===1 ? n-1-col : col;   // Spalte -> erste Silhouettenachse
+const gridB=(row,n)=> n-1-row;                    // Zeile  -> zweite Achse (immer von oben)
+
+/* ---------- Seitenpanel ---------- */
+function layerGridHTML(){
+  let lay='';
+  for(let z=0;z<S.n;z++)
+    lay+='<button class="'+(z===S.layer?'on':'')+'" onclick="setLayer('+z+')">Ebene '+(z+1)+'</button>';
+  let cells='';
+  for(let y=S.n-1;y>=0;y--)for(let x=0;x<S.n;x++){
+    const f=S.body.has(key(x,y,S.layer));
+    const below=!f&&S.layer>0&&S.body.has(key(x,y,S.layer-1));
+    cells+='<div class="cell '+(f?'f':(below?'below':''))+'" onclick="toggle('+x+','+y+')"></div>';
+  }
+  return '<div class="layers">'+lay+'</div><div class="axis">hinten</div>'+
+    '<div class="grid" style="grid-template-columns:repeat('+S.n+',1fr);max-width:'+(S.n*46)+
+    'px">'+cells+'</div><div class="axis">vorne</div>';
+}
+function renderSide(){
+  const el=document.getElementById('side');
+  el.className = (S.mode==='pick' ? 'side breit' : 'side');
+  if(S.mode==='build'){
+    el.innerHTML='<h2>Körper bauen</h2>'+layerGridHTML()+
+      '<div class="bar" style="margin-top:10px"><button class="prim" onclick="check()">Prüfen</button>'+
+      '<button onclick="clearBody()">Leeren</button><button onclick="solve()">Lösung</button></div>'+
+      '<div class="hint">Klicke Felder der aktiven Ebene an. Gestrichelte Felder liegen in der Ebene darunter.</div>';
+  } else if(S.mode==='proj'){
+    let steps='';
+    for(let i=0;i<6;i++)
+      steps+='<li class="'+(i===S.pstep?'now':(i<S.pstep?'done':''))+'" onclick="pStop();pGo('+i+')">'+
+        (i+1)+'. '+PTITLE[i]+'</li>';
+    el.innerHTML='<h2>Projektion Schritt für Schritt</h2>'+layerGridHTML()+
+      '<div class="bar" style="margin-top:10px">'+
+      '<button onclick="pStop();pGo(S.pstep-1)"'+(S.pstep<=0?' disabled':'')+'>◀ zurück</button>'+
+      '<button class="prim" onclick="pStop();pGo(S.pstep+1)"'+(S.pstep>=5?' disabled':'')+'>weiter ▶</button>'+
+      '<button onclick="pPlay()">▶ alles abspielen</button></div>'+
+      '<ul class="steps">'+steps+'</ul>'+
+      '<div class="bar"><button onclick="pRandom()">Zufallskörper</button>'+
+      '<button onclick="clearBody()">Leeren</button></div>'+
+      '<div class="hint">Baue links einen Körper und gehe die sechs Schritte durch. Bis Schritt 4 lässt sich der Raum drehen.</div>';
+  } else if(S.mode==='draw'){
+    const v=S.hidden,n=S.n,soll=sil(S.target,n,VIEWS[v].ax);
+    let cells='';
+    for(let row=0;row<n;row++)for(let col=0;col<n;col++){
+      const a=gridA(v,col,n),b=gridB(row,n);
+      let cls=S.draw[a][b]?'f':'';
+      if(S.revealed){
+        if(soll[a][b]&&S.draw[a][b])cls='gut';
+        else if(soll[a][b])cls='fehlt';
+        else if(S.draw[a][b])cls='zuviel';
+        else cls='';
+      }
+      cells+='<div class="cell '+cls+'" onclick="toggleDraw('+a+','+b+')"></div>';
+    }
+    const unten = v===2 ? 'vorne' : 'unten';
+    const oben  = v===2 ? 'hinten' : 'oben';
+    const seite = v===1 ? 'links = hinten, rechts = vorne' : 'links ↔ rechts wie am Körper';
+    el.innerHTML='<h2>'+VIEWS[v].name+' zeichnen</h2>'+
+      '<div class="axis">'+oben+'</div><div class="grid" style="grid-template-columns:repeat('+n+
+      ',1fr);max-width:'+(n*46)+'px">'+cells+'</div><div class="axis">'+unten+'</div>'+
+      '<div class="axis">'+seite+'</div>'+
+      '<div class="bar" style="margin-top:10px"><button class="prim" onclick="checkDraw()">Prüfen</button>'+
+      '<button onclick="clearDraw()">Leeren</button><button onclick="solveDraw()">Lösung</button></div>'+
+      '<div class="hint">Der Körper steht im Raum und lässt sich drehen. Zwei Tafeln sind gegeben – ergänze die dritte.</div>';
+  } else if(S.mode==='pick'){
+    let html='<h2>'+(S.kat==='soma'?'Welches Soma-Teil passt?':'Welcher Körper passt?')+
+             '</h2><div class="choices">';
+    for(let i=0;i<4;i++){
+      const cls=S.picked<0?'':(i===S.correct?'ok':(i===S.picked?'no':''));
+      html+='<div class="choice '+cls+'"><span>'+'ABCD'[i]+'</span><canvas id="c'+i+'"></canvas></div>';
+    }
+    html+='</div><div class="hint">Auch die kleinen Körper lassen sich drehen – einfach ziehen. Zum Antworten kurz antippen.</div>';
+    el.innerHTML=html;
+    for(let i=0;i<4;i++){
+      const cv=document.getElementById('c'+i),idx=i;
+      drawSmall(cv,S.choices[i],S.n);
+      bindDrag(cv);
+      cv.addEventListener('pointerup',function(){if(!lastMoved)pick(idx);});
+    }
+  }
+}
+function say(t,c){const m=document.getElementById('msg');m.textContent=t||'';m.className='msg '+(t?(c||'info'):'');}
+function updScore(){document.getElementById('score').textContent=S.right+' / '+S.total+' richtig';}
+
+/* ---------- Aktionen: bauen ---------- */
+function setLayer(z){S.layer=z;renderSide();}
+function toggle(x,y){
+  if(S.mode==='build'&&S.solved)return;
+  const k=key(x,y,S.layer);
+  S.body.has(k)?S.body.delete(k):S.body.add(k);
+  if(S.mode==='proj'){pStop();S.pstep=0;S.pv=Object.assign(pTarget(0),{az:S.az,el:S.el});}
+  renderSide();drawMain();
+}
+function clearBody(){
+  S.body=new Set();S.solved=false;say('');
+  if(S.mode==='proj'){pStop();S.pstep=0;S.pv=Object.assign(pTarget(0),{az:S.az,el:S.el});}
+  renderSide();drawMain();
+}
+function solve(){
+  S.body=new Set(S.target);S.solved=true;
+  say('So sieht ein passender Körper aus.','info');
+  renderSide();drawMain();
+}
+function check(){
+  if(S.body.size===0){say('Es steht noch kein Körper im Raum.','no');return;}
+  if(!connected(S.body)){say('Die Würfel hängen nicht zusammen – es ist noch kein Körper.','no');return;}
+  const bad=[];
+  for(const v of [0,1,2])
+    if(!silEq(sil(S.body,S.n,VIEWS[v].ax),sil(S.target,S.n,VIEWS[v].ax)))bad.push(VIEWS[v].name);
+  S.total++;
+  if(bad.length===0){
+    S.right++;S.solved=true;
+    const wer=S.teil>=0?' Es war '+somaName(S.teil)+'.':'';
+    say((same(S.body,S.target)?'Richtig – genau dieser Körper war gemeint.'
+      :'Richtig – alle drei Ansichten stimmen. Dein Körper ist eine andere gültige Lösung.')+wer,'ok');
+  } else say('Noch nicht passend: '+bad.join(', ')+(bad.length>1?' stimmen':' stimmt')+' nicht überein.','no');
+  updScore();renderSide();drawMain();
+}
+/* ---------- Aktionen: Ansicht zeichnen ---------- */
+function toggleDraw(a,b){
+  if(S.revealed)return;
+  S.draw[a][b]=!S.draw[a][b];
+  renderSide();drawMain();
+}
+function clearDraw(){S.draw=emptyGrid(S.n);say('');renderSide();drawMain();}
+function solveDraw(){
+  S.draw=sil(S.target,S.n,VIEWS[S.hidden].ax);S.revealed=true;
+  say('Das ist die richtige '+VIEWS[S.hidden].name+'.','info');
+  renderSide();drawMain();
+}
+function checkDraw(){
+  const soll=sil(S.target,S.n,VIEWS[S.hidden].ax);
+  let fehlt=0,zuviel=0;
+  for(let a=0;a<S.n;a++)for(let b=0;b<S.n;b++){
+    if(soll[a][b]&&!S.draw[a][b])fehlt++;
+    if(!soll[a][b]&&S.draw[a][b])zuviel++;
+  }
+  S.total++;S.revealed=true;
+  if(fehlt+zuviel===0){S.right++;say('Richtig – die '+VIEWS[S.hidden].name+' stimmt genau.','ok');}
+  else say('Noch nicht richtig: '+fehlt+' Feld(er) fehlen, '+zuviel+' Feld(er) zu viel. '+
+           'Grün = richtig, rot gestrichelt = fehlt, rosa = zu viel.','no');
+  updScore();renderSide();drawMain();
+}
+function pick(i){
+  if(S.picked>=0)return;
+  S.picked=i;S.total++;
+  const wer=S.teil>=0?' Gesucht war '+somaName(S.teil)+'.':'';
+  if(i===S.correct){S.right++;say('Richtig.'+wer,'ok');}
+  else say('Falsch. Richtig war '+'ABCD'[S.correct]+'.'+wer+
+           ' Vergleiche die drei Tafeln noch einmal.','no');
+  updScore();renderSide();drawMain();
+}
+/* ---------- Steuerung ---------- */
+const MODES=['build','pick','draw','proj','wett'];
+const AUFTRAG={
+  build:'Alle drei Ansichten sind gegeben. Baue einen Körper, der zu allen dreien passt.',
+  pick :'Alle drei Ansichten sind gegeben. Welcher der vier Körper passt?',
+  draw :'Der Körper und zwei Ansichten sind gegeben. Ergänze die dritte Ansicht.',
+  proj :'Baue einen Körper und sieh Schritt für Schritt, wie die drei Ansichten entstehen.',
+  wett :'Wettkampf: Der Lehrer-Laptop stellt die Aufgaben, alle rätseln gleichzeitig mit.'};
+function setMode(m){
+  pStop();
+  S.mode=m;
+  for(const x of MODES)document.getElementById('m-'+x).className=(m===x?'on':'');
+  document.getElementById('auftrag').textContent=
+    AUFTRAG[m]+(S.kat==='soma'&&m!=='wett'?' Es kommen nur die sieben Soma-Teile vor.':'');
+  document.getElementById('wett').className=(m==='wett'?'show':'');
+  document.getElementById('btn-neu').textContent=(m==='proj'?'Zufallskörper':'Neue Aufgabe');
+  if(m==='wett'){wEnter();return;}
+  wLeave();
+  newTask();
+}
+function setN(n){
+  if(S.kat==='soma')return;                 // die Soma-Teile brauchen genau 3x3x3
+  S.n=n;
+  document.getElementById('n-3').className=n===3?'on':'';
+  document.getElementById('n-4').className=n===4?'on':'';
+  newTask();
+}
+function setKat(k){
+  S.kat=k;
+  document.getElementById('auftrag').textContent=
+    AUFTRAG[S.mode]+(k==='soma'&&S.mode!=='wett'?' Es kommen nur die sieben Soma-Teile vor.':'');
+  document.getElementById('k-frei').className=k==='frei'?'on':'';
+  document.getElementById('k-soma').className=k==='soma'?'on':'';
+  /* Alle sieben Teile passen in 3x3x3 - groesser waere nur leerer Rand. */
+  const n4=document.getElementById('n-4');
+  n4.disabled=(k==='soma');
+  if(k==='soma'){
+    S.n=3;
+    document.getElementById('n-3').className='on';
+    n4.className='';
+  }
+  newTask();
+}
+function newTask(){
+  if(S.mode==='wett')return;
+  if(S.mode==='proj'){pRandom();return;}
+  const soma=(S.kat==='soma');
+  if(soma){const z=somaZufall();S.target=z.koerper;S.teil=z.teil;}
+  else {S.target=genBody(S.n);S.teil=-1;}
+  S.body=new Set();S.solved=false;S.revealed=false;S.layer=0;S.picked=-1;
+  S.hidden = S.mode==='draw' ? rnd(3) : -1;
+  S.draw = emptyGrid(S.n);
+  if(S.mode==='pick'){
+    if(soma){
+      const q=makeSomaPickQ();
+      if(q){S.target=q.target;S.teil=q.teil;S.choices=q.bodies;S.correct=q.correct;S.teile=q.teile;}
+    } else {
+      const q=makePickQ(S.n,S.target);
+      S.choices=q.bodies;S.correct=q.correct;S.teile=null;
+    }
+  }
+  say('');renderSide();drawMain();
+}
+
+/* ================= Aufgaben-Erzeugung (gemeinsam) ================= */
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=rnd(i+1);const t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function makePickQ(n,target){
+  const t=target||genBody(n),list=[t];let guard=0;
+  while(list.length<4&&guard++<800){
+    const m=mutate(t,n); if(!m)continue;
+    if(![0,1,2].some(v=>!silEq(sil(m,n,VIEWS[v].ax),sil(t,n,VIEWS[v].ax))))continue;
+    if(list.some(b=>same(b,m)))continue;
+    list.push(m);
+  }
+  while(list.length<4)list.push(genBody(n));
+  shuffle(list);
+  return {bodies:list,correct:list.findIndex(b=>same(b,t)),target:t};
+}
+/* Vier Soma-Teile, davon genau eines passend zu den drei Ansichten. */
+function makeSomaPickQ(){
+  for(let att=0;att<200;att++){
+    const z=somaZufall();
+    const soll=[0,1,2].map(v=>sil(z.koerper,3,VIEWS[v].ax));
+    const list=[z.koerper],teile=[z.teil];
+    let guard=0;
+    while(list.length<4&&guard++<600){
+      const i=rnd(SOMA.length);
+      if(teile.indexOf(i)>=0)continue;
+      const lagen=SOMALAGEN[i],k=new Set(lagen[rnd(lagen.length)]);
+      if([0,1,2].every(v=>silEq(sil(k,3,VIEWS[v].ax),soll[v])))continue;  // wäre auch richtig
+      if(list.some(b=>same(b,k)))continue;
+      list.push(k);teile.push(i);
+    }
+    if(list.length<4)continue;
+    const ord=[0,1,2,3];shuffle(ord);
+    return {bodies:ord.map(k=>list[k]),teile:ord.map(k=>teile[k]),
+            correct:ord.indexOf(0),target:z.koerper,teil:z.teil};
+  }
+  return null;
+}
+/* Ein Soma-Teil, vier Ansichten, davon eine richtige. */
+function makeSomaViewQ(){
+  const z=somaZufall(),ax=rnd(3),right=sil(z.koerper,3,VIEWS[ax].ax);
+  const seen=new Set([gk(right)]),list=[right];
+  for(const v of [0,1,2]){                       // die anderen Ansichten desselben Teils
+    if(list.length>=4)break;
+    if(v===ax)continue;
+    const g=sil(z.koerper,3,VIEWS[v].ax);
+    if(gEmpty(g)||seen.has(gk(g)))continue;
+    seen.add(gk(g));list.push(g);
+  }
+  let guard=0;
+  while(list.length<4&&guard++<600){             // Ansichten anderer Teile
+    const w=somaZufall(),g=sil(w.koerper,3,VIEWS[rnd(3)].ax);
+    if(gEmpty(g)||seen.has(gk(g)))continue;
+    seen.add(gk(g));list.push(g);
+  }
+  shuffle(list);
+  return {body:z.koerper,ax:ax,grids:list,teil:z.teil,
+          correct:list.findIndex(g=>gk(g)===gk(right))};
+}
+const gk=g=>g.map(r=>r.map(v=>v?1:0).join('')).join('|');
+const gEmpty=g=>g.every(r=>r.every(v=>!v));
+function gMirror(g,n){const o=emptyGrid(n);for(let a=0;a<n;a++)for(let b=0;b<n;b++)o[n-1-a][b]=g[a][b];return o;}
+function gFlipV(g,n){const o=emptyGrid(n);for(let a=0;a<n;a++)for(let b=0;b<n;b++)o[a][n-1-b]=g[a][b];return o;}
+function gTrans(g,n){const o=emptyGrid(n);for(let a=0;a<n;a++)for(let b=0;b<n;b++)o[b][a]=g[a][b];return o;}
+function gToggle(g,n){const o=g.map(r=>r.slice()),c=1+rnd(2);
+  for(let i=0;i<c;i++){const a=rnd(n),b=rnd(n);o[a][b]=!o[a][b];}return o;}
+function makeViewQ(n){
+  const t=genBody(n),ax=rnd(3),right=sil(t,n,VIEWS[ax].ax);
+  const seen=new Set([gk(right)]),list=[right],cand=[];
+  for(const v of [0,1,2])if(v!==ax)cand.push(sil(t,n,VIEWS[v].ax));
+  cand.push(gMirror(right,n));cand.push(gFlipV(right,n));cand.push(gTrans(right,n));
+  shuffle(cand);
+  for(const g of cand){if(list.length>=4)break;
+    if(gEmpty(g)||seen.has(gk(g)))continue;seen.add(gk(g));list.push(g);}
+  let guard=0;
+  while(list.length<4&&guard++<400){const g=gToggle(right,n);
+    if(gEmpty(g)||seen.has(gk(g)))continue;seen.add(gk(g));list.push(g);}
+  shuffle(list);
+  return {body:t,ax:ax,grids:list,correct:list.findIndex(g=>gk(g)===gk(right))};
+}
+/* Serialisierung für den Server */
+const bs=set=>Array.from(set);
+const ub=arr=>new Set(arr);
+const gs=g=>g.map(r=>r.map(v=>v?1:0));
+const ug=a=>a.map(r=>r.map(v=>!!v));
+
+/* ===== QR-ANFANG =====
+   QR-Code, Byte-Modus, Fehlerkorrektur M, Versionen 1–6 (bis 108 Zeichen).
+   Selbst geschrieben: die Seite soll ohne Fremdpakete und ohne Internet laufen. */
+const QR=(function(){
+  const EXP=new Array(512),LOG=new Array(256);
+  (function(){let x=1;for(let i=0;i<255;i++){EXP[i]=x;LOG[x]=i;x<<=1;if(x&0x100)x^=0x11D;}
+    for(let i=255;i<512;i++)EXP[i]=EXP[i-255];})();
+  const mul=(a,b)=>(a&&b)?EXP[LOG[a]+LOG[b]]:0;
+  function genPoly(n){
+    let p=[1];
+    for(let i=0;i<n;i++){
+      const q=new Array(p.length+1).fill(0);
+      for(let j=0;j<p.length;j++){q[j]^=p[j];q[j+1]^=mul(p[j],EXP[i]);}
+      p=q;
+    }
+    return p;
+  }
+  function rest(data,ecLen){
+    const g=genPoly(ecLen),r=data.slice().concat(new Array(ecLen).fill(0));
+    for(let i=0;i<data.length;i++){
+      const f=r[i];
+      if(!f)continue;
+      for(let j=0;j<g.length;j++)r[i+j]^=mul(g[j],f);
+    }
+    return r.slice(data.length);
+  }
+  /* Version -> gesamte Codewörter, EC-Codewörter je Block, Blockzahl (Stufe M) */
+  const VER=[null,{tot:26,ec:10,bl:1},{tot:44,ec:16,bl:1},{tot:70,ec:26,bl:1},
+             {tot:100,ec:18,bl:2},{tot:134,ec:24,bl:2},{tot:172,ec:16,bl:4}];
+  const AUSRICHT=[0,0,18,22,26,30,34];
+  const FMT=[0x5412,0x5125,0x5E7C,0x5B4B,0x45F9,0x40CE,0x4F97,0x4AA0];
+  const MASKE=[(r,c)=>(r+c)%2===0,(r,c)=>r%2===0,(r,c)=>c%3===0,(r,c)=>(r+c)%3===0,
+    (r,c)=>(Math.floor(r/2)+Math.floor(c/3))%2===0,(r,c)=>((r*c)%2+(r*c)%3)===0,
+    (r,c)=>(((r*c)%2+(r*c)%3)%2)===0,(r,c)=>(((r+c)%2+(r*c)%3)%2)===0];
+
+  function codewoerter(text){
+    const by=[];
+    for(let i=0;i<text.length;i++){
+      const c=text.charCodeAt(i);
+      if(c<0x80)by.push(c);
+      else if(c<0x800)by.push(0xC0|(c>>6),0x80|(c&63));
+      else by.push(0xE0|(c>>12),0x80|((c>>6)&63),0x80|(c&63));
+    }
+    let ver=0;
+    for(let v=1;v<=6;v++){
+      const dat=VER[v].tot-VER[v].ec*VER[v].bl;
+      if(4+8+8*by.length<=dat*8){ver=v;break;}
+    }
+    if(!ver)throw new Error('Text zu lang für Version 6');
+    const V=VER[ver],datCW=V.tot-V.ec*V.bl,bits=[];
+    const put=(val,n)=>{for(let i=n-1;i>=0;i--)bits.push((val>>i)&1);};
+    put(4,4);put(by.length,8);
+    for(const b of by)put(b,8);
+    for(let i=0;i<4&&bits.length<datCW*8;i++)bits.push(0);
+    while(bits.length%8)bits.push(0);
+    const dat=[];
+    for(let i=0;i<bits.length;i+=8){let v=0;for(let j=0;j<8;j++)v=(v<<1)|bits[i+j];dat.push(v);}
+    for(let i=0;dat.length<datCW;i++)dat.push(i%2?0x11:0xEC);
+    const je=datCW/V.bl,db=[],eb=[];
+    for(let i=0;i<V.bl;i++){const d=dat.slice(i*je,(i+1)*je);db.push(d);eb.push(rest(d,V.ec));}
+    const out=[];
+    for(let i=0;i<je;i++)for(const d of db)out.push(d[i]);
+    for(let i=0;i<V.ec;i++)for(const e of eb)out.push(e[i]);
+    return {ver:ver,codes:out};
+  }
+
+  function matrix(text){
+    const {ver,codes}=codewoerter(text);
+    const size=17+4*ver;
+    const m=[],fest=[];
+    for(let i=0;i<size;i++){m.push(new Array(size).fill(0));fest.push(new Array(size).fill(false));}
+    const setz=(r,c,v)=>{if(r<0||c<0||r>=size||c>=size)return;m[r][c]=v?1:0;fest[r][c]=true;};
+    const sucher=(R,C)=>{
+      for(let r=-1;r<=7;r++)for(let c=-1;c<=7;c++)
+        setz(R+r,C+c,(r>=0&&r<=6&&(c===0||c===6))||(c>=0&&c<=6&&(r===0||r===6))||
+                     (r>=2&&r<=4&&c>=2&&c<=4));
+    };
+    sucher(0,0);sucher(0,size-7);sucher(size-7,0);
+    for(let i=8;i<size-8;i++){setz(6,i,i%2===0);setz(i,6,i%2===0);}
+    const A=AUSRICHT[ver];
+    if(A)for(let r=-2;r<=2;r++)for(let c=-2;c<=2;c++)
+      setz(A+r,A+c,Math.max(Math.abs(r),Math.abs(c))!==1);
+    setz(size-8,8,true);                                  // immer dunkles Modul
+    for(let i=0;i<9;i++){                                 // Platz fürs Format freihalten
+      if(!fest[8][i])setz(8,i,false);
+      if(!fest[i][8])setz(i,8,false);
+    }
+    for(let i=0;i<8;i++){
+      if(!fest[8][size-1-i])setz(8,size-1-i,false);
+      if(!fest[size-1-i][8])setz(size-1-i,8,false);
+    }
+    /* Daten im Zickzack von rechts unten nach oben */
+    let bit=0,richtung=-1,spalte=size-1;
+    const gesamt=codes.length*8;
+    while(spalte>0){
+      if(spalte===6)spalte--;
+      for(let i=0;i<size;i++){
+        const zeile=richtung<0?size-1-i:i;
+        for(let s=0;s<2;s++){
+          const c=spalte-s;
+          if(fest[zeile][c])continue;
+          m[zeile][c]=bit<gesamt?((codes[bit>>3]>>(7-(bit&7)))&1):0;
+          bit++;
+        }
+      }
+      richtung=-richtung;spalte-=2;
+    }
+    /* beste Maske suchen */
+    let best=null,bestStrafe=Infinity;
+    for(let k=0;k<8;k++){
+      const t=m.map(r=>r.slice());
+      for(let r=0;r<size;r++)for(let c=0;c<size;c++)
+        if(!fest[r][c]&&MASKE[k](r,c))t[r][c]^=1;
+      format(t,size,k);
+      const s=strafe(t,size);
+      if(s<bestStrafe){bestStrafe=s;best=t;}
+    }
+    return best;
+  }
+  function format(t,size,maske){
+    const f=FMT[maske];
+    for(let i=0;i<15;i++){
+      const b=(f>>i)&1;
+      /* erste Kopie: senkrecht neben dem linken oberen Suchmuster, dann waagrecht */
+      if(i<6)t[i][8]=b;
+      else if(i===6)t[7][8]=b;
+      else if(i===7)t[8][8]=b;
+      else if(i===8)t[8][7]=b;
+      else t[8][14-i]=b;
+      /* zweite Kopie: rechts unten am Rand */
+      if(i<8)t[8][size-1-i]=b;
+      else t[size-15+i][8]=b;
+    }
+  }
+  function strafe(t,size){
+    let p=0;
+    const spalte=i=>t.map(r=>r[i]);
+    const lauf=l=>{let run=1,s=0;
+      for(let j=1;j<size;j++){
+        if(l[j]===l[j-1])run++; else {if(run>=5)s+=3+(run-5);run=1;}
+      }
+      if(run>=5)s+=3+(run-5);
+      return s;};
+    const P1=[1,0,1,1,1,0,1,0,0,0,0],P2=[0,0,0,0,1,0,1,1,1,0,1];
+    const treffer=(l,p2)=>{let n=0;
+      for(let j=0;j+p2.length<=size;j++){
+        let ok=true;
+        for(let k=0;k<p2.length;k++)if(l[j+k]!==p2[k]){ok=false;break;}
+        if(ok)n++;
+      }
+      return n;};
+    for(let i=0;i<size;i++){
+      const z=t[i],s=spalte(i);
+      p+=lauf(z)+lauf(s);
+      p+=40*(treffer(z,P1)+treffer(z,P2)+treffer(s,P1)+treffer(s,P2));
+    }
+    for(let r=0;r<size-1;r++)for(let c=0;c<size-1;c++){
+      const v=t[r][c];
+      if(v===t[r][c+1]&&v===t[r+1][c]&&v===t[r+1][c+1])p+=3;
+    }
+    let dunkel=0;
+    for(let r=0;r<size;r++)for(let c=0;c<size;c++)dunkel+=t[r][c];
+    p+=10*Math.floor(Math.abs(dunkel*100/(size*size)-50)/5);
+    return p;
+  }
+  return {matrix:matrix};
+})();
+function zeichneQR(cv,text,wunsch){
+  if(!cv)return;
+  let mods;
+  try{mods=QR.matrix(text);}catch(e){return;}
+  const n=mods.length,rand=4,s=Math.max(2,Math.floor(wunsch/(n+2*rand)));
+  const px=(n+2*rand)*s,dpr=window.devicePixelRatio||1;
+  cv.width=px*dpr;cv.height=px*dpr;cv.style.width=px+'px';cv.style.height=px+'px';
+  const ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.fillStyle='#ffffff';ctx.fillRect(0,0,px,px);
+  ctx.fillStyle='#2b2320';
+  for(let r=0;r<n;r++)for(let c=0;c<n;c++)
+    if(mods[r][c])ctx.fillRect((c+rand)*s,(r+rand)*s,s,s);
+}
+/* ===== QR-ENDE ===== */
+
+/* ================= Wettkampf ================= */
+/* Ein Spiel leiten darf nur die Lehrer-App. Sie lädt beim Start den Trainer mit
+   ?leitung=1 – der Wettkampf ist dann einen Klick entfernt. /leiten steigt direkt ein. */
+const AUTOLEITUNG=/\/leiten\/?$/.test(location.pathname||'')||location.hash.indexOf('leiten')>=0;
+const ISLEITUNG=AUTOLEITUNG||/[?&]leitung=1/.test(location.search||'');
+const W={base:'',role:null,pin:'',host:'',pid:'',tok:'',name:'',es:null,q:null,
+  idx:0,gesamt:0,limit:30,t0:0,picked:-1,tick:0,players:[],board:[],active:false,conn:false};
+
+function apiBase(){
+  return (location.protocol==='http:'||location.protocol==='https:')?location.origin:'';
+}
+/* Liegt die Seite ueberhaupt auf einem Wettkampfserver? Auf GitHub Pages oder als
+   heruntergeladene Datei nicht - dann gibt es hier nichts zu verbinden. */
+async function wServerDa(){
+  if(W.serverDa!==undefined)return W.serverDa;
+  let ok=false;
+  const b=apiBase();
+  if(b){
+    try{
+      const r=await fetch(b+'/api/status',{cache:'no-store'});
+      ok=r.ok&&!!(await r.json()).ok;
+    }catch(e){}
+  }
+  W.serverDa=ok;
+  return ok;
+}
+async function api(p,body){
+  const b=apiBase();
+  if(!b)throw new Error('Bitte die Serveradresse eintragen.');
+  const r=await fetch(b+p,{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(body||{})});
+  let j={};try{j=await r.json();}catch(e){}
+  if(!r.ok||j.err)throw new Error(j.err||('Server-Fehler '+r.status));
+  return j;
+}
+function wShow(id){
+  const list=document.querySelectorAll('#wett .wscreen');
+  for(const e of list)e.className='wscreen'+(e.id===id?' show':'');
+  if(id==='w-hostq'||id==='w-play'||id==='w-hostrev')setTimeout(wRedraw,10);
+}
+function wEnter(){
+  document.getElementById('w-hostbtn').style.display=(ISLEITUNG?'':'none');
+  if(!W.active)wShow('w-start');
+  wStatus();setTimeout(wRedraw,10);
+  wServerDa().then(da=>{
+    document.getElementById('w-keinserver').style.display=da?'none':'block';
+    document.getElementById('w-startknoepfe').style.display=da?'':'none';
+    document.getElementById('w-startText').style.display=da?'':'none';
+  });
+}
+function wLeave(){}
+function wStatus(){
+  const e=document.getElementById('wstatus');if(!e)return;
+  e.textContent = W.role==='host' ? ('PIN '+W.pin+' · '+W.players.length+' Mitspieler'+(W.conn?'':' · Verbindung …'))
+    : (W.role==='player' ? (W.name+' · PIN '+W.pin+(W.conn?'':' · Verbindung …')) : '');
+}
+function wStream(qs){
+  if(W.es){W.es.close();W.es=null;}
+  W.es=new EventSource(apiBase()+'/api/stream?'+qs);
+  W.es.onopen=()=>{W.conn=true;wStatus();};
+  W.es.onerror=()=>{W.conn=false;wStatus();};
+  W.es.onmessage=e=>{let m=null;try{m=JSON.parse(e.data);}catch(_){return;}wEvent(m);};
+}
+function wEvent(m){
+  if(m.ev==='lobby'){
+    W.players=m.players;
+    if(W.role==='host')wLobby();
+    const t=document.getElementById('wh-total');if(t)t.textContent=m.players.length;
+    wStatus();
+  }
+  else if(m.ev==='question')wOnQuestion(m);
+  else if(m.ev==='answered'){
+    const c=document.getElementById('wh-count');if(c)c.textContent=m.count;
+    const t=document.getElementById('wh-total');if(t)t.textContent=m.total;
+  }
+  else if(m.ev==='reveal')wOnReveal(m);
+  else if(m.ev==='end')wOnEnd(m);
+}
+function wLobby(){
+  const el=document.getElementById('w-players');
+  document.getElementById('w-pcount').textContent=W.players.length;
+  el.innerHTML = W.players.length
+    ? W.players.map(p=>'<span class="pchip">'+esc(p.name)+'</span>').join('')
+    : '<span class="hint">noch niemand …</span>';
+}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---- Lehrer ---- */
+async function wHostStart(){
+  const h=document.getElementById('w-starthint');
+  h.textContent='verbinde …';
+  try{
+    const j=await api('/api/create',{});
+    W.role='host';W.pin=j.pin;W.host=j.host;W.active=true;W.players=[];W.q=null;
+    document.getElementById('w-pin').textContent=j.pin;
+    const adr=(j.url||apiBase())+'/mit';
+    document.getElementById('w-joinurl').textContent=adr;
+    zeichneQR(document.getElementById('w-qr'),adr,250);
+    wStream('pin='+j.pin+'&host='+j.host);
+    wLobby();wShow('w-hostlobby');wStatus();h.textContent='';
+  }catch(e){
+    h.textContent='Kein Server erreichbar ('+e.message+'). Starte auf dem Lehrer-Laptop '+
+      'die Datei "Wettkampf starten.cmd" bzw. "node wettkampf-server.js".';
+  }
+}
+function wKoerperWechsel(){
+  /* Die Soma-Teile passen genau in 3x3x3 - das Raster ist dann nicht frei waehlbar. */
+  const soma=document.getElementById('w-koerper').value==='soma';
+  const n=document.getElementById('w-n');
+  n.disabled=soma;
+  if(soma)n.value='3';
+}
+async function wNext(){
+  const soma=document.getElementById('w-koerper').value==='soma';
+  const n=soma?3:(Number(document.getElementById('w-n').value)||3);
+  const limit=Math.max(10,Math.min(120,Number(document.getElementById('w-limit').value)||30));
+  const art=document.getElementById('w-art').value;
+  const kind = art==='mix' ? (Math.random()<0.5?'pick':'view') : art;
+  let q,correct;
+  if(kind==='pick'){
+    const r=soma?makeSomaPickQ():makePickQ(n);
+    if(!r){say2('Aufgabe liess sich nicht erzeugen, bitte noch einmal.');return;}
+    q={type:'pick',n:n,soma:soma,choices:r.bodies.map(bs),
+       views:[0,1,2].map(v=>gs(sil(r.bodies[r.correct],n,VIEWS[v].ax)))};
+    correct=r.correct;
+  } else {
+    const r=soma?makeSomaViewQ():makeViewQ(n);
+    q={type:'view',n:n,soma:soma,ax:r.ax,body:bs(r.body),choices:r.grids.map(gs)};
+    correct=r.correct;
+  }
+  const anzahl=Math.max(0,Math.min(99,Number(document.getElementById('w-anzahl').value)||0));
+  try{await api('/api/question',{pin:W.pin,host:W.host,q:q,correct:correct,limit:limit,gesamt:anzahl});}
+  catch(e){say2('Fehler: '+e.message);}
+}
+async function wReveal(){try{await api('/api/reveal',{pin:W.pin,host:W.host});}catch(e){say2(e.message);}}
+async function wEnd(){try{await api('/api/end',{pin:W.pin,host:W.host});}catch(e){say2(e.message);}}
+function say2(t){const e=document.getElementById('wstatus');if(e)e.textContent=t;}
+
+/* ---- Schüler ---- */
+async function wJoin(){
+  const pin=(document.getElementById('w-inpin').value||'').trim();
+  const name=(document.getElementById('w-inname').value||'').trim();
+  const h=document.getElementById('w-joinhint');
+  if(!/^[0-9]{4,8}$/.test(pin)){h.textContent='Bitte die PIN vom Beamer eintippen.';return;}
+  if(name.length<2){h.textContent='Bitte einen Namen eintragen.';return;}
+  h.textContent='verbinde …';
+  try{
+    const j=await api('/api/join',{pin:pin,name:name});
+    W.role='player';W.pin=pin;W.pid=j.pid;W.tok=j.tok;W.name=j.name;W.active=true;
+    try{localStorage.setItem('dtf-wett',JSON.stringify({pin:pin,pid:j.pid,tok:j.tok,name:j.name}));}catch(_){}
+    wStream('pin='+pin+'&pid='+j.pid+'&tok='+j.tok);
+    document.getElementById('w-myname').textContent=j.name;
+    document.getElementById('w-waittext').textContent='Du bist dabei. Warte auf die erste Frage …';
+    document.getElementById('w-myscore').textContent='';
+    wShow('w-wait');wStatus();h.textContent='';
+  }catch(e){h.textContent=e.message;}
+}
+async function wAnswer(i){
+  if(W.picked>=0)return;
+  W.picked=i;
+  for(let j=0;j<4;j++){const b=document.getElementById('wp-ans-b'+j);
+    if(b&&j!==i)b.className='ansbtn a'+j+' dim';}
+  try{await api('/api/answer',{pin:W.pin,pid:W.pid,tok:W.tok,c:i});}catch(e){}
+  document.getElementById('w-myname').textContent='ABCD'[i];
+  document.getElementById('w-waittext').textContent='Antwort abgegeben. Warte auf die Auflösung …';
+  document.getElementById('w-myscore').textContent=W.name;
+  wShow('w-wait');
+}
+
+/* ---- Frage anzeigen ---- */
+function wPrompt(q){
+  if(q.type==='pick')
+    return q.soma ? 'Welches Soma-Teil passt zu den drei Ansichten?'
+                  : 'Welcher Körper passt zu den drei Ansichten?';
+  return 'Welches Bild ist die richtige '+VIEWS[q.ax].name+
+         (q.soma?' dieses Soma-Teils?':' dieses Körpers?');
+}
+function gridHTML(g,n,ax){
+  let s='';
+  for(let row=0;row<n;row++)for(let col=0;col<n;col++){
+    const a=(ax===1?n-1-col:col),b=n-1-row;
+    s+='<div class="'+(g[a][b]?'f':'')+'"></div>';
+  }
+  return '<div class="mini" style="grid-template-columns:repeat('+n+',1fr)">'+s+'</div>';
+}
+function wRenderAns(id,click){
+  const q=W.q,el=document.getElementById(id);if(!q||!el)return;
+  let h='';
+  for(let i=0;i<4;i++){
+    const inner = q.type==='pick'
+      ? '<div class="cvwrap"><canvas id="'+id+'-c'+i+'"></canvas></div>'
+      : gridHTML(ug(q.choices[i]),q.n,q.ax);
+    h+='<button class="ansbtn a'+i+'" id="'+id+'-b'+i+'"'+(click?' onclick="wAnswer('+i+')"':'')+
+       '><span class="lbl">'+'ABCD'[i]+'</span>'+inner+'</button>';
+  }
+  el.innerHTML=h;
+  if(q.type==='pick')for(let i=0;i<4;i++){
+    const cv=document.getElementById(id+'-c'+i);
+    if(cv)drawSmall(cv,ub(q.choices[i]),q.n);
+  }
+}
+function wRedraw(){
+  const q=W.q;if(!q)return;
+  const n=q.n,id=(W.role==='host'?'wh':'wp'),cv=document.getElementById(id+'-cv');
+  /* Fast quadratisch, sonst begrenzt die Höhe den Maßstab und der Raum wird winzig.
+     Ist das Fenster aber so schmal, dass die Antworten unter die Zeichnung rutschen,
+     wird sie flacher – sonst müsste man zu ihnen scrollen. */
+  let hoehe=0.7;
+  if(W.role==='host'&&cv)
+    hoehe=Math.max(0.45,Math.min(0.95,window.innerHeight*0.6/Math.max(200,cv.parentElement.clientWidth)));
+  if(cv&&cv.offsetParent!==null){
+    if(q.type==='pick')drawRoom(cv,n,[ug(q.views[0]),ug(q.views[1]),ug(q.views[2])],null,hoehe);
+    else{
+      const body=ub(q.body);
+      const g=[0,1,2].map(v=>v===q.ax?null:sil(body,n,VIEWS[v].ax));
+      drawRoom(cv,n,g,body,hoehe);
+    }
+  }
+  if(q.type==='pick')for(const pref of ['wh-ans','wp-ans','wr-ans'])for(let i=0;i<4;i++){
+    const c=document.getElementById(pref+'-c'+i);
+    if(c&&c.offsetParent!==null)drawSmall(c,ub(q.choices[i]),n);
+  }
+}
+function wStartTimer(){
+  clearInterval(W.tick);
+  const upd=()=>{
+    const left=Math.max(0,W.limit-Math.round((Date.now()-W.t0)/1000));
+    for(const id of ['wh-timer','wp-timer']){
+      const e=document.getElementById(id);
+      if(e){e.textContent=left+' s';e.className='tim'+(left<=5?' hot':'');}
+    }
+    if(left<=0)clearInterval(W.tick);
+  };
+  upd();W.tick=setInterval(upd,250);
+}
+function wOnQuestion(m){
+  if(S.mode!=='wett')setMode('wett');
+  W.q=m.q;W.idx=m.idx;W.gesamt=m.gesamt||0;W.limit=m.limit;W.t0=Date.now()-(m.el||0);W.picked=-1;
+  const zaehler='Frage '+m.idx+(W.gesamt?' von '+W.gesamt:'');
+  if(W.role==='host'){
+    wShow('w-hostq');
+    document.getElementById('wh-frage').textContent=zaehler+': '+wPrompt(m.q);
+    document.getElementById('wh-count').textContent='0';
+    document.getElementById('wh-total').textContent=W.players.length;
+    wRenderAns('wh-ans',false);
+  } else {
+    wShow('w-play');
+    document.getElementById('wp-frage').textContent=zaehler+': '+wPrompt(m.q);
+    wRenderAns('wp-ans',true);
+  }
+  setTimeout(wRedraw,10);wStartTimer();
+}
+function wBoardHTML(board,lim,mark){
+  return board.slice(0,lim).map((p,i)=>
+    '<li class="'+(mark&&p.pid===W.pid?'me':'')+'"><span class="rk">'+(i+1)+'.</span>'+
+    '<b>'+esc(p.name)+'</b>'+(p.delta?'<span class="dl">+'+p.delta+'</span>':'')+
+    '<span class="pt">'+p.score+'</span></li>').join('');
+}
+function wOnReveal(m){
+  clearInterval(W.tick);W.board=m.board;
+  if(W.role==='host'){
+    wShow('w-hostrev');
+    /* War das die letzte Frage, tritt "Spiel beenden" an die Stelle von "Nächste Frage". */
+    const letzte=W.gesamt>0&&W.idx>=W.gesamt;
+    document.getElementById('wr-frage').textContent='Richtig war '+'ABCD'[m.correct]+'.'+
+      (letzte?'  Das war die letzte Frage.':(W.gesamt?'  (Frage '+W.idx+' von '+W.gesamt+')':''));
+    const bn=document.getElementById('wr-next'),be=document.getElementById('wr-end');
+    bn.style.display=letzte?'none':'';
+    be.className=letzte?'prim big':'big';
+    wRenderAns('wr-ans',false);
+    for(let i=0;i<4;i++){const b=document.getElementById('wr-ans-b'+i);
+      if(b)b.className='ansbtn a'+i+(i===m.correct?' win':' dim');}
+    const mx=Math.max(1,m.counts[0],m.counts[1],m.counts[2],m.counts[3]);
+    let bh='';
+    for(let i=0;i<4;i++)bh+='<div class="bcol"><div class="cnt">'+m.counts[i]+'</div>'+
+      '<div class="bar4 a'+i+'" style="height:'+Math.round(4+96*m.counts[i]/mx)+'%"></div></div>';
+    document.getElementById('wr-bars').innerHTML=bh;
+    document.getElementById('wr-lb').innerHTML=wBoardHTML(m.board,10,false);
+    setTimeout(wRedraw,10);
+  } else {
+    const me=m.board.filter(p=>p.pid===W.pid)[0]||{};
+    const ok=!!me.ok,d=me.delta||0;
+    const top=document.getElementById('wres-top');
+    top.textContent = ok?'Richtig!':(W.picked<0?'Keine Antwort':'Leider falsch');
+    top.style.color = ok?'#3E7A5A':'#B3372F';
+    document.getElementById('wres-pt').textContent=
+      (d>0?'+'+d+' Punkte':'0 Punkte')+' · gesamt '+(me.score||0)+
+      ' · richtig war '+'ABCD'[m.correct];
+    let r=0;for(let i=0;i<m.board.length;i++)if(m.board[i].pid===W.pid)r=i+1;
+    document.getElementById('wres-rank').textContent=r?('Platz '+r+' von '+m.board.length):'';
+    document.getElementById('wres-lb').innerHTML=wBoardHTML(m.board,5,true);
+    wShow('w-res');
+  }
+}
+function wOnEnd(m){
+  clearInterval(W.tick);
+  if(W.role==='host'){
+    document.getElementById('we-lb').innerHTML=wBoardHTML(m.board,50,false);
+    wShow('w-hostend');
+  } else {
+    let r=0;for(let i=0;i<m.board.length;i++)if(m.board[i].pid===W.pid)r=i+1;
+    const me=m.board.filter(p=>p.pid===W.pid)[0]||{};
+    document.getElementById('w-myname').textContent=r?('Platz '+r):'Ende';
+    document.getElementById('w-waittext').textContent='Spiel beendet – '+(me.score||0)+' Punkte.';
+    document.getElementById('w-myscore').textContent=W.name;
+    wShow('w-wait');
+  }
+}
+
+/* ---------- Start ---------- */
+window.addEventListener('resize',drawAll);
+bindDrag(document.getElementById('main'));
+bindDrag(document.getElementById('wh-cv'));
+bindDrag(document.getElementById('wp-cv'));
+newTask();updScore();
+(function(){
+  const p=location.pathname||'',hash=location.hash||'';
+  if(AUTOLEITUNG){ setMode('wett'); wHostStart(); return; }
+  if(/\/mit\/?$/.test(p)||hash.indexOf('mit')>=0){
+    setMode('wett');wShow('w-join');
+    const m=/pin=([0-9]+)/.exec(hash);
+    if(m)document.getElementById('w-inpin').value=m[1];
+    setTimeout(()=>{const e=document.getElementById(m?'w-inname':'w-inpin');if(e)e.focus();},60);
+  }
+})();
+</script>
+</body>
+</html>
