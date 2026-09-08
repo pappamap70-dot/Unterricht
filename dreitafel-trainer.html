@@ -695,7 +695,7 @@ function resetView(){S.az=AZ0;S.el=EL0;if(S.mode==='proj'&&S.pstep<4){S.pv.az=AZ
 
 /* ================= Modus: Projektion zeigen ================= */
 const PTITLE=['Körper im Raum','Vorderansicht projizieren','Seitenansicht projizieren',
-  'Draufsicht projizieren','Tafeln aufklappen','Dreitafelbild','Maße übertragen'];
+  'Draufsicht projizieren','Tafeln aufklappen','Dreitafelbild','Seitenansicht konstruieren'];
 const PSTEP=[
  'Der Körper steht im Raum. Hinter ihm steht die Tafel für die Vorderansicht, rechts die für die Seitenansicht, unter ihm die für die Draufsicht.',
  'Blick von vorn: Parallele Sehstrahlen treffen die hintere Tafel. Dort entsteht die Vorderansicht.',
@@ -703,7 +703,7 @@ const PSTEP=[
  'Blick von oben: Die Sehstrahlen treffen die untere Tafel. Dort entsteht die Draufsicht.',
  'Die beiden seitlichen Tafeln werden um die Faltachsen in die Ebene der Vorderansicht geklappt.',
  'Fertig: Draufsicht unter der Vorderansicht, Seitenansicht rechts daneben. Die Ordnungslinien und die Projektionslinie unter 45° verbinden zusammengehörige Maße.',
- 'Wozu die Projektionslinie? Die Tiefe steht in der Draufsicht senkrecht, in der Seitenansicht aber waagrecht. Die 45°-Linie klappt das Maß um: waagrecht aus der Draufsicht heraus, an der Linie nach oben abknicken. Die Höhe kommt waagrecht aus der Vorderansicht – wo sich beide treffen, liegt die Kante.'];
+ 'Angenommen, die Seitenansicht fehlt noch. Jede Höhe wird waagrecht aus der Vorderansicht herübergezogen, jede Tiefe aus der Draufsicht – dort steht sie senkrecht, deshalb klappt die 45°-Linie sie in die Waagrechte. Übertragen wird jede Kante, nicht nur die Gesamtgröße. Die Linien geben das Netz vor, in das die Seitenansicht eingetragen wird.'];
 
 function projBounds(n,u){
   const lo=[1e9,1e9,1e9],hi=[-1e9,-1e9,-1e9];
@@ -790,55 +790,59 @@ function zieh(ctx,pkt,t,farbe,breite,gestrichelt){
   ctx.stroke();ctx.restore();
   return {ende:ende,richtung:richtung,fertig:t>=1};
 }
-function drawUebertragung(ctx,P,n,t,flaecheH){
+/* Ermittelt die waagrechten Kanten einer Ansicht: dort, wo die Silhouette
+   von belegt auf frei wechselt. Genau diese Linien überträgt man beim Zeichnen. */
+function kantenLinien(g,n){
+  const out=[];
+  for(let k=0;k<=n;k++){
+    let kante=false;
+    for(let i=0;i<n;i++){
+      const oben=(k<n)?g[i][k]:false, unten=(k>0)?g[i][k-1]:false;
+      if(oben!==unten){kante=true;break;}
+    }
+    if(kante)out.push(k);
+  }
+  return out;
+}
+function drawUebertragung(ctx,P,n,t){
   if(t<=0.002||S.body.size===0)return;
   const E=n+GAP,pt=(u,w)=>P(u,E,w);
-  let yMin=99,yMax=-1,zMax=-1,xMin=99;
-  for(const k of S.body){
-    const q=parse(k);
-    yMin=Math.min(yMin,q[1]);yMax=Math.max(yMax,q[1]);
-    zMax=Math.max(zMax,q[2]);xMin=Math.min(xMin,q[0]);
-  }
-  const wDrauf=y=>y-n-2*GAP;            // Tiefe y -> senkrecht in der Draufsicht
-  const uSeite=y=>2*n+2*GAP-y;          // Tiefe y -> waagrecht in der Seitenansicht
-  const hoehe=zMax+1;
+  const gVorn=sil(S.body,n,VIEWS[0].ax),gOben=sil(S.body,n,VIEWS[2].ax);
+  const hoehen=kantenLinien(gVorn,n);     // z-Werte: Höhen aus der Vorderansicht
+  const tiefen=kantenLinien(gOben,n);     // y-Werte: Tiefen aus der Draufsicht
+  if(!hoehen.length||!tiefen.length)return;
+  const zOben=Math.max(...hoehen);
+  const wDrauf=y=>y-n-2*GAP;
+  const rechts=2*n+2*GAP;
   const GRUEN='#3E7A5A',TERRA='#C0603A';
-  /* drei Abschnitte nacheinander */
-  const ab=[[0,0.30],[0.30,0.66],[0.66,1]];
-  const anteil=i=>Math.max(0,Math.min(1,(t-ab[i][0])/(ab[i][1]-ab[i][0])));
+  /* zwei Abschnitte, innerhalb jedes Abschnitts eine Linie nach der anderen */
+  const teil=(t,von,bis,i,anzahl)=>
+    Math.max(0,Math.min(1,((t-von)/(bis-von))*anzahl-i));
+  let stiftAn=null;
 
-  /* A: Höhe aus der Vorderansicht */
-  const wegA=[pt(0,hoehe),pt(uSeite(yMin),hoehe)];
-  const a=zieh(ctx,wegA,anteil(0),GRUEN,2.2,true);
-
-  /* B und C: Tiefe über die Projektionslinie */
-  const tiefen=[yMax+1,yMin];
-  const spitzen=[];
-  for(let i=0;i<2;i++){
-    const w=wDrauf(tiefen[i]),u=n-w;    // Knick auf der 45°-Linie
-    const weg=[pt(0,w),pt(u,w),pt(u,hoehe)];
-    const r=zieh(ctx,weg,anteil(i+1),TERRA,2.2,true);
-    spitzen.push(r);
-    if(anteil(i+1)>0&&anteil(i+1)<1&&anteil(i+1)>0.001)
-      stift(ctx,r.ende[0],r.ende[1],r.richtung[0],r.richtung[1]);
-  }
-  if(anteil(0)>0&&anteil(0)<1)stift(ctx,a.ende[0],a.ende[1],a.richtung[0],a.richtung[1]);
-
-  /* am Ende: die getroffene Seitenansicht hervorheben */
-  if(t>0.97){
-    ctx.save();ctx.strokeStyle='#6B1A2A';ctx.lineWidth=3;
-    const q=[pt(uSeite(yMax+1),0),pt(uSeite(yMin),0),
-             pt(uSeite(yMin),hoehe),pt(uSeite(yMax+1),hoehe)];
-    ctx.beginPath();
-    q.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));
-    ctx.closePath();ctx.stroke();ctx.restore();
-  }
+  hoehen.forEach((z,i)=>{
+    const tt=teil(t,0,0.42,i,hoehen.length);
+    if(tt<=0)return;
+    const r=zieh(ctx,[pt(0,z),pt(rechts,z)],tt,GRUEN,2.2,true);
+    if(tt<1)stiftAn=r;
+  });
+  tiefen.forEach((y,i)=>{
+    const tt=teil(t,0.42,0.90,i,tiefen.length);
+    if(tt<=0)return;
+    const w=wDrauf(y),u=n-w;                       // Knick auf der 45°-Linie
+    const r=zieh(ctx,[pt(0,w),pt(u,w),pt(u,zOben)],tt,TERRA,2.2,true);
+    if(tt<1)stiftAn=r;
+  });
+  if(stiftAn)stift(ctx,stiftAn.ende[0],stiftAn.ende[1],stiftAn.richtung[0],stiftAn.richtung[1]);
 }
 function drawProj(){
   const cv=document.getElementById('main'),{ctx,w,h}=fitCanvas(cv,0.8);
   const n=S.n,pv=S.pv,u=pv.u,c=cam(pv.az,pv.el);
   const b=projBounds(n,u),P=makeProj(w,h,b[0],b[1],12,c);
   const prog=[pv.s0,pv.s1,pv.s2],ray=[pv.r0,pv.r1,pv.r2];
+  /* Schritt 7 konstruiert die Seitenansicht: sie verschwindet zu Beginn und
+     erscheint erst wieder, wenn die Hilfslinien sie eingegrenzt haben. */
+  if(pv.ue>0.001)prog[1]=pv.ue<0.90?0:(pv.ue-0.90)/0.10;
   setzeBeschriftung(ctx,P,n,u);
   for(const v of [0,1,2])
     drawTafel(ctx,P,v,n,sil(S.body,n,VIEWS[v].ax),'given',{u:u,prog:prog[v]});
