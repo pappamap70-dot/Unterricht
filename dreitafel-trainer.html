@@ -33,6 +33,8 @@ button:disabled{opacity:.45;cursor:default}
 .canvasbox{flex:1 1 380px;min-width:300px;background:#fff;border:1px solid var(--linie);
  border-radius:10px;padding:6px;position:relative}
 .drehhint{position:absolute;right:10px;bottom:8px;font-size:14px;color:#b09c91;pointer-events:none}
+#projlegende{display:none;padding:8px 4px 2px;font-size:15px;line-height:1.6}
+#projlegende b{font-weight:700;letter-spacing:1px}
 canvas{display:block;width:100%;height:auto;touch-action:none;cursor:grab}
 canvas:active{cursor:grabbing}
 .side{flex:0 0 260px;background:#fff;border:1px solid var(--linie);border-radius:10px;padding:10px}
@@ -178,6 +180,7 @@ input[type=text],input[type=number],select{font-family:inherit;font-size:20px;pa
     <div class="canvasbox">
       <canvas id="main"></canvas>
       <div class="drehhint" id="drehhint">ziehen zum Drehen</div>
+      <div id="projlegende"></div>
     </div>
     <div class="side" id="side"></div>
   </div>
@@ -375,7 +378,7 @@ const AZ0=225,EL0=32,AZMIN=186,AZMAX=264,ELMIN=6,ELMAX=82;
 const S={n:3,kat:'frei',teil:-1,mode:'build',target:null,hidden:-1,body:new Set(),draw:null,
   solved:false,revealed:false,right:0,total:0,layer:0,
   choices:[],correct:0,picked:-1,az:AZ0,el:EL0,
-  pstep:0,pv:{u:0,az:AZ0,el:EL0,s0:0,s1:0,s2:0,r0:0,r1:0,r2:0,ba:1,ol:0},praf:0,pfall:0,pplay:0};
+  pstep:0,pv:{u:0,az:AZ0,el:EL0,s0:0,s1:0,s2:0,r0:0,r1:0,r2:0,ba:1,ol:0,ue:0},praf:0,pfall:0,pplay:0};
 
 const key=(x,y,z)=>x+','+y+','+z;
 const parse=k=>k.split(',').map(Number);
@@ -692,14 +695,15 @@ function resetView(){S.az=AZ0;S.el=EL0;if(S.mode==='proj'&&S.pstep<4){S.pv.az=AZ
 
 /* ================= Modus: Projektion zeigen ================= */
 const PTITLE=['Körper im Raum','Vorderansicht projizieren','Seitenansicht projizieren',
-  'Draufsicht projizieren','Tafeln aufklappen','Dreitafelbild'];
+  'Draufsicht projizieren','Tafeln aufklappen','Dreitafelbild','Maße übertragen'];
 const PSTEP=[
  'Der Körper steht im Raum. Hinter ihm steht die Tafel für die Vorderansicht, rechts die für die Seitenansicht, unter ihm die für die Draufsicht.',
  'Blick von vorn: Parallele Sehstrahlen treffen die hintere Tafel. Dort entsteht die Vorderansicht.',
  'Blick von links: Die Sehstrahlen treffen die rechte Tafel. Dort entsteht die Seitenansicht.',
  'Blick von oben: Die Sehstrahlen treffen die untere Tafel. Dort entsteht die Draufsicht.',
  'Die beiden seitlichen Tafeln werden um die Faltachsen in die Ebene der Vorderansicht geklappt.',
- 'Fertig: Draufsicht unter der Vorderansicht, Seitenansicht rechts daneben. Die Ordnungslinien und die Projektionslinie unter 45° verbinden zusammengehörige Maße.'];
+ 'Fertig: Draufsicht unter der Vorderansicht, Seitenansicht rechts daneben. Die Ordnungslinien und die Projektionslinie unter 45° verbinden zusammengehörige Maße.',
+ 'Wozu die Projektionslinie? Die Tiefe steht in der Draufsicht senkrecht, in der Seitenansicht aber waagrecht. Die 45°-Linie klappt das Maß um: waagrecht aus der Draufsicht heraus, an der Linie nach oben abknicken. Die Höhe kommt waagrecht aus der Vorderansicht – wo sich beide treffen, liegt die Kante.'];
 
 function projBounds(n,u){
   const lo=[1e9,1e9,1e9],hi=[-1e9,-1e9,-1e9];
@@ -747,6 +751,89 @@ function drawOrd(ctx,P,n,al){
   const mp=pt(E+L*0.6,-GAP-L*0.6);ctx.fillText('Projektionslinie',mp[0]+7,mp[1]-3);
   ctx.restore();
 }
+/* ---------- Schritt 7: Maße übertragen ----------
+   Zeigt, wofür die Projektionslinie da ist. Die Tiefe des Körpers steht in der
+   Draufsicht senkrecht, in der Seitenansicht waagrecht - die 45°-Linie dreht das
+   Maß um. Ein Stift zieht die Wege nacheinander:
+     A  Höhe:  waagrecht aus der Vorderansicht nach rechts
+     B  Tiefe hinten:  waagrecht aus der Draufsicht, an der Linie nach oben
+     C  Tiefe vorne:   dasselbe für die vordere Kante                            */
+function stift(ctx,x,y,dx,dy){
+  const a=Math.atan2(dy,dx);
+  ctx.save();ctx.translate(x,y);ctx.rotate(a);
+  ctx.fillStyle='#2b2320';
+  ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(-11,-4.5);ctx.lineTo(-11,4.5);ctx.closePath();ctx.fill();
+  ctx.fillStyle='#E8B23A';ctx.fillRect(-32,-4.5,21,9);
+  ctx.fillStyle='#6B1A2A';ctx.fillRect(-40,-4.5,8,9);
+  ctx.restore();
+}
+/* zeichnet einen Streckenzug bis zum Anteil t und setzt den Stift ans Ende */
+function zieh(ctx,pkt,t,farbe,breite,gestrichelt){
+  let ges=0;
+  const l=[];
+  for(let i=1;i<pkt.length;i++){
+    const d=Math.hypot(pkt[i][0]-pkt[i-1][0],pkt[i][1]-pkt[i-1][1]);
+    l.push(d);ges+=d;
+  }
+  let rest=ges*Math.max(0,Math.min(1,t)),ende=pkt[0],richtung=[1,0];
+  ctx.save();ctx.strokeStyle=farbe;ctx.lineWidth=breite;ctx.lineCap='butt';
+  if(gestrichelt)ctx.setLineDash([7,5]);      // Hilfslinien sind gestrichelt
+  ctx.beginPath();ctx.moveTo(pkt[0][0],pkt[0][1]);
+  for(let i=1;i<pkt.length&&rest>0;i++){
+    const teil=Math.min(1,rest/l[i-1]);
+    const x=pkt[i-1][0]+(pkt[i][0]-pkt[i-1][0])*teil;
+    const y=pkt[i-1][1]+(pkt[i][1]-pkt[i-1][1])*teil;
+    ctx.lineTo(x,y);
+    ende=[x,y];richtung=[pkt[i][0]-pkt[i-1][0],pkt[i][1]-pkt[i-1][1]];
+    rest-=l[i-1];
+  }
+  ctx.stroke();ctx.restore();
+  return {ende:ende,richtung:richtung,fertig:t>=1};
+}
+function drawUebertragung(ctx,P,n,t,flaecheH){
+  if(t<=0.002||S.body.size===0)return;
+  const E=n+GAP,pt=(u,w)=>P(u,E,w);
+  let yMin=99,yMax=-1,zMax=-1,xMin=99;
+  for(const k of S.body){
+    const q=parse(k);
+    yMin=Math.min(yMin,q[1]);yMax=Math.max(yMax,q[1]);
+    zMax=Math.max(zMax,q[2]);xMin=Math.min(xMin,q[0]);
+  }
+  const wDrauf=y=>y-n-2*GAP;            // Tiefe y -> senkrecht in der Draufsicht
+  const uSeite=y=>2*n+2*GAP-y;          // Tiefe y -> waagrecht in der Seitenansicht
+  const hoehe=zMax+1;
+  const GRUEN='#3E7A5A',TERRA='#C0603A';
+  /* drei Abschnitte nacheinander */
+  const ab=[[0,0.30],[0.30,0.66],[0.66,1]];
+  const anteil=i=>Math.max(0,Math.min(1,(t-ab[i][0])/(ab[i][1]-ab[i][0])));
+
+  /* A: Höhe aus der Vorderansicht */
+  const wegA=[pt(0,hoehe),pt(uSeite(yMin),hoehe)];
+  const a=zieh(ctx,wegA,anteil(0),GRUEN,2.2,true);
+
+  /* B und C: Tiefe über die Projektionslinie */
+  const tiefen=[yMax+1,yMin];
+  const spitzen=[];
+  for(let i=0;i<2;i++){
+    const w=wDrauf(tiefen[i]),u=n-w;    // Knick auf der 45°-Linie
+    const weg=[pt(0,w),pt(u,w),pt(u,hoehe)];
+    const r=zieh(ctx,weg,anteil(i+1),TERRA,2.2,true);
+    spitzen.push(r);
+    if(anteil(i+1)>0&&anteil(i+1)<1&&anteil(i+1)>0.001)
+      stift(ctx,r.ende[0],r.ende[1],r.richtung[0],r.richtung[1]);
+  }
+  if(anteil(0)>0&&anteil(0)<1)stift(ctx,a.ende[0],a.ende[1],a.richtung[0],a.richtung[1]);
+
+  /* am Ende: die getroffene Seitenansicht hervorheben */
+  if(t>0.97){
+    ctx.save();ctx.strokeStyle='#6B1A2A';ctx.lineWidth=3;
+    const q=[pt(uSeite(yMax+1),0),pt(uSeite(yMin),0),
+             pt(uSeite(yMin),hoehe),pt(uSeite(yMax+1),hoehe)];
+    ctx.beginPath();
+    q.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));
+    ctx.closePath();ctx.stroke();ctx.restore();
+  }
+}
 function drawProj(){
   const cv=document.getElementById('main'),{ctx,w,h}=fitCanvas(cv,0.8);
   const n=S.n,pv=S.pv,u=pv.u,c=cam(pv.az,pv.el);
@@ -758,18 +845,20 @@ function drawProj(){
   drawCubes(ctx,P,S.body,c,pv.ba);
   for(const v of [0,1,2])if(ray[v]>0.01)drawRays(ctx,P,v,n,ray[v]);
   drawOrd(ctx,P,n,pv.ol);
+  drawUebertragung(ctx,P,n,pv.ue,h);
 }
 function pTarget(k){
   return {u:k>=4?1:0, az:k>=4?270:S.az, el:k>=4?0:S.el,
     s0:k>=1?1:0, s1:k>=2?1:0, s2:k>=3?1:0,
     r0:k===1?1:0, r1:k===2?1:0, r2:k===3?1:0,
-    ba:k>=5?0:(k===4?0.35:1), ol:k>=5?1:0};
+    ba:k>=5?0:(k===4?0.35:1), ol:k>=5?1:0, ue:k>=6?1:0};
 }
 function pGo(k){
-  k=Math.max(0,Math.min(5,k));
+  k=Math.max(0,Math.min(6,k));
   if(k>0&&S.body.size===0){say('Baue zuerst einen Körper – klicke Felder im Raster an.','no');return;}
   S.pstep=k;
-  const from=Object.assign({},S.pv),to=pTarget(k),t0=performance.now(),D=900;
+  /* Schritt 7 zeichnet drei Wege nacheinander und braucht daher mehr Zeit. */
+  const from=Object.assign({},S.pv),to=pTarget(k),t0=performance.now(),D=(k===6?3600:900);
   if(S.praf){cancelAnimationFrame(S.praf);S.praf=0;}
   if(S.pfall){clearTimeout(S.pfall);S.pfall=0;}
   const tick=()=>{
@@ -791,7 +880,8 @@ function pPlay(){
   if(S.body.size===0){say('Baue zuerst einen Körper.','no');return;}
   if(S.pplay){clearInterval(S.pplay);S.pplay=0;}
   let k=0;pGo(0);
-  S.pplay=setInterval(()=>{k++;if(k>5){clearInterval(S.pplay);S.pplay=0;return;}pGo(k);},1700);
+  S.pplay=setInterval(()=>{k++;if(k>6){clearInterval(S.pplay);S.pplay=0;return;}pGo(k);},
+    1700);
 }
 function pStop(){if(S.pplay){clearInterval(S.pplay);S.pplay=0;}}
 function pRandom(){
@@ -824,6 +914,17 @@ function layerGridHTML(){
 }
 function renderSide(){
   const el=document.getElementById('side');
+  /* Farberklaerung zu Schritt 7 unter der Zeichnung - auf der Zeichenflaeche selbst
+     gibt es je nach Koerper keinen sicher freien Platz. */
+  const lg=document.getElementById('projlegende');
+  if(lg){
+    const an=(S.mode==='proj'&&S.pstep>=6);
+    lg.style.display=an?'block':'none';
+    if(an)lg.innerHTML=
+      '<span style="color:#3E7A5A"><b>– – –</b> Höhe – waagrecht aus der Vorderansicht</span>'+
+      '<span style="color:#C0603A;margin-left:22px"><b>– – –</b> Tiefe – aus der Draufsicht '+
+      'über die 45°-Linie</span>';
+  }
   el.className = (S.mode==='pick' ? 'side breit' : 'side');
   if(S.mode==='build'){
     el.innerHTML='<h2>Körper bauen</h2>'+layerGridHTML()+
@@ -832,13 +933,13 @@ function renderSide(){
       '<div class="hint">Klicke Felder der aktiven Ebene an. Gestrichelte Felder liegen in der Ebene darunter.</div>';
   } else if(S.mode==='proj'){
     let steps='';
-    for(let i=0;i<6;i++)
+    for(let i=0;i<7;i++)
       steps+='<li class="'+(i===S.pstep?'now':(i<S.pstep?'done':''))+'" onclick="pStop();pGo('+i+')">'+
         (i+1)+'. '+PTITLE[i]+'</li>';
     el.innerHTML='<h2>Projektion Schritt für Schritt</h2>'+layerGridHTML()+
       '<div class="bar" style="margin-top:10px">'+
       '<button onclick="pStop();pGo(S.pstep-1)"'+(S.pstep<=0?' disabled':'')+'>◀ zurück</button>'+
-      '<button class="prim" onclick="pStop();pGo(S.pstep+1)"'+(S.pstep>=5?' disabled':'')+'>weiter ▶</button>'+
+      '<button class="prim" onclick="pStop();pGo(S.pstep+1)"'+(S.pstep>=6?' disabled':'')+'>weiter ▶</button>'+
       '<button onclick="pPlay()">▶ alles abspielen</button></div>'+
       '<ul class="steps">'+steps+'</ul>'+
       '<div class="bar"><button onclick="pRandom()">Zufallskörper</button>'+
