@@ -1,6 +1,6 @@
 {
   "hinweis": "Diese Datei steuert die Uebersichtsseite. Sie wird ueber verwalten.html gepflegt - Handarbeit ist moeglich, aber nicht noetig.",
-  "aktualisiert": "2026-09-13T17:30:52.739Z",
+  "aktualisiert": "2026-09-13T17:31:46.379Z",
   "rubriken": [
     {
       "name": "Arduino",
@@ -75,7 +75,13 @@
     {
       "name": "Maschinen-Getriebe",
       "sichtbar": true,
-      "eintraege": []
+      "eintraege": [
+        {
+          "datei": "FiTe_getriebe_exp.html",
+          "titel": "FiTe Getriebe Exp",
+          "sichtbar": true
+        }
+      ]
     }
   ]
 }
