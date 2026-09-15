@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Die Projektplanung – Handyhalter aus Holz und Metall</title>
+<style>
+:root{
+  --bordeaux:#6B1A2A;
+  --terrakotta:#C0603A;
+  --lachs:#E8906A;
+  --creme:#FBF5F0;
+  --stufe:#444441;
+  --grau:#6b6b66;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;padding:0;background:#e9e6e2;
+  font-family:"Barlow Condensed","Segoe UI Semilight",Calibri,Arial,sans-serif;
+  font-size:17px;line-height:1.45;color:#26231f;
+}
+nav{
+  position:sticky;top:0;z-index:50;background:var(--stufe);
+  padding:8px 14px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;
+}
+nav button{
+  font-family:inherit;font-size:15px;padding:6px 12px;border:none;border-radius:3px;
+  background:#5d5d58;color:#fff;cursor:pointer;
+}
+nav button:hover{background:var(--terrakotta)}
+nav button.nav-btn.active{background:var(--lachs);color:#2b2b28;font-weight:600}
+nav .spacer{flex:1}
+#pages{max-width:960px;margin:0 auto;padding:18px 10px 60px}
+.page{display:none;background:#fff;padding:0 0 34px;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+.page.active{display:block}
+.stripe{height:8px;background:var(--stufe)}
+.head{padding:16px 34px 0}
+.head .meta{display:flex;gap:14px;flex-wrap:wrap;font-size:15px;color:var(--grau);margin-bottom:6px}
+.head .meta input{
+  font-family:inherit;font-size:15px;border:none;border-bottom:1px solid #bbb;
+  padding:2px 4px;background:transparent;min-width:130px;
+}
+h1{font-size:40px;font-weight:400;margin:6px 0 2px;color:var(--bordeaux);letter-spacing:.3px}
+h1 span{display:block;font-size:20px;color:var(--grau);letter-spacing:.5px}
+.body{padding:10px 34px 0}
+.cols{column-count:2;column-gap:28px}
+@media (max-width:760px){.cols{column-count:1}}
+h2{font-size:21px;color:var(--bordeaux);margin:16px 0 2px;break-after:avoid}
+h2:first-child{margin-top:4px}
+p{margin:0 0 9px;text-align:justify;hyphens:auto}
+b,strong{font-weight:700}
+.lead{
+  background:var(--creme);border-left:5px solid var(--terrakotta);
+  padding:10px 14px;margin:0 0 16px;font-size:18px;
+}
+.flow{break-inside:avoid;margin:6px 0 14px;text-align:center}
+.flow svg{max-width:100%;height:auto}
+.cap{font-size:14px;color:var(--grau);margin-top:4px}
+.mat{
+  border:2px solid var(--terrakotta);border-radius:4px;padding:12px 16px;margin:18px 0;
+  background:#fffdfb;break-inside:avoid;
+}
+.mat h3{margin:0 0 8px;font-size:19px;color:var(--terrakotta);
+  border-bottom:1px solid var(--lachs);padding-bottom:4px}
+.aufg{margin:0 0 16px;break-inside:avoid}
+.aufg .nr{
+  display:inline-block;background:var(--bordeaux);color:#fff;font-weight:700;
+  padding:1px 9px;border-radius:3px;margin-right:7px;font-size:16px;
+}
+.aufg .txt{font-weight:600}
+.hint{font-size:15px;color:var(--grau);margin:2px 0 6px}
+textarea{
+  width:100%;resize:none;overflow:hidden;min-height:56px;font-family:inherit;font-size:16px;
+  border:1px solid #c9c4be;border-radius:3px;padding:6px 8px;background:#fcfbfa;line-height:1.5;
+}
+textarea:focus,input:focus,select:focus{outline:2px solid var(--lachs);outline-offset:1px}
+table{width:100%;border-collapse:collapse;margin:8px 0 4px;font-size:16px}
+th,td{border:1px solid #bdb8b2;padding:5px 7px;text-align:left;vertical-align:top}
+th{background:var(--creme);color:var(--bordeaux);font-weight:700}
+td input{width:100%;border:none;font-family:inherit;font-size:16px;background:transparent;padding:2px}
+select.ans{
+  font-family:inherit;font-size:16px;padding:4px 6px;border:1px solid #bdb8b2;
+  border-radius:3px;background:#fff;min-width:230px;
+}
+select.ans.correct{background:#d8ecd8;border-color:#3B6D11}
+select.ans.wrong{background:#f6dada;border-color:#a32626}
+.zuord{margin:6px 0;display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.zuord .satz{flex:1;min-width:250px}
+.skizze{border:1px dashed #b4afa9;height:210px;border-radius:3px;background:
+  repeating-linear-gradient(0deg,#fdfdfc,#fdfdfc 19px,#f0eeeb 20px);margin:6px 0 2px}
+.skizze.klein{height:150px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media (max-width:760px){.grid3{grid-template-columns:1fr}}
+.footer{padding:14px 34px 0;font-size:14px;color:var(--grau);border-top:1px solid #e3ded8;margin-top:20px}
+@media print{
+  nav,.no-print{display:none!important}
+  body{background:#fff;font-size:12.5pt}
+  #pages{padding:0;max-width:none}
+  .page{display:none!important;box-shadow:none;padding-bottom:0}
+  .page.active{display:block!important}
+  body.print-all .page{display:block!important;break-after:page;page-break-after:always}
+  body.print-all .page:last-child{break-after:auto;page-break-after:auto}
+  .skizze{height:180px}
+  textarea{border:1px solid #999;background:#fff}
+  @page{margin:12mm}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <button class="nav-btn active" data-page="1" onclick="showPage(1)">1 · Info</button>
+  <button class="nav-btn" data-page="2" onclick="showPage(2)">2 · Aufgaben</button>
+  <button class="nav-btn" data-page="3" onclick="showPage(3)">3 · Planung</button>
+  <span class="spacer"></span>
+  <button onclick="exportData()">💾 Speichern</button>
+  <button onclick="importData()">📂 Laden</button>
+  <button onclick="printSingle()">🖨 Diese Seite</button>
+  <button onclick="printAll()">🖨 Alle Seiten</button>
+</nav>
+
+<div id="pages">
+
+<!-- ============================ SEITE 1 ============================ -->
+<div class="page active" id="page1">
+  <div class="stripe"></div>
+  <div class="head">
+    <div class="meta">
+      <span>Name: <input id="f-name" type="text"></span>
+      <span>Klasse: <input id="f-klasse" type="text"></span>
+      <span>Datum: <input id="f-datum" type="text"></span>
+    </div>
+    <h1>Die Projektplanung<span>Technik · Werkstoffgerecht konstruieren · Handyhalter aus Holz und Metall</span></h1>
+  </div>
+
+  <div class="body">
+    <div class="lead">
+      Bevor ein Werkstück hergestellt wird, muss alles vorbereitet werden.
+      <b>Wie wird ein Projekt geplant?</b>
+    </div>
+
+    <div class="cols">
+      <h2>Problem und Lösung</h2>
+      <p>Auf dem Schreibtisch liegt das Handy flach auf der Tischplatte. Man muss sich beim Lesen
+      vorbeugen, beim Videoanruf kippt das Gerät weg, und das Ladekabel knickt an der Buchse ab.
+      Am Anfang steht deshalb die Frage: <b>Worin besteht das Problem eigentlich genau?</b>
+      Erst wenn das klar ist, lässt sich eine passende Lösung finden. Unterschiedliche Nutzer haben
+      dabei unterschiedliche Erwartungen – wer am Schreibtisch arbeitet, braucht einen anderen
+      Neigungswinkel als jemand, der beim Kochen ein Video verfolgt.</p>
+
+      <h2>Projektplanung</h2>
+      <p>Ein <b>Projekt</b> ist eine zeitlich begrenzte Aufgabe, die darauf abzielt, ein bestimmtes
+      Ziel zu erreichen oder ein Problem zu lösen. Im Technikunterricht entsteht dabei meist ein
+      Werkstück. Bevor gefertigt wird, muss das Projekt geplant werden. Eine gründliche Planung zu
+      Beginn erleichtert später die Fertigung erheblich – Fehler in der Planung kosten in der
+      Werkstatt Material und Zeit.</p>
+
+      <h2>Problemstellung und Ideen</h2>
+      <p>Ist das Problem erkannt, werden <b>Lösungsideen</b> gesammelt. Für den Handyhalter sind
+      mehrere Prinzipien denkbar: ein gebogener Bügel, ein abgekanteter Winkel oder eine Stütze,
+      die in eine Nut der Grundplatte gesteckt wird. Wichtig ist, mindestens drei Ideen zu
+      entwickeln, die sich wirklich unterscheiden – nicht nur in den Maßen.</p>
+
+      <h2>Anforderungen festlegen</h2>
+      <p>Steht die Idee fest, werden <b>Ziele und Anforderungen</b> an den Handyhalter festgelegt.
+      Dazu wird gemessen und <b>recherchiert</b>: Wie breit sind die Geräte in der Klasse? Wo sitzt
+      die Ladebuchse? Welcher Neigungswinkel ist angenehm? Man unterscheidet <b>Forderungen</b>,
+      die das Produkt zwingend erfüllen muss, und <b>Wünsche</b>, die wünschenswert sind.
+      Anforderungen werden immer <b>überprüfbar</b> formuliert: nicht „stabil“, sondern
+      „kippt beim Tippen auf das Display nicht um“.</p>
+
+      <h2>Umsetzbarkeit prüfen</h2>
+      <p>Ist die Bauform festgelegt, wird eine <b>Skizze</b> erstellt, um Aussehen und Größe
+      festzuhalten. Anschließend wird geprüft, ob das Werkstück mit den Materialien und Werkzeugen
+      im Technikunterricht machbar ist. Dabei ist auch das eigene Können einzubeziehen. Ein Bügel
+      aus Stahlblech lässt sich im Schraubstock abkanten – Acrylglas dagegen bräuchte ein
+      Biegegerät und eine Heizung auf etwa 150 °C. Die <b>Umsetzbarkeit</b> wird überprüft.</p>
+
+      <h2>Technische Zeichnung</h2>
+      <p>Mithilfe der Skizze wird eine <b>technische Zeichnung</b> mit genauen Maßen angefertigt.
+      Bei gebogenen Metallteilen gehört dazu die <b>Abwicklung</b> – das Teil so, wie es vor dem
+      Biegen flach aussieht. Dadurch lässt sich die benötigte Menge an Holz, Metall und Schrauben
+      festlegen. Daraus entstehen die <b>Stückliste</b> und der <b>Fertigungsplan</b>. Darin steht,
+      welche Arbeitsschritte nacheinander ausgeführt werden und wie viel Zeit sie ungefähr
+      benötigen. Die Arbeitszeit im Technikunterricht ist begrenzt – das muss beachtet werden.</p>
+
+      <h2>Fertigung</h2>
+      <p>Während der <b>Fertigung</b> behält man den Fertigungsplan im Auge und hat nur die
+      benötigten Werkzeuge und Materialien am Platz. Wichtige Reihenfolgeregeln: anreißen vor dem
+      Trennen, bohren solange das Blech noch flach ist, entgraten vor der Oberflächenbehandlung.</p>
+
+      <h2>Testen und beurteilen</h2>
+      <p>Ist das Werkstück fertig, wird <b>getestet und beurteilt</b>, ob und wie gut die
+      Anforderungen erfüllt wurden. Dazu dient ein <b>Beurteilungsbogen</b>: Hält der Halter drei
+      verschiedene Geräte? Bleibt die Ladebuchse frei? Kippt er beim Tippen? Ist eine Kante scharf?
+      Durch das Beantworten dieser Fragen erkennt man, ob das Werkstück verbessert werden muss.
+      Alle Unterlagen, die vor, während und nach der Fertigung entstehen, werden in einer
+      <b>Konstruktionsmappe</b> gesammelt.</p>
+    </div>
+
+    <div class="flow">
+      <svg viewBox="0 0 400 560" xmlns="http://www.w3.org/2000/svg" role="img"
+           aria-label="Ablaufdiagramm von der Problemstellung zum fertigen Produkt">
+        <defs>
+          <marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="3"
+                  orient="auto" markerUnits="strokeWidth">
+            <path d="M0,0 L7,3 L0,6 z" fill="#444441"/>
+          </marker>
+        </defs>
+        <g font-family="Barlow Condensed,Arial,sans-serif" font-size="15" text-anchor="middle">
+          <rect x="105" y="10" width="190" height="34" rx="4" fill="#FBF5F0" stroke="#C0603A" stroke-width="2"/>
+          <text x="200" y="32">Problem erkennen</text>
+
+          <rect x="105" y="74" width="190" height="46" rx="4" fill="#FBF5F0" stroke="#C0603A" stroke-width="2"/>
+          <text x="200" y="94">Anforderungen und</text><text x="200" y="111">Ziele festlegen</text>
+
+          <rect x="105" y="150" width="190" height="46" rx="4" fill="#FBF5F0" stroke="#C0603A" stroke-width="2"/>
+          <text x="200" y="170">Lösungsideen</text><text x="200" y="187">entwickeln</text>
+
+          <rect x="105" y="226" width="190" height="60" rx="4" fill="#FBF5F0" stroke="#C0603A" stroke-width="2"/>
+          <text x="200" y="246">Skizze, technische</text>
+          <text x="200" y="263">Zeichnung, Stückliste,</text>
+          <text x="200" y="280">Fertigungsplan</text>
+
+          <rect x="105" y="316" width="190" height="34" rx="4" fill="#FBF5F0" stroke="#C0603A" stroke-width="2"/>
+          <text x="200" y="338">Fertigung</text>
+
+          <rect x="105" y="380" width="190" height="46" rx="4" fill="#FBF5F0" stroke="#C0603A" stroke-width="2"/>
+          <text x="200" y="400">Testen und</text><text x="200" y="417">beurteilen</text>
+
+          <rect x="105" y="456" width="190" height="34" rx="4" fill="#fff" stroke="#6B1A2A" stroke-width="2"/>
+          <text x="200" y="478">Verbesserung nötig?</text>
+
+          <rect x="128" y="518" width="60" height="28" rx="14" fill="#fff" stroke="#6B1A2A" stroke-width="2"/>
+          <text x="158" y="537">ja</text>
+          <rect x="212" y="518" width="60" height="28" rx="14" fill="#fff" stroke="#6B1A2A" stroke-width="2"/>
+          <text x="242" y="537">nein</text>
+
+          <g stroke="#444441" stroke-width="2" fill="none" marker-end="url(#ar)">
+            <path d="M200,44 L200,70"/>
+            <path d="M200,120 L200,146"/>
+            <path d="M200,196 L200,222"/>
+            <path d="M200,286 L200,312"/>
+            <path d="M200,350 L200,376"/>
+            <path d="M200,426 L200,452"/>
+            <path d="M175,490 L158,514"/>
+            <path d="M225,490 L242,514"/>
+          </g>
+          <g stroke="#444441" stroke-width="2" fill="none" stroke-dasharray="6 4" marker-end="url(#ar)">
+            <path d="M128,532 L40,532 L40,150 L101,150"/>
+          </g>
+          <text x="242" y="558" font-weight="700" fill="#6B1A2A">fertiges Produkt</text>
+        </g>
+      </svg>
+      <div class="cap">Schritte von der Problemstellung zum fertigen Produkt</div>
+    </div>
+
+    <div class="footer">Behalte alle Blätter dieses Projekts in deiner Konstruktionsmappe.</div>
+  </div>
+</div>
+
+<!-- ============================ SEITE 2 ============================ -->
+<div class="page" id="page2">
+  <div class="stripe"></div>
+  <div class="head">
+    <h1>Aufgaben<span>Projektplanung · Handyhalter</span></h1>
+  </div>
+  <div class="body">
+
+    <div class="aufg">
+      <p><span class="nr">1</span><span class="txt">Erkläre in zwei bis drei Sätzen, warum ein Projekt
+      geplant wird, bevor in der Werkstatt gearbeitet wird.</span></p>
+      <textarea oninput="grow(this)"></textarea>
+    </div>
+
+    <div class="aufg">
+      <p><span class="nr">2</span><span class="txt">Ordne zu: In welchem Planungsschritt passiert das?</span></p>
+      <p class="hint">Wähle im Auswahlfeld den passenden Schritt. Es stehen mehr Schritte zur Auswahl,
+      als du brauchst.</p>
+
+      <div class="zuord"><div class="satz">Ihr messt die Breite von drei Handys und notiert, wo die Ladebuchse sitzt.</div>
+        <select class="ans" onchange="chk(this,'anf')">
+          <option value="">— auswählen —</option>
+          <option value="prob">Problem erkennen</option>
+          <option value="anf">Anforderungen und Ziele festlegen</option>
+          <option value="idee">Lösungsideen entwickeln</option>
+          <option value="zeich">Technische Zeichnung erstellen</option>
+          <option value="fert">Fertigung</option>
+          <option value="test">Testen und beurteilen</option>
+        </select></div>
+
+      <div class="zuord"><div class="satz">Ihr zeichnet drei unterschiedliche Stützenformen als Freihandskizze.</div>
+        <select class="ans" onchange="chk(this,'idee')">
+          <option value="">— auswählen —</option>
+          <option value="prob">Problem erkennen</option>
+          <option value="anf">Anforderungen und Ziele festlegen</option>
+          <option value="idee">Lösungsideen entwickeln</option>
+          <option value="zeich">Technische Zeichnung erstellen</option>
+          <option value="fert">Fertigung</option>
+          <option value="test">Testen und beurteilen</option>
+        </select></div>
+
+      <div class="zuord"><div class="satz">Ihr tragt die Maße und den Biegewinkel der Stütze maßstäblich ein.</div>
+        <select class="ans" onchange="chk(this,'zeich')">
+          <option value="">— auswählen —</option>
+          <option value="prob">Problem erkennen</option>
+          <option value="anf">Anforderungen und Ziele festlegen</option>
+          <option value="idee">Lösungsideen entwickeln</option>
+          <option value="zeich">Technische Zeichnung erstellen</option>
+          <option value="fert">Fertigung</option>
+          <option value="test">Testen und beurteilen</option>
+        </select></div>
+
+      <div class="zuord"><div class="satz">Ihr stellt fest, dass das Handy auf der glatten Tischplatte wegrutscht.</div>
+        <select class="ans" onchange="chk(this,'prob')">
+          <option value="">— auswählen —</option>
+          <option value="prob">Problem erkennen</option>
+          <option value="anf">Anforderungen und Ziele festlegen</option>
+          <option value="idee">Lösungsideen entwickeln</option>
+          <option value="zeich">Technische Zeichnung erstellen</option>
+          <option value="fert">Fertigung</option>
+          <option value="test">Testen und beurteilen</option>
+        </select></div>
+
+      <div class="zuord"><div class="satz">Ihr setzt drei verschiedene Handys ein und prüft, ob das Ladekabel passt.</div>
+        <select class="ans" onchange="chk(this,'test')">
+          <option value="">— auswählen —</option>
+          <option value="prob">Problem erkennen</option>
+          <option value="anf">Anforderungen und Ziele festlegen</option>
+          <option value="idee">Lösungsideen entwickeln</option>
+          <option value="zeich">Technische Zeichnung erstellen</option>
+          <option value="fert">Fertigung</option>
+          <option value="test">Testen und beurteilen</option>
+        </select></div>
+    </div>
+
+    <div class="aufg">
+      <p><span class="nr">3</span><span class="txt">Erkläre den Unterschied zwischen einer Forderung
+      und einem Wunsch. Gib zu jedem ein eigenes Beispiel für den Handyhalter an.</span></p>
+      <textarea oninput="grow(this)"></textarea>
+    </div>
+
+    <div class="aufg">
+      <p><span class="nr">4</span><span class="txt">Die Anforderung „Der Halter soll stabil sein“ ist
+      nicht überprüfbar. Formuliere sie so um, dass man sie messen oder testen kann.</span></p>
+      <textarea oninput="grow(this)"></textarea>
+    </div>
+
+    <div class="aufg">
+      <p><span class="nr">5</span><span class="txt">Warum ist es sinnvoll, mehrere Lösungsideen zu
+      entwickeln, obwohl am Ende nur eine gebaut wird?</span></p>
+      <textarea oninput="grow(this)"></textarea>
+    </div>
+
+    <div class="mat">
+      <h3>M1 · Werkstoffe für die Stütze</h3>
+      <table>
+        <tr><th>Werkstoff</th><th>Dicke</th><th>Bearbeitung bei uns</th><th>Besonderheit</th></tr>
+        <tr><td>Stahlblech DC01</td><td>1,0 mm</td><td>kalt abkanten im Schraubstock</td><td>steif, muss lackiert werden</td></tr>
+        <tr><td>Flachstahl S235</td><td>20 × 2</td><td>ablängen und biegen</td><td>kein Blechzuschnitt nötig</td></tr>
+        <tr><td>Aluminium</td><td>1,5–2 mm</td><td>kalt biegen, sehr weich</td><td>rostet nicht, reißt bei kleinem Radius</td></tr>
+        <tr><td>Acrylglas</td><td>3 mm</td><td>nur warm biegbar (ca. 150 °C)</td><td>spröde, Kanten müssen poliert werden</td></tr>
+      </table>
+      <p class="hint" style="margin-top:8px"><b>Aufgabe 6:</b> Wähle mithilfe von M1 einen Werkstoff für
+      die Stütze aus. Begründe deine Wahl nach dem Muster <b>Maßnahme + Werkstoffeigenschaft + Folge</b>.</p>
+      <textarea oninput="grow(this)"></textarea>
+      <p class="hint" style="margin-top:8px"><b>Aufgabe 7:</b> Nenne einen Grund, der gegen Acrylglas
+      spricht, und einen Grund, der dafür spricht.</p>
+      <textarea oninput="grow(this)"></textarea>
+    </div>
+
+  </div>
+</div>
+
+<!-- ============================ SEITE 3 ============================ -->
+<div class="page" id="page3">
+  <div class="stripe"></div>
+  <div class="head">
+    <h1>Deine Planung<span>Anforderungsliste · Lösungsideen · Bewertung</span></h1>
+  </div>
+  <div class="body">
+
+    <div class="aufg">
+      <p><span class="nr">8</span><span class="txt">Messwerte aufnehmen</span></p>
+      <p class="hint">Messt drei verschiedene Handys in eurer Gruppe.</p>
+      <table>
+        <tr><th style="width:34%">Gerät</th><th>Breite in mm</th><th>Dicke in mm</th><th>Ladebuchse (Lage)</th></tr>
+        <tr><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+      </table>
+    </div>
+
+    <div class="aufg">
+      <p><span class="nr">9</span><span class="txt">Anforderungsliste</span></p>
+      <p class="hint">Mindestens sechs Forderungen (F) und drei Wünsche (W). Jede Anforderung muss
+      überprüfbar sein.</p>
+      <table>
+        <tr><th style="width:8%">Nr.</th><th style="width:10%">F / W</th><th>Anforderung</th><th style="width:30%">Prüfbar durch</th></tr>
+        <tr><td>1</td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><td>2</td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><td>3</td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><td>4</td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><td>5</td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><td>6</td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><td>7</td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><td>8</td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><td>9</td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+      </table>
+    </div>
+
+    <div class="aufg">
+      <p><span class="nr">10</span><span class="txt">Drei Lösungsideen skizzieren</span></p>
+      <p class="hint">Die Ideen müssen sich im Prinzip unterscheiden, nicht nur in den Maßen.
+      Schreibe unter jede Skizze einen kurzen Namen.</p>
+      <div class="grid3">
+        <div><div class="skizze klein"></div><input type="text" placeholder="Idee 1 – Name"
+             style="width:100%;border:none;border-bottom:1px solid #bbb;font-family:inherit;font-size:16px;padding:3px"></div>
+        <div><div class="skizze klein"></div><input type="text" placeholder="Idee 2 – Name"
+             style="width:100%;border:none;border-bottom:1px solid #bbb;font-family:inherit;font-size:16px;padding:3px"></div>
+        <div><div class="skizze klein"></div><input type="text" placeholder="Idee 3 – Name"
+             style="width:100%;border:none;border-bottom:1px solid #bbb;font-family:inherit;font-size:16px;padding:3px"></div>
+      </div>
+    </div>
+
+    <div class="aufg">
+      <p><span class="nr">11</span><span class="txt">Bewertung und Entscheidung</span></p>
+      <p class="hint">Gewichtung: 3 = sehr wichtig, 2 = wichtig, 1 = weniger wichtig.
+      Bewertung je Idee: 0 bis 3 Punkte. Ergebnis = Bewertung × Gewichtung.</p>
+      <table>
+        <tr><th>Kriterium</th><th style="width:12%">Gewicht</th><th style="width:16%">Idee 1</th>
+            <th style="width:16%">Idee 2</th><th style="width:16%">Idee 3</th></tr>
+        <tr><td>Standsicherheit</td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><td>Kratzschutz für das Gerät</td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><td>Ladebuchse frei zugänglich</td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><td>Bearbeitbarkeit in unserer Werkstatt</td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><td>Materialkosten</td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><td><input type="text" placeholder="eigenes Kriterium"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td><td><input type="text"></td></tr>
+        <tr><th>Summe</th><th></th><th><input type="text"></th><th><input type="text"></th><th><input type="text"></th></tr>
+      </table>
+      <p class="hint" style="margin-top:10px"><b>Unsere Entscheidung – und warum:</b></p>
+      <textarea oninput="grow(this)"></textarea>
+    </div>
+
+    <div class="footer">Diese Seite kommt in die Konstruktionsmappe. Sie ist die Grundlage für die
+    technische Zeichnung im nächsten Block.</div>
+  </div>
+</div>
+
+</div>
+
+<input type="file" id="fileImport" accept=".json" style="display:none" onchange="loadFile(this)">
+
+<script>
+function grow(el){el.style.height='auto';el.style.height=el.scrollHeight+'px';}
+
+function showPage(n){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page'+n).classList.add('active');
+  document.querySelector('.nav-btn[data-page="'+n+'"]')?.classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function chk(el,correct){
+  el.classList.remove('correct','wrong');
+  if(el.value===''){save();return;}
+  el.classList.add(el.value===correct?'correct':'wrong');
+  save();
+}
+
+function collectData(){
+  const fields={};
+  document.querySelectorAll('input[type="text"], textarea').forEach((el,i)=>{
+    const key=i+'_'+(el.id||el.getAttribute('placeholder')||'ta_'+i);
+    fields[key]=el.value;
+  });
+  const selects=[];
+  document.querySelectorAll('select.ans').forEach(sel=>{
+    selects.push({val:sel.value,cls:sel.className.replace('ans','').trim()});
+  });
+  return {fields,selects,ts:Date.now()};
+}
+
+function applyData(data){
+  if(!data||!data.fields)return;
+  document.querySelectorAll('input[type="text"], textarea').forEach((el,i)=>{
+    const key=i+'_'+(el.id||el.getAttribute('placeholder')||'ta_'+i);
+    if(data.fields[key]!==undefined){
+      el.value=data.fields[key];
+      if(el.tagName==='TEXTAREA'){
+        const page=el.closest('.page');
+        const wasHidden=page&&!page.classList.contains('active');
+        if(wasHidden)page.style.display='block';
+        el.style.height='auto';
+        el.style.height=el.scrollHeight+'px';
+        if(wasHidden)page.style.display='';
+      }
+    }
+  });
+  if(data.selects){
+    document.querySelectorAll('select.ans').forEach((sel,i)=>{
+      if(data.selects[i]){
+        sel.value=data.selects[i].val;
+        sel.className='ans '+(data.selects[i].cls||'');
+      }
+    });
+  }
+}
+
+function save(){localStorage.setItem('ab_projektplanung_handyhalter',JSON.stringify(collectData()));}
+document.addEventListener('input',save);
+
+window.addEventListener('load',()=>{
+  const saved=localStorage.getItem('ab_projektplanung_handyhalter');
+  if(saved){try{applyData(JSON.parse(saved));}catch(e){}}
+});
+
+function exportData(){
+  const blob=new Blob([JSON.stringify(collectData(),null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const name=document.getElementById('f-name')?.value.trim()||'';
+  const kl=document.getElementById('f-klasse')?.value.trim()||'';
+  a.download='projektplanung_handyhalter'+(name?'_'+name.replace(/\s+/g,'_'):'')+(kl?'_'+kl:'')+'.json';
+  a.href=url;a.click();URL.revokeObjectURL(url);
+}
+
+function importData(){document.getElementById('fileImport').click();}
+
+function loadFile(input){
+  const file=input.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=e=>{try{applyData(JSON.parse(e.target.result));save();}catch(err){alert('Datei konnte nicht gelesen werden.');}};
+  r.readAsText(file);
+  input.value='';
+}
+
+function printSingle(){document.body.classList.remove('print-all');window.print();}
+
+function printAll(){
+  const activePageId=document.querySelector('.page.active')?.id;
+  document.querySelectorAll('.page').forEach(p=>p.style.display='block');
+  document.body.classList.add('print-all');
+  document.querySelectorAll('textarea').forEach(ta=>{ta.style.height='auto';ta.style.height=ta.scrollHeight+'px';});
+  setTimeout(()=>{
+    window.print();
+    setTimeout(()=>{
+      document.body.classList.remove('print-all');
+      document.querySelectorAll('.page').forEach(p=>p.style.display='');
+      if(activePageId)document.getElementById(activePageId)?.classList.add('active');
+    },500);
+  },300);
+}
+</script>
+</body>
+</html>
