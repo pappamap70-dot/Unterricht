@@ -1,6 +1,6 @@
 {
   "hinweis": "Diese Datei steuert die Uebersichtsseite. Sie wird ueber verwalten.html gepflegt - Handarbeit ist moeglich, aber nicht noetig.",
-  "aktualisiert": "2026-09-15T07:03:59.477Z",
+  "aktualisiert": "2026-09-15T13:59:31.217Z",
   "rubriken": [
     {
       "name": "Arduino",
@@ -85,6 +85,17 @@
           "datei": "musterloesung-industrielle-revolution.html",
           "titel": "Musterloesung Industrielle Revolution",
           "sichtbar": false
+        }
+      ]
+    },
+    {
+      "name": "Projektplanung",
+      "sichtbar": true,
+      "eintraege": [
+        {
+          "datei": "ab_projektplanung_handyhalter.html",
+          "titel": "Ab Projektplanung Handyhalter",
+          "sichtbar": true
         }
       ]
     }
