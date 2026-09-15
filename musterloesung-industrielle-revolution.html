@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Musterlösung – Deutschland in der Industriellen Revolution</title>
+<style>
+:root{
+  --bordeaux:#6B1A2A;
+  --terrakotta:#C0603A;
+  --lachs:#E8906A;
+  --creme:#FBF5F0;
+  --grau:#444441;
+  --gruen:#3B6D11;
+  --gruenhell:#EDF5E2;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family:'Barlow Condensed','Arial Narrow',Arial,sans-serif;
+  background:var(--creme);color:#1a1a1a;
+  margin:0;display:flex;flex-direction:column;min-height:100vh;
+  font-size:19px;line-height:1.4;
+}
+header{
+  background:var(--bordeaux);color:#fff;
+  padding:10px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+}
+header .titel{font-size:19px;font-weight:600}
+header .spacer{flex:1}
+header button{
+  font-family:inherit;font-size:15px;
+  background:#fff;color:var(--bordeaux);
+  border:none;border-radius:4px;padding:5px 12px;cursor:pointer;
+}
+header button:hover{background:var(--lachs);color:#fff}
+main{flex:1;display:flex;align-items:flex-start;justify-content:center;padding:26px 20px 90px}
+.karte{
+  width:100%;max-width:960px;background:#fff;
+  border:1px solid #e3d7cd;padding:30px 36px 34px;
+}
+.nr{
+  display:inline-block;background:var(--bordeaux);color:#fff;
+  font-size:20px;font-weight:700;padding:3px 14px;margin-bottom:14px;
+}
+.teil{font-size:16px;color:var(--grau);margin-bottom:10px;letter-spacing:.4px}
+.frage{font-size:27px;line-height:1.3;margin:0 0 22px}
+.loesung{
+  background:var(--gruenhell);border-left:5px solid var(--gruen);
+  padding:16px 20px;font-size:21px;
+}
+.loesung h3{margin:0 0 8px;font-size:17px;color:var(--gruen);letter-spacing:.5px;text-transform:uppercase}
+.loesung ul{margin:6px 0 0;padding-left:22px}
+.loesung li{margin-bottom:5px}
+.loesung table{width:100%;border-collapse:collapse;margin-top:8px;font-size:19px}
+.loesung th,.loesung td{border:1px solid #b9cf9c;padding:7px 10px;text-align:left;vertical-align:top}
+.loesung th{background:#dcebc6;color:var(--gruen)}
+.offen{background:#f6ece4;border-left-color:var(--terrakotta)}
+.offen h3{color:var(--terrakotta)}
+.verdeckt .loesung{display:none}
+.reveal{
+  font-family:inherit;font-size:19px;
+  background:var(--gruen);color:#fff;border:none;border-radius:5px;
+  padding:11px 24px;cursor:pointer;
+}
+.reveal:hover{background:#4d8a18}
+.verdeckt .reveal{display:inline-block}
+.reveal{display:none}
+.notiz{margin-top:22px}
+.notiz label{font-size:15px;color:var(--grau);display:block;margin-bottom:4px}
+.notiz textarea{
+  width:100%;font-family:inherit;font-size:18px;
+  border:1px solid #d8c8bc;border-radius:4px;padding:8px 10px;
+  background:#fffdfb;resize:none;overflow:hidden;min-height:52px;
+}
+.notiz textarea:focus{outline:none;border-color:var(--terrakotta);background:#fff}
+footer{
+  position:fixed;bottom:0;left:0;right:0;
+  background:#fff;border-top:1px solid #e3d7cd;
+  padding:10px 20px;display:flex;align-items:center;gap:14px;
+}
+footer button{
+  font-family:inherit;font-size:18px;
+  background:var(--bordeaux);color:#fff;border:none;border-radius:5px;
+  padding:9px 22px;cursor:pointer;
+}
+footer button:disabled{background:#cbbfb6;cursor:default}
+footer .zaehler{font-size:17px;color:var(--grau);min-width:112px;text-align:center}
+.balken{flex:1;height:7px;background:#e8ddd4;border-radius:4px;overflow:hidden}
+.balken div{height:100%;background:var(--terrakotta);width:0;transition:width .2s}
+@media print{
+  header,footer,.reveal{display:none !important}
+  body{background:#fff;display:block}
+  main{display:block;padding:0}
+  .karte{max-width:none;border:none;padding:0 0 14mm;break-after:page;page-break-after:always}
+  .verdeckt .loesung{display:block !important}
+  .frage{font-size:15pt}
+  .loesung{font-size:13pt}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="titel">Musterlösung &middot; Deutschland in der Industriellen Revolution</span>
+  <span class="spacer"></span>
+  <button onclick="alleZeigen()">Alle Lösungen zeigen</button>
+  <button onclick="exportNotizen()">💾 Notizen sichern</button>
+  <button onclick="window.print()">🖨 Drucken</button>
+</header>
+
+<main><div class="karte" id="karte"></div></main>
+
+<footer>
+  <button id="btnZurueck" onclick="blaettern(-1)">◀ Zurück</button>
+  <span class="zaehler" id="zaehler"></span>
+  <button id="btnWeiter" onclick="blaettern(1)">Weiter ▶</button>
+  <div class="balken"><div id="fortschritt"></div></div>
+</footer>
+
+<script>
+const A = [
+{n:1,teil:"Teil 1 · Die Maschine kommt",
+ f:"Wie heißt das Eisenwerk im Saarland, das als weltweit einziges aus der Blütezeit der Industrialisierung erhalten ist?",
+ l:"Die <b>Völklinger Hütte</b> — benannt nach der Gründerfamilie Röchling („Röchling'sche Eisen- und Stahlwerke“). Sie machte Völklingen Ende des 19. Jahrhunderts zu einem Zentrum der Schwerindustrie."},
+
+{n:2,teil:"Teil 1 · Die Maschine kommt",
+ f:"Drotschmann fragt: „Kommt Ihnen das irgendwie bekannt vor?“ Mit welchen drei Entwicklungen von heute vergleicht er die damalige Umwälzung?",
+ l:"<b>Digitalisierung, künstliche Intelligenz und Robotik.</b> Viele sprechen deshalb von einer „Industrialisierung 4.0“, die uns bevorsteht."},
+
+{n:3,teil:"Teil 1 · Die Maschine kommt",
+ f:"Schloss Neuschwanstein sieht mittelalterlich aus, ist aber Industriearchitektur. Nenne drei moderne Techniken, die beim Bau oder in den Räumen eingesetzt wurden.",
+ l:"Drei genügen aus:<ul><li><b>Dynamit</b>, um die Bergspitze abzusprengen</li><li><b>dampfbetriebener Lastkran</b> auf der Baustelle</li><li><b>Eisenkonstruktion</b>: Doppel-T-Träger und Metallsäulen, außen mit Gips verkleidet</li><li><b>batteriebetriebene Klingel</b> mit Signaltafel für die Diener</li><li><b>erste Telefonanlage Bayerns</b> neben dem Arbeitszimmer</li></ul>"},
+
+{n:4,teil:"Teil 1 · Die Maschine kommt",
+ f:"So arbeitet die Dampfmaschine. Nummeriere die Schritte von 1 bis 4 in der richtigen Reihenfolge.",
+ l:"<table><tr><th style='width:52px'>Nr.</th><th>Schritt</th></tr><tr><td><b>3</b></td><td>Der hohe Druck des Dampfs bewegt einen Kolben.</td></tr><tr><td><b>1</b></td><td>Feuer erzeugt in einem Kessel Wasserdampf.</td></tr><tr><td><b>4</b></td><td>Der Kolben treibt ein Schwungrad an.</td></tr><tr><td><b>2</b></td><td>Der Dampf wird in einen Zylinder geleitet.</td></tr></table><p style='margin:10px 0 0'>Reihenfolge also: Kessel → Zylinder → Kolben → Schwungrad. Vom Schwungrad aus lassen sich ganz unterschiedliche Maschinen bewegen.</p>"},
+
+{n:5,teil:"Teil 1 · Die Maschine kommt",
+ f:"In Freudenberg treibt eine einzige Dampfmaschine 25 Werkzeuge an — Fräsen, Bohrer, Sägen. Wie wird die Kraft von der Maschine zu den Werkzeugen übertragen?",
+ l:"Über eine <b>Transmission mit großen Gelenkwellen</b>, die unter der Decke der Werkstatt verläuft. Von dort führen Riemen zu den einzelnen Maschinen.<p style='margin:10px 0 0'><i>Anschluss an unser Thema: Welle und Riemen sind Maschinenelemente — genau die, die wir beim Akkuschrauber und am Fahrrad untersucht haben.</i></p>"},
+
+{n:6,teil:"Teil 1 · Die Maschine kommt",
+ f:"Vorher arbeiteten gelernte Gesellen im Handwerksbetrieb. Was änderte sich durch die Maschinen für die Arbeitenden? Nenne zwei Punkte.",
+ l:"Zwei genügen aus:<ul><li>Es war <b>keine Ausbildung mehr nötig</b> — eine Anleitung reichte, um die Maschine zu bedienen</li><li>deshalb wurden <b>sehr geringe Löhne</b> gezahlt</li><li>die <b>Tagesarbeitszeiten wurden immer länger</b></li><li>die Arbeit war insgesamt sehr belastend</li></ul>"},
+
+{n:7,teil:"Teil 1 · Die Maschine kommt",
+ f:"1821 kommt es in Eupen zum „Maschinensturm“. Warum zerstören die Tuchscherer die neue Schermaschine?",
+ l:"Sie <b>fürchteten um Brot und Lohn</b> — also um ihre Arbeit und ihr Einkommen. Der Aufstand brach los, <b>noch bevor die Maschine überhaupt aufgestellt war.</b>"},
+
+{n:8,teil:"Teil 1 · Die Maschine kommt",
+ f:"Warum konnte sich die Industrialisierung in Deutschland zunächst nicht durchsetzen — und was änderte sich 1834?",
+ l:"<b>Vorher:</b> Jedes Land des Deutschen Bundes hatte eigenes Handelsrecht, eine eigene Währung und nicht einmal eine einheitliche Zeit. Dutzende Zollschranken behinderten den Handel — zwischen Hamburg und Österreich musste zehnmal Zoll gezahlt werden.<br><br><b>1834:</b> Der <b>Deutsche Zollverein</b> entsteht. Aus 39 Kleinstaaten wird eine Freihandelszone von 30 Millionen Menschen. Der Volkswirtschaftler Friedrich List aus Reutlingen hatte dafür gekämpft."},
+
+{n:9,teil:"Teil 1 · Die Maschine kommt",
+ f:"Die ersten Lokomotiven nannte man „dampfschnaubende Drachen“. Wovor hatten die Menschen Angst — und wie schnell fuhren die Züge tatsächlich?",
+ l:"Es gab Warnungen vor <b>Hirnschäden</b> und vor <b>Lungenentzündungen wegen des Fahrtwinds</b>.<br><br>Tatsächlich fuhren die Züge <b>bis zu 30 km/h</b>."},
+
+{n:10,teil:"Teil 1 · Die Maschine kommt",
+ f:"August Borsig baute die erste deutsche Dampflok. Wie ging er dabei vor?",
+ l:"<ul><li>Seine Eisengießerei bekam den Auftrag, <b>englische und amerikanische Loks zu reparieren</b></li><li>dabei <b>studierte er die Konstruktion bis ins kleinste Detail</b> und suchte gezielt nach Schwachstellen</li><li>er verbesserte sie: Kessel mit <b>Filzplatten</b> verkleidet (Energieverbrauch), dazu Maschinensteuerung und Achssysteme — darauf meldete er <b>eigene Patente</b> an</li><li><b>1841</b> verließ die „Borsig 1“ die Fabrik; bei einer Wettfahrt Berlin–Jüterbog bewies sie, dass sie dem Original in nichts nachstand</li></ul>"},
+
+{n:11,teil:"Teil 2 · Der Preis des Fortschritts",
+ f:"Der Kohlebergbau hat das Ruhrgebiet absacken lassen. Trage ein:",
+ l:"<table><tr><th style='width:58%'>Um wie viele Meter abgesackt?</th><td><b>12 Meter</b> im Durchschnitt — teilweise unterhalb des Grundwasserspiegels</td></tr><tr><th>Wie viele Pumpwerke?</th><td><b>mehr als 200</b>, Tag und Nacht in Betrieb</td></tr><tr><th>Kosten pro Jahr und Name dafür?</th><td>rund <b>100 Millionen Euro</b> — man spricht von <b>Ewigkeitskosten</b></td></tr></table>"},
+
+{n:12,teil:"Teil 2 · Der Preis des Fortschritts",
+ f:"Was bedeutet „puddeln“, und wozu dient es?",
+ l:"Puddeln heißt <b>umrühren</b>. Die flüssige Masse aus Eisenerz und Koks muss ständig gerührt werden, um <b>Roheisen in Schmiedeeisen umzuwandeln</b>. Für die Arbeiter an den Hochöfen war das ein Knochenjob."},
+
+{n:13,teil:"Teil 2 · Der Preis des Fortschritts",
+ f:"Alfred Krupp wurde mit einem Bauteil für die Eisenbahn weltberühmt. Welches war es — und was hat es mit dem Firmenzeichen aus drei Ringen zu tun?",
+ l:"Krupp entwickelte <b>nahtlos geschmiedete und gewalzte Stahlreifen</b>, die auf die Räder der Lokomotiven gezogen werden. Dieser <b>bruchsichere Eisenbahnradreifen</b> wurde weltweit zum Verkaufsschlager.<br><br>Genau dieses Bauteil wurde — in Form <b>dreier aufeinander liegender Ringe</b> — zum Firmenemblem."},
+
+{n:14,teil:"Teil 2 · Der Preis des Fortschritts",
+ f:"Vergleiche die beiden Wohnformen aus dem Film.",
+ l:"<table><tr><th style='width:50%'>Gartenstadt Margarethenhöhe (1911)</th><th>Mietskaserne</th></tr><tr><td>hell, großzügig, separate Küche, Kachelofenheizung — modernes Wohnen; <b>für die meisten Arbeiter aber unerschwinglich</b></td><td>mehretagige Häuser um einen engen Innenhof; unten kommt kaum Licht und Luft an; oft nur <b>ein einziges Zimmer</b> zum Wohnen, Essen und Schlafen; <b>kein eigenes Klo</b></td></tr></table>"},
+
+{n:15,teil:"Teil 2 · Der Preis des Fortschritts",
+ f:"Im Museum sagt der Experte, Carl Benz habe das Auto nicht allein erfunden. Was war die eigentliche Leistung der Automobilpioniere?",
+ l:"Ihre Genialität bestand darin, <b>alles bereits Erfundene so zusammenzufügen, dass es funktionierte</b>. Der Motor war da (Nicolaus Otto), Antriebsübersetzungen gab es, Zündungsmethoden gab es — die Leistung war die Kombination zu einem funktionierenden Ganzen."},
+
+{n:16,teil:"Teil 2 · Der Preis des Fortschritts",
+ f:"Überraschung im Film: Am Anfang war das Elektroauto dem Benziner ebenbürtig. Welcher Nachteil gab am Ende den Ausschlag für den Verbrennungsmotor?",
+ l:"<b>Die zu schwachen Batterien.</b><br><br>Sonst lag das Elektrofahrzeug vorn: Ferdinand Porsche entwickelte um 1900 mit dem Lohner-Porsche den ersten serienmäßigen Hybridantrieb mit Elektromotor in der Vorderachse, und die Schallmauer von 100 km/h durchbrach 1899 zuerst ein Elektrofahrzeug."},
+
+{n:17,teil:"Teil 2 · Der Preis des Fortschritts",
+ f:"In Crimmitschau arbeitete jeder dritte Einwohner in einer Textilfabrik. Wie sah der Arbeitsalltag der Frauen aus? Nenne die Arbeitszeit und zwei weitere Belastungen.",
+ l:"<b>Arbeitszeit:</b> 11 Stunden täglich, Montag bis Samstag — eine <b>66-Stunden-Woche</b>.<br><br>Belastungen (zwei genügen):<ul><li>viele brachen in den ersten Wochen <b>vor Anstrengung zusammen</b></li><li><b>Lungen- und Halskrankheiten</b> durch den Staub</li><li><b>schlechter Lohn</b> bei monotoner Arbeit</li><li>eingesetzt wurden oft ungelernte junge Frauen, <b>teils erst 14 Jahre alt</b></li></ul>"},
+
+{n:18,teil:"Teil 2 · Der Preis des Fortschritts",
+ f:"1903 streiken rund 8000 Textilarbeiterinnen und -arbeiter in Crimmitschau.",
+ l:"<table><tr><th style='width:46%'>Welche zwei Forderungen?</th><td>Einführung des <b>Zehnstundentages</b> und <b>10 % höhere Akkordlöhne</b></td></tr><tr><th>Was war zum ersten Mal so?</th><td>Zum ersten Mal in Deutschland stellten <b>Arbeiterinnen die Hälfte</b> der an einem Arbeitskampf Beteiligten — Frauen und Männer streikten gemeinsam</td></tr><tr><th>Warum trotzdem ein Erfolg?</th><td>Der Streik wurde nach sechs Monaten ergebnislos abgebrochen, aber <b>1908 wurde der Zehnstundentag per Gesetz eingeführt</b> — ein später Sieg</td></tr></table>"},
+
+{n:19,teil:"Nach dem Film · A · Maschinen erkennen",
+ f:"Welche Maschinenelemente aus unserem Unterricht hast du im Film wiedererkannt? Nenne mindestens drei und schreibe dazu, wo sie im Film vorkamen.",
+ offen:true,
+ l:"Offene Aufgabe — drei aus dieser Sammlung genügen:<table><tr><th style='width:34%'>Maschinenelement</th><th>Wo im Film?</th></tr><tr><td>Welle</td><td>Gelenkwellen der Transmission in Freudenberg</td></tr><tr><td>Riemen</td><td>Transmissionsriemen zu den Werkzeugmaschinen</td></tr><tr><td>Kolben / Zylinder</td><td>Dampfmaschine, Verbrennungsmotor im Benz</td></tr><tr><td>Schwungrad</td><td>Dampfmaschine</td></tr><tr><td>Zahnrad / Getriebe</td><td>Antriebsübersetzung beim frühen Automobil</td></tr><tr><td>Feder</td><td>Federung des Benz Velo, von der Kutsche übernommen</td></tr></table>"},
+
+{n:20,teil:"Nach dem Film · A · Maschinen erkennen",
+ f:"Die Dampfmaschine in Freudenberg treibt 25 Werkzeuge gleichzeitig an, ein Akkuschrauber hat seinen Motor eingebaut. Nenne je einen Vorteil beider Lösungen.",
+ offen:true,
+ l:"<table><tr><th style='width:50%'>Zentrale Maschine für viele Werkzeuge</th><th>Eigener Motor je Gerät</th></tr><tr><td>nur eine Kraftquelle nötig — billiger als 25 Motoren; eine Wartungsstelle; damals gab es gar keine kleinen Motoren</td><td>ortsunabhängig und tragbar; jedes Gerät einzeln schaltbar; fällt eines aus, laufen die anderen weiter; kein Energieverlust in langen Transmissionen; deutlich ungefährlicher als offen laufende Riemen</td></tr></table>"},
+
+{n:21,teil:"Nach dem Film · B · Fluch oder Segen?",
+ f:"Drotschmann sagt, die Industrielle Revolution sei „Fluch oder Segen“ gewesen. Sammle aus dem ganzen Film Beispiele für beides.",
+ offen:true,
+ l:"<table><tr><th style='width:50%'>Das wurde besser</th><th>Das wurde schlechter</th></tr><tr><td>Wohlstand und Wachstum; Fortschritte in Hygiene, Medizin und Ernährung; Eisenbahn verbindet das Land; Erfindungen erleichtern den Alltag (Thermosflasche, Kaffeefilter, Handbohrmaschine); später Sozialgesetze und der Zehnstundentag</td><td>Zerstörung der Natur — das Ruhrgebiet sackt um 12 Meter ab; Ewigkeitskosten bis heute; Kinderarbeit und 66-Stunden-Wochen; Krankheiten durch Staub; Mietskasernen ohne Licht und Klo; Abhängigkeit vom Fabrikherrn (Stumm); Arbeitsplatzverlust durch Maschinen</td></tr></table>"},
+
+{n:22,teil:"Nach dem Film · C · Und heute?",
+ f:"Der Film endet mit: „Technischer Fortschritt hat immer seinen Preis. Aber auch seine Chancen.“ Heute ersetzen Roboter und KI an vielen Stellen menschliche Arbeit. Welche Parallele siehst du zu 1821 in Eupen?",
+ offen:true,
+ l:"Offene Aufgabe — eine gute Antwort enthält:<ul><li><b>die Parallele:</b> Damals fürchteten die Tuchscherer um Brot und Lohn und zerstörten die Schermaschine; heute fürchten Menschen, dass Roboter und KI ihre Arbeit übernehmen</li><li><b>den Unterschied:</b> Die Maschinen kamen trotzdem — Widerstand hat die Entwicklung nicht aufgehalten</li><li><b>die Lehre:</b> Neue Technik vernichtet Tätigkeiten und schafft zugleich neue (die Eisenbahn brachte ein „Jobwunder“ mit Hunderttausenden im Streckenbau)</li><li><b>die offene Frage:</b> Wer trägt den Preis? Damals mussten sich die Arbeiter ihre Rechte erst mühsam erkämpfen</li></ul>"},
+
+{n:23,teil:"Nach dem Film · C · Und heute?",
+ f:"Denk an deine eigene Berufswahl: Welche Tätigkeit könnte in zwanzig Jahren eine Maschine übernehmen — und welche eher nicht? Begründe.",
+ offen:true,
+ l:"Offene Aufgabe, keine feste Lösung. Bewertet wird die <b>Begründung</b>, nicht die Wahl des Berufs. Gute Antworten unterscheiden etwa:<ul><li><b>eher ersetzbar:</b> immer gleiche, klar geregelte Abläufe — Sortieren, Zusammenbauen am Band, Standardauskünfte</li><li><b>eher nicht:</b> Arbeit mit Menschen, unvorhersehbare Situationen, handwerkliche Arbeit an wechselnden Orten (Reparatur, Pflege, Baustelle), Verantwortung für Entscheidungen</li></ul><i>Gesprächsimpuls: Im Film ersetzte die Maschine nicht den ganzen Beruf, sondern veränderte ihn — aus dem Gesellen wurde der Maschinenbediener.</i>"}
+];
+
+let i = 0;
+const NOTIZ_KEY = 'musterloesung_indrev_notizen';
+let notizen = {};
+try{ notizen = JSON.parse(localStorage.getItem(NOTIZ_KEY) || '{}'); }catch(e){ notizen = {}; }
+
+function render(){
+  const a = A[i];
+  const k = document.getElementById('karte');
+  k.className = 'karte verdeckt';
+  k.innerHTML =
+    '<div class="teil">' + a.teil + '</div>' +
+    '<span class="nr">Aufgabe ' + a.n + '</span>' +
+    '<p class="frage">' + a.f + '</p>' +
+    '<button class="reveal" onclick="zeigen()">Musterlösung einblenden</button>' +
+    '<div class="loesung' + (a.offen ? ' offen' : '') + '">' +
+      '<h3>' + (a.offen ? 'Erwartete Antwort' : 'Musterlösung') + '</h3>' + a.l +
+    '</div>' +
+    '<div class="notiz"><label>Ergänzungen aus dem Unterrichtsgespräch</label>' +
+      '<textarea id="nz" oninput="notizAendern(this)"></textarea></div>';
+  const ta = document.getElementById('nz');
+  ta.value = notizen[a.n] || '';
+  wachsen(ta);
+  document.getElementById('zaehler').textContent = (i+1) + ' von ' + A.length;
+  document.getElementById('btnZurueck').disabled = (i === 0);
+  document.getElementById('btnWeiter').disabled = (i === A.length - 1);
+  document.getElementById('fortschritt').style.width = ((i+1)/A.length*100) + '%';
+  window.scrollTo(0,0);
+}
+
+function zeigen(){ document.getElementById('karte').classList.remove('verdeckt'); }
+
+function alleZeigen(){
+  document.querySelectorAll('.karte').forEach(k=>k.classList.remove('verdeckt'));
+}
+
+function wachsen(el){ el.style.height='auto'; el.style.height=el.scrollHeight+'px'; }
+
+function notizAendern(el){
+  notizen[A[i].n] = el.value;
+  wachsen(el);
+  try{ localStorage.setItem(NOTIZ_KEY, JSON.stringify(notizen)); }catch(e){}
+}
+
+function blaettern(d){
+  const neu = i + d;
+  if(neu < 0 || neu >= A.length) return;
+  i = neu;
+  render();
+}
+
+function exportNotizen(){
+  const zeilen = A.filter(a=>(notizen[a.n]||'').trim())
+    .map(a=>'Aufgabe '+a.n+'\n'+notizen[a.n].trim());
+  const text = zeilen.length ? zeilen.join('\n\n') : 'Keine Ergänzungen eingetragen.';
+  const blob = new Blob([text], {type:'text/plain;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.download = 'ergaenzungen_industrielle_revolution.txt';
+  link.href = url; link.click(); URL.revokeObjectURL(url);
+}
+
+document.addEventListener('keydown', e=>{
+  if(e.target.tagName === 'TEXTAREA') return;
+  if(e.key === 'ArrowRight' || e.key === 'PageDown') blaettern(1);
+  if(e.key === 'ArrowLeft'  || e.key === 'PageUp')   blaettern(-1);
+  if(e.key === ' ' || e.key === 'Enter'){ e.preventDefault(); zeigen(); }
+});
+
+render();
+</script>
+</body>
+</html>
