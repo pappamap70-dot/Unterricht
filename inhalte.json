@@ -1,6 +1,6 @@
 {
   "hinweis": "Diese Datei steuert die Uebersichtsseite. Sie wird ueber verwalten.html gepflegt - Handarbeit ist moeglich, aber nicht noetig.",
-  "aktualisiert": "2026-09-16T07:43:42.299Z",
+  "aktualisiert": "2026-09-16T08:19:54.963Z",
   "rubriken": [
     {
       "name": "Arduino",
@@ -95,6 +95,11 @@
         {
           "datei": "ab_projektplanung_handyhalter.html",
           "titel": "Ab Projektplanung Handyhalter",
+          "sichtbar": true
+        },
+        {
+          "datei": "ab_projektplanung_handyhalter_loesung.html",
+          "titel": "Ab Projektplanung Handyhalter Loesung",
           "sichtbar": true
         }
       ]
