@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arbeitsheft A1 – Die Konstruktionsaufgabe (Technik Kl. 10)</title>
+<style>
+:root{--bordeaux:#6B1A2A;--terrakotta:#C0603A;--lachs:#E8906A;--creme:#FBF5F0;--e1:#795548;--e2:#34495E;--e3:#5B21B6;--pr:#115E59}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Barlow Condensed","Arial Narrow",Arial,sans-serif;background:var(--creme);color:#222;font-size:17px}
+nav{position:sticky;top:0;z-index:10;background:var(--bordeaux);padding:8px;display:flex;flex-wrap:wrap;gap:5px}
+nav button{font:inherit;font-size:15px;border:none;border-radius:4px;padding:5px 10px;background:#fff;color:var(--bordeaux);cursor:pointer}
+nav button.active{background:var(--lachs);color:#fff;font-weight:700}
+nav .sp{flex:1}
+#pages{max-width:980px;margin:18px auto;padding:0 12px}
+.page{display:none;background:#fff;padding:26px 32px;border-top:10px solid var(--bordeaux);box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.page.active{display:block}
+.page.e1{border-top-color:var(--e1)}.page.e2{border-top-color:var(--e2)}.page.e3{border-top-color:var(--e3)}.page.ex{border-top-color:#9D174D}
+h1{margin:0 0 4px;color:var(--bordeaux);font-size:34px}
+h2{margin:0 0 6px;font-size:28px}
+.e1 h2{color:var(--e1)}.e2 h2{color:var(--e2)}.e3 h2{color:var(--e3)}.ex h2{color:#9D174D}
+h3{margin:20px 0 6px;font-size:21px;color:var(--terrakotta)}
+.sub{color:#666;margin-bottom:14px}
+.frage{margin:12px 0}
+.frage p{margin:4px 0}
+.tag{display:inline-block;font-size:13px;padding:1px 7px;border-radius:10px;background:var(--lachs);color:#fff;margin-left:6px}
+.praxis{background:#E6F2F1;border-left:6px solid var(--pr);padding:10px 14px;margin:12px 0}
+.hinweis{background:#FFF4E5;border-left:6px solid var(--terrakotta);padding:8px 14px;margin:10px 0}
+table{border-collapse:collapse;width:100%;margin:6px 0}
+th,td{border:1px solid #ccc;padding:5px 7px;vertical-align:top;text-align:left}
+th{background:#f3ece6}
+tr.sum td{background:#f3ece6;font-weight:700}
+input[type=text],input[type=number],select,textarea{font:inherit;font-size:16px;width:100%;border:1px solid #bbb;border-radius:3px;padding:3px 5px;background:#fff}
+input[type=number]{width:60px}
+textarea{resize:none;overflow:hidden;min-height:30px}
+select.ans.correct{background:#d4edda;border-color:#28a745}
+select.ans.wrong{background:#f8d7da;border-color:#dc3545}
+.kopf{display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;margin:10px 0 16px}
+.kopf label{font-size:14px;color:#666}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.svgbox{text-align:center;margin:8px 0}
+.skizze{border:1px dashed #999;height:180px;display:flex;align-items:flex-start;padding:6px;color:#888;font-size:14px}
+body.bw .page{border-top-color:#000!important}
+body.bw h1,body.bw h2,body.bw h3{color:#000!important}
+body.bw .praxis,body.bw .hinweis{background:#fff;border-left-color:#000}
+@media (max-width:700px){.grid2,.kopf{grid-template-columns:1fr}.page{padding:16px}}
+@media print{
+ nav,.no-print{display:none!important}
+ body{background:#fff;font-size:14px}
+ #pages{margin:0;max-width:none;padding:0}
+ .page{display:none!important;box-shadow:none;padding:0;border-top-width:6px}
+ .page.active{display:block!important}
+ body.print-all .page{display:block!important;break-after:page;page-break-after:always}
+ body.print-all .page:last-child{break-after:auto;page-break-after:auto}
+ .frage,.praxis,.hinweis,tr,.svgbox{page-break-inside:avoid}
+ h1,h2,h3{page-break-after:avoid}
+ input[type=text],input[type=number],select{border:none;border-bottom:1px solid #000;background:transparent!important;appearance:none;-webkit-appearance:none;-moz-appearance:none;color:#000!important}
+ textarea{border:1px solid #bbb!important}
+ select.ans.correct,select.ans.wrong{background:transparent!important;border-color:#000!important}
+}
+</style>
+</head>
+<body>
+<nav>
+ <button class="nav-btn active" data-page="1" onclick="showPage(1)">Start</button>
+ <button class="nav-btn" data-page="2" onclick="showPage(2)">E1 Werkstoffe</button>
+ <button class="nav-btn" data-page="3" onclick="showPage(3)">E1 Praxis</button>
+ <button class="nav-btn" data-page="4" onclick="showPage(4)">E2 Anforderungen</button>
+ <button class="nav-btn" data-page="5" onclick="showPage(5)">E2 Varianten</button>
+ <button class="nav-btn" data-page="6" onclick="showPage(6)">E2 Planungsmittel</button>
+ <button class="nav-btn" data-page="7" onclick="showPage(7)">E3 Fertigung</button>
+ <button class="nav-btn" data-page="8" onclick="showPage(8)">E3 Praxis</button>
+ <button class="nav-btn" data-page="9" onclick="showPage(9)">Prüfungstraining</button>
+ <span class="sp"></span>
+ <button onclick="exportData()">💾 Speichern</button>
+ <button onclick="importData()">📂 Laden</button>
+ <button onclick="printSingle()">🖨 Diese Seite</button>
+ <button onclick="printAll()">🖨 Alle Seiten</button>
+ <button onclick="toggleBW()" id="bwbtn">⚫ S/W</button>
+</nav>
+
+<div id="pages">
+
+<!-- ================= SEITE 1 ================= -->
+<div class="page active" id="page1">
+ <h1>Arbeitsheft A1 – Die Konstruktionsaufgabe</h1>
+ <div class="sub">Technik Klasse 10 · Vorbereitung schriftliche Prüfung · Pflichtteil A1: Werkstoffe und Produkte / Produktionstechnik</div>
+ <div class="kopf">
+  <div><label>Name</label><input type="text" id="f-name"></div>
+  <div><label>Klasse</label><input type="text" id="f-klasse"></div>
+  <div><label>Gruppe</label><input type="text" id="f-gruppe"></div>
+ </div>
+ <table>
+  <tr><th>Einheit</th><th>Thema</th><th>Praxis</th><th>Seiten</th></tr>
+  <tr><td>1</td><td>Werkstoffe als Konstruktionskriterium</td><td>Werkstoffprüfung an Stationen</td><td>2–3</td></tr>
+  <tr><td>2</td><td>Konstruktionsaufgabe und Planungsmittel</td><td>Handyhalter konstruieren</td><td>4–6</td></tr>
+  <tr><td>3</td><td>Fertigung</td><td>Handyhalter aus Acrylglas fertigen</td><td>7–8</td></tr>
+  <tr><td>–</td><td>Prüfungstraining A1</td><td>–</td><td>9</td></tr>
+ </table>
+ <div class="hinweis">Deine Eingaben werden in diesem Browser automatisch gespeichert. Sichere trotzdem am Ende <b>jeder</b> Einheit mit <b>💾 Speichern</b> eine JSON-Datei in deinem Home-Verzeichnis. Die Buchseiten findest du in der Edumap.</div>
+ <h3>Selbsteinschätzung zu Beginn</h3>
+ <table>
+  <tr><th>Ich kann …</th><th style="width:170px">Start</th><th style="width:170px">nach Einheit 3</th></tr>
+  <tr><td>Werkstoffe begründet für ein Produkt auswählen</td><td><select class="fw"><option></option><option>sicher</option><option>teilweise</option><option>noch nicht</option></select></td><td><select class="fw"><option></option><option>sicher</option><option>teilweise</option><option>noch nicht</option></select></td></tr>
+  <tr><td>Konstruktionskriterien nennen und anwenden</td><td><select class="fw"><option></option><option>sicher</option><option>teilweise</option><option>noch nicht</option></select></td><td><select class="fw"><option></option><option>sicher</option><option>teilweise</option><option>noch nicht</option></select></td></tr>
+  <tr><td>eine Dreitafelprojektion zeichnen und bemaßen</td><td><select class="fw"><option></option><option>sicher</option><option>teilweise</option><option>noch nicht</option></select></td><td><select class="fw"><option></option><option>sicher</option><option>teilweise</option><option>noch nicht</option></select></td></tr>
+  <tr><td>Stückliste und Arbeitsablaufplan erstellen</td><td><select class="fw"><option></option><option>sicher</option><option>teilweise</option><option>noch nicht</option></select></td><td><select class="fw"><option></option><option>sicher</option><option>teilweise</option><option>noch nicht</option></select></td></tr>
+  <tr><td>Fertigungsverfahren nach DIN 8580 zuordnen</td><td><select class="fw"><option></option><option>sicher</option><option>teilweise</option><option>noch nicht</option></select></td><td><select class="fw"><option></option><option>sicher</option><option>teilweise</option><option>noch nicht</option></select></td></tr>
+ </table>
+</div>
+
+<!-- ================= SEITE 2 ================= -->
+<div class="page e1" id="page2">
+ <h2>Einheit 1 · Werkstoffe als Konstruktionskriterium</h2>
+ <div class="sub">Stationen Holz, Metall, Kunststoff – Buch S. 14–29 (in der Edumap)</div>
+
+ <h3>Station 1: Holz</h3>
+ <div class="frage"><p>1. Nenne die Handelsformen von Schnittholz (S. 16, Abb. 2).</p><textarea data-a="" rows="2" oninput="grow(this)"></textarea></div>
+ <div class="frage"><p>2. Beschreibe den Aufbau von Sperrholz und erkläre den Zweck der Kreuzverleimung.</p><textarea data-a="" rows="3" oninput="grow(this)"></textarea></div>
+ <div class="frage"><p>3. Ordne die Beschreibung dem Holzwerkstoff zu. <span class="tag">Selbstkontrolle</span></p>
+  <table><tr><th>Beschreibung</th><th style="width:220px">Holzwerkstoff</th></tr><tr><td>Holzspäne mit Leim gepresst, oft beschichtet</td><td><select class="ans" onchange="chk(this,'Spanplatte')"><option value=""></option><option>Spanplatte</option><option>MDF-Platte</option><option>OSB-Platte</option><option>Sperrholz</option><option>Siebdruckplatte</option><option>Tischlerplatte</option></select></td></tr><tr><td>mitteldichte Faserplatte aus kleinen, gepressten Fasern</td><td><select class="ans" onchange="chk(this,'MDF-Platte')"><option value=""></option><option>Spanplatte</option><option>MDF-Platte</option><option>OSB-Platte</option><option>Sperrholz</option><option>Siebdruckplatte</option><option>Tischlerplatte</option></select></td></tr><tr><td>grobe Späne, kreuzweise verleimt</td><td><select class="ans" onchange="chk(this,'OSB-Platte')"><option value=""></option><option>Spanplatte</option><option>MDF-Platte</option><option>OSB-Platte</option><option>Sperrholz</option><option>Siebdruckplatte</option><option>Tischlerplatte</option></select></td></tr><tr><td>mindestens drei dicke Furniere kreuzweise verleimt</td><td><select class="ans" onchange="chk(this,'Sperrholz')"><option value=""></option><option>Spanplatte</option><option>MDF-Platte</option><option>OSB-Platte</option><option>Sperrholz</option><option>Siebdruckplatte</option><option>Tischlerplatte</option></select></td></tr><tr><td>Sperrholz, mit Phenolharz beschichtet</td><td><select class="ans" onchange="chk(this,'Siebdruckplatte')"><option value=""></option><option>Spanplatte</option><option>MDF-Platte</option><option>OSB-Platte</option><option>Sperrholz</option><option>Siebdruckplatte</option><option>Tischlerplatte</option></select></td></tr><tr><td>dreilagig, Mittellage aus massiven Holzstäben</td><td><select class="ans" onchange="chk(this,'Tischlerplatte')"><option value=""></option><option>Spanplatte</option><option>MDF-Platte</option><option>OSB-Platte</option><option>Sperrholz</option><option>Siebdruckplatte</option><option>Tischlerplatte</option></select></td></tr></table></div>
+ <div class="frage"><p>4. ⭐ Begründe, welcher Holzwerkstoff sich für die Bodenplatte eines Anhängers eignet (Tabelle S. 19).</p><textarea data-a="" rows="3" oninput="grow(this)"></textarea></div>
+
+ <h3>Station 2: Metall</h3>
+ <div class="frage"><p>1. Erkläre den Begriff <b>Legierung</b> an einem Beispiel.</p><textarea data-a="" rows="2" oninput="grow(this)"></textarea></div>
+ <div class="frage"><p>2. Stahl ist eine Legierung aus Eisen und … <span class="tag">Selbstkontrolle</span></p>
+  <div style="max-width:260px"><select class="ans" onchange="chk(this,'Kohlenstoff')"><option></option><option>Zinn</option><option>Kohlenstoff</option><option>Kupfer</option><option>Aluminium</option></select></div>
+  <p>Bronze ist eine Legierung aus Kupfer und …</p>
+  <div style="max-width:260px"><select class="ans" onchange="chk(this,'Zinn')"><option></option><option>Zinn</option><option>Kohlenstoff</option><option>Eisen</option><option>Zink</option></select></div></div>
+ <div class="frage"><p>3. Beschreibe den Weg vom Barren über das <b>Halbzeug</b> zum <b>Fertigteil</b>.</p><textarea data-a="" rows="3" oninput="grow(this)"></textarea></div>
+ <div class="frage"><p>4. Nenne vier Halbzeuge bzw. Profile und je eine Verwendung.</p><textarea data-a="" rows="3" oninput="grow(this)"></textarea></div>
+ <div class="frage"><p>5. ⭐ Begründe, warum Bohrer aus HSS-Stahl hergestellt werden (Tabelle S. 21).</p><textarea data-a="" rows="2" oninput="grow(this)"></textarea></div>
+
+ <h3>Station 3: Kunststoff</h3>
+ <div class="frage"><p>1. Beschreibe, wie Kunststoffe aus Monomeren entstehen.</p><textarea data-a="" rows="2" oninput="grow(this)"></textarea></div>
+ <div class="frage"><p>2. Ordne zu. <span class="tag">Selbstkontrolle</span></p>
+  <table><tr><th>Aufbau / Produkt</th><th style="width:220px">Kunststoffgruppe</th></tr><tr><td>Ketten nicht miteinander verbunden, werden beim Erwärmen weich</td><td><select class="ans" onchange="chk(this,'Thermoplast')"><option value=""></option><option>Thermoplast</option><option>Duromer</option><option>Elastomer</option></select></td></tr><tr><td>Ketten engmaschig vernetzt, zersetzen sich bei großer Hitze</td><td><select class="ans" onchange="chk(this,'Duromer')"><option value=""></option><option>Thermoplast</option><option>Duromer</option><option>Elastomer</option></select></td></tr><tr><td>Ketten weitmaschig vernetzt, dehnbar und elastisch</td><td><select class="ans" onchange="chk(this,'Elastomer')"><option value=""></option><option>Thermoplast</option><option>Duromer</option><option>Elastomer</option></select></td></tr><tr><td>PLA-Filament im 3D-Drucker</td><td><select class="ans" onchange="chk(this,'Thermoplast')"><option value=""></option><option>Thermoplast</option><option>Duromer</option><option>Elastomer</option></select></td></tr><tr><td>Autoreifen, Dichtungen</td><td><select class="ans" onchange="chk(this,'Elastomer')"><option value=""></option><option>Thermoplast</option><option>Duromer</option><option>Elastomer</option></select></td></tr><tr><td>Acrylglasstreifen, der gebogen werden kann</td><td><select class="ans" onchange="chk(this,'Thermoplast')"><option value=""></option><option>Thermoplast</option><option>Duromer</option><option>Elastomer</option></select></td></tr></table></div>
+ <div class="frage"><p>3. Erkläre, warum Thermoplaste beim Erwärmen weich werden, Duromere aber nicht.</p><textarea data-a="" rows="3" oninput="grow(this)"></textarea></div>
+ <div class="frage"><p>4. Beschreibe den Unterschied zwischen werkstofflicher und rohstofflicher Verwertung.</p><textarea data-a="" rows="3" oninput="grow(this)"></textarea></div>
+ <div class="frage"><p>5. ⭐ Begründe, warum ein Milchkarton (Verbundstoff) schwer zu recyceln ist.</p><textarea data-a="" rows="2" oninput="grow(this)"></textarea></div>
+</div>
+
+<!-- ================= SEITE 3 ================= -->
+<div class="page e1" id="page3">
+ <h2>Einheit 1 · Praxis: Werkstoffprüfung</h2>
+ <div class="praxis"><b>Sicherheit:</b> Keine Brennproben mit Kunststoffen. Heißluftföhn nur unter Aufsicht. Schutzbrille an Station B.</div>
+ <table>
+  <tr><th style="width:130px">Station</th><th style="width:190px">Proben / Prüfung</th><th>Beobachtung</th><th>Merksatz: „… eignet sich für …, weil …"</th></tr>
+  <tr><td><b>A Biegeprobe Holz</b></td><td>Leiste längs / quer zur Faser, Sperrholz</td><td><textarea data-a="" rows="2" oninput="grow(this)"></textarea></td><td><textarea data-a="" rows="2" oninput="grow(this)"></textarea></td></tr><tr><td><b>B Metalle</b></td><td>Magnettest, Ritzprobe, Draht biegen</td><td><textarea data-a="" rows="2" oninput="grow(this)"></textarea></td><td><textarea data-a="" rows="2" oninput="grow(this)"></textarea></td></tr><tr><td><b>C Kunststoffe</b></td><td>Erwärmen, Dehnen, Biegen</td><td><textarea data-a="" rows="2" oninput="grow(this)"></textarea></td><td><textarea data-a="" rows="2" oninput="grow(this)"></textarea></td></tr><tr><td><b>D Wasser</b></td><td>Massivholz, Spanplatte, Siebdruckplatte</td><td><textarea data-a="" rows="2" oninput="grow(this)"></textarea></td><td><textarea data-a="" rows="2" oninput="grow(this)"></textarea></td></tr>
+ </table>
+
+ <h3>Transfer: Werkstoffauswahl begründen</h3>
+ <div class="frage"><p>Für eine <b>Gartenbank</b> soll die Sitzfläche ausgewählt werden. Zur Wahl stehen: unbehandelte Spanplatte, Siebdruckplatte, Kiefer (unbehandelt), Bangkirai mit FSC-Siegel.</p>
+  <p>a) Nenne die Anforderungen, die die Sitzfläche erfüllen muss.</p><textarea data-a="" rows="3" oninput="grow(this)"></textarea>
+  <p>b) Beurteile <b>zwei</b> der Werkstoffe anhand dieser Anforderungen und entscheide dich begründet.</p><textarea data-a="" rows="5" oninput="grow(this)"></textarea></div>
+ <div class="frage"><p>Werkstoff ist nur <b>ein</b> Konstruktionskriterium. Nenne drei weitere Kriterien, die bei der Gartenbank eine Rolle spielen.</p><textarea data-a="" rows="2" oninput="grow(this)"></textarea></div>
+
+ <h3>Reflexion Einheit 1</h3>
+ <div class="frage"><p>Was war heute neu oder schwierig für dich?</p><textarea data-a="" rows="2" oninput="grow(this)"></textarea></div>
+</div>
+
+<!-- ================= SEITE 4 ================= -->
+<div class="page e2" id="page4">
+ <h2>Einheit 2 · Die Konstruktionsaufgabe</h2>
+ <div class="sub">Auftrag: Konstruiere einen Tisch-Handyhalter aus einem Acrylglasstreifen, der in Einheit 3 gefertigt wird.</div>
+
+ <h3>Einstieg: Zwei Handyhalter im Vergleich</h3>
+ <div class="grid2">
+  <div class="frage"><p>Halter 1 – das ist gut / schlecht gelöst:</p><textarea data-a="" rows="3" oninput="grow(this)"></textarea></div>
+  <div class="frage"><p>Halter 2 – das ist gut / schlecht gelöst:</p><textarea data-a="" rows="3" oninput="grow(this)"></textarea></div>
+ </div>
+
+ <h3>Konstruktionskriterien</h3>
+ <div class="frage"><p>Nenne zu jedem Kriterium eine konkrete Frage für den Handyhalter.</p>
+ <table>
+  <tr><th style="width:210px">Kriterium</th><th>Frage für den Handyhalter</th></tr>
+  <tr><td>Funktion</td><td><textarea data-a="" rows="2" oninput="grow(this)"></textarea></td></tr>
+  <tr><td>Stabilität / Standfestigkeit</td><td><textarea data-a="" rows="2" oninput="grow(this)"></textarea></td></tr>
+  <tr><td>Werkstoff</td><td><textarea data-a="" rows="2" oninput="grow(this)"></textarea></td></tr>
+  <tr><td>Fertigung</td><td><textarea data-a="" rows="2" oninput="grow(this)"></textarea></td></tr>
+  <tr><td>Kosten</td><td><textarea data-a="" rows="2" oninput="grow(this)"></textarea></td></tr>
+  <tr><td>Sicherheit</td><td><textarea data-a="" rows="2" oninput="grow(this)"></textarea></td></tr>
+  <tr><td>Handhabung / Ergonomie</td><td><textarea data-a="" rows="2" oninput="grow(this)"></textarea></td></tr>
+  <tr><td>Gestaltung / Design</td><td><textarea data-a="" rows="2" oninput="grow(this)"></textarea></td></tr>
+  <tr><td>Umwelt / Nachhaltigkeit</td><td><textarea data-a="" rows="2" oninput="grow(this)"></textarea></td></tr>
+ </table></div>
+ <div class="frage"><p>Erkläre an einem Beispiel, warum zwei Konstruktionskriterien miteinander in Konflikt stehen können.</p><textarea data-a="" rows="3" oninput="grow(this)"></textarea></div>
+
+ <h3>Anforderungsliste</h3>
+ <p>F = Festforderung (muss erfüllt sein) · W = Wunschforderung (wäre gut). Ergänze mindestens zwei eigene Forderungen.</p>
+ <table><tr><th style="width:40px">Nr.</th><th>Anforderung</th><th style="width:70px">F / W</th></tr><tr><td>1</td><td>Werkstoff: ein Acrylglasstreifen 3 × 60 × 200 mm</td><td>F</td></tr><tr><td>2</td><td>Fertigung nur durch Sägen, Feilen, Bohren, Warmbiegen</td><td>F</td></tr><tr><td>3</td><td>Handy steht hoch und quer sicher, kippt nicht</td><td>F</td></tr><tr><td>4</td><td>keine scharfen Kanten</td><td>F</td></tr><tr><td>5</td><td><input type="text" data-a=""></td><td style="width:70px"><select class="fw"><option></option><option>F</option><option>W</option></select></td></tr><tr><td>6</td><td><input type="text" data-a=""></td><td style="width:70px"><select class="fw"><option></option><option>F</option><option>W</option></select></td></tr><tr><td>7</td><td><input type="text" data-a=""></td><td style="width:70px"><select class="fw"><option></option><option>F</option><option>W</option></select></td></tr><tr><td>8</td><td><input type="text" data-a=""></td><td style="width:70px"><select class="fw"><option></option><option>F</option><option>W</option></select></td></tr></table>
+</div>
+
+<!-- ================= SEITE 5 ================= -->
+<div class="page e2" id="page5">
+ <h2>Einheit 2 · Lösungsvarianten und Bewertung</h2>
+ <div class="praxis"><b>Praxis:</b> Skizziert drei unterschiedliche Varianten auf Karopapier (Seitenansicht mit Biegewinkeln und Maßen genügt). Fotografiert die Skizzen oder heftet sie ein. Beschreibt hier kurz jede Variante.</div>
+ <div class="grid2">
+  <div class="frage"><p><b>Variante A</b> – Idee, Biegewinkel, Besonderheit</p><textarea data-a="" rows="3" oninput="grow(this)"></textarea></div>
+  <div class="frage"><p><b>Variante B</b></p><textarea data-a="" rows="3" oninput="grow(this)"></textarea></div>
+ </div>
+ <div class="grid2">
+  <div class="frage"><p><b>Variante C</b></p><textarea data-a="" rows="3" oninput="grow(this)"></textarea></div>
+  <div class="skizze no-print">Platz für eure Skizzen auf Papier – im Ausdruck ausgeblendet</div>
+ </div>
+
+ <h3>Bewertungsmatrix</h3>
+ <p>Gewichtung: 1 = weniger wichtig, 2 = wichtig, 3 = sehr wichtig · Punkte: 0 = nicht erfüllt … 4 = sehr gut erfüllt. Die Summen werden automatisch berechnet.</p>
+ <table id="bm">
+  <tr><th>Kriterium</th><th style="width:90px">Gewichtung</th><th style="width:90px">A</th><th style="width:90px">B</th><th style="width:90px">C</th></tr>
+  <tr><td>Standfestigkeit</td><td><input type="number" min="1" max="3" data-a="" class="bw" data-row="0"></td><td><input type="number" min="0" max="4" data-a="" class="bp" data-row="0" data-var="A"></td><td><input type="number" min="0" max="4" data-a="" class="bp" data-row="0" data-var="B"></td><td><input type="number" min="0" max="4" data-a="" class="bp" data-row="0" data-var="C"></td></tr><tr><td>Handy hoch und quer nutzbar</td><td><input type="number" min="1" max="3" data-a="" class="bw" data-row="1"></td><td><input type="number" min="0" max="4" data-a="" class="bp" data-row="1" data-var="A"></td><td><input type="number" min="0" max="4" data-a="" class="bp" data-row="1" data-var="B"></td><td><input type="number" min="0" max="4" data-a="" class="bp" data-row="1" data-var="C"></td></tr><tr><td>Materialverbrauch/Abfall</td><td><input type="number" min="1" max="3" data-a="" class="bw" data-row="2"></td><td><input type="number" min="0" max="4" data-a="" class="bp" data-row="2" data-var="A"></td><td><input type="number" min="0" max="4" data-a="" class="bp" data-row="2" data-var="B"></td><td><input type="number" min="0" max="4" data-a="" class="bp" data-row="2" data-var="C"></td></tr><tr><td>Fertigungsaufwand</td><td><input type="number" min="1" max="3" data-a="" class="bw" data-row="3"></td><td><input type="number" min="0" max="4" data-a="" class="bp" data-row="3" data-var="A"></td><td><input type="number" min="0" max="4" data-a="" class="bp" data-row="3" data-var="B"></td><td><input type="number" min="0" max="4" data-a="" class="bp" data-row="3" data-var="C"></td></tr><tr><td>Aussehen/Design</td><td><input type="number" min="1" max="3" data-a="" class="bw" data-row="4"></td><td><input type="number" min="0" max="4" data-a="" class="bp" data-row="4" data-var="A"></td><td><input type="number" min="0" max="4" data-a="" class="bp" data-row="4" data-var="B"></td><td><input type="number" min="0" max="4" data-a="" class="bp" data-row="4" data-var="C"></td></tr><tr><td><input type="text" data-a="" placeholder="eigenes Kriterium"></td><td><input type="number" min="1" max="3" data-a="" class="bw" data-row="5"></td><td><input type="number" min="0" max="4" data-a="" class="bp" data-row="5" data-var="A"></td><td><input type="number" min="0" max="4" data-a="" class="bp" data-row="5" data-var="B"></td><td><input type="number" min="0" max="4" data-a="" class="bp" data-row="5" data-var="C"></td></tr><tr><td><input type="text" data-a="" placeholder="eigenes Kriterium"></td><td><input type="number" min="1" max="3" data-a="" class="bw" data-row="6"></td><td><input type="number" min="0" max="4" data-a="" class="bp" data-row="6" data-var="A"></td><td><input type="number" min="0" max="4" data-a="" class="bp" data-row="6" data-var="B"></td><td><input type="number" min="0" max="4" data-a="" class="bp" data-row="6" data-var="C"></td></tr><tr class="sum"><td colspan="2"><b>Summe (Gewichtung × Punkte)</b></td><td id="sumA">0</td><td id="sumB">0</td><td id="sumC">0</td></tr>
+ </table>
+ <div class="frage"><p>Begründe eure Entscheidung. Was übernehmt ihr eventuell aus den anderen Varianten?</p><textarea data-a="" rows="3" oninput="grow(this)"></textarea></div>
+</div>
+
+<!-- ================= SEITE 6 ================= -->
+<div class="page e2" id="page6">
+ <h2>Einheit 2 · Planungsmittel</h2>
+
+ <h3>Welches Planungsmittel wofür?</h3>
+ <table>
+  <tr><th style="width:320px">Aufgabe</th><th>Planungsmittel</th></tr>
+  <tr><td>schnell Ideen festhalten und vergleichen</td><td><select class="ans" onchange="chk(this,'Ideenskizze')"><option></option><option>Ideenskizze</option><option>Technische Zeichnung</option><option>Stückliste</option><option>Arbeitsablaufplan</option></select></td></tr>
+  <tr><td>Form und Maße eindeutig für die Fertigung festlegen</td><td><select class="ans" onchange="chk(this,'Technische Zeichnung')"><option></option><option>Ideenskizze</option><option>Technische Zeichnung</option><option>Stückliste</option><option>Arbeitsablaufplan</option></select></td></tr>
+  <tr><td>alle Teile mit Anzahl, Werkstoff und Rohmaßen auflisten</td><td><select class="ans" onchange="chk(this,'Stückliste')"><option></option><option>Ideenskizze</option><option>Technische Zeichnung</option><option>Stückliste</option><option>Arbeitsablaufplan</option></select></td></tr>
+  <tr><td>Reihenfolge der Arbeitsschritte mit Werkzeugen festlegen</td><td><select class="ans" onchange="chk(this,'Arbeitsablaufplan')"><option></option><option>Ideenskizze</option><option>Technische Zeichnung</option><option>Stückliste</option><option>Arbeitsablaufplan</option></select></td></tr>
+ </table>
+
+ <h3>Linienarten <span class="tag">Selbstkontrolle</span></h3>
+ <table><tr><th>Bedeutung</th><th style="width:260px">Linienart</th></tr><tr><td>sichtbare Kanten</td><td><select class="ans" onchange="chk(this,'breite Volllinie')"><option value=""></option><option>breite Volllinie</option><option>schmale Strichlinie</option><option>schmale Strichpunktlinie</option><option>schmale Volllinie</option></select></td></tr><tr><td>verdeckte Kanten</td><td><select class="ans" onchange="chk(this,'schmale Strichlinie')"><option value=""></option><option>breite Volllinie</option><option>schmale Strichlinie</option><option>schmale Strichpunktlinie</option><option>schmale Volllinie</option></select></td></tr><tr><td>Mittellinien, Symmetrieachsen</td><td><select class="ans" onchange="chk(this,'schmale Strichpunktlinie')"><option value=""></option><option>breite Volllinie</option><option>schmale Strichlinie</option><option>schmale Strichpunktlinie</option><option>schmale Volllinie</option></select></td></tr><tr><td>Maßlinien und Maßhilfslinien</td><td><select class="ans" onchange="chk(this,'schmale Volllinie')"><option value=""></option><option>breite Volllinie</option><option>schmale Strichlinie</option><option>schmale Strichpunktlinie</option><option>schmale Volllinie</option></select></td></tr></table>
+
+ <h3>Übung: Dreitafelprojektion</h3>
+ <div class="svgbox"><svg viewBox="0 0 460 290" width="420" xmlns="http://www.w3.org/2000/svg"><polygon points="40.0,260.0 296.0,260.0 296.0,212.0 88.0,212.0 88.0,68.0 40.0,68.0" fill="#F3D9C8" stroke="#222" stroke-width="2"/><polygon points="88.0,212.0 296.0,212.0 341.3,166.7 133.3,166.7" fill="#FBF5F0" stroke="#222" stroke-width="2"/><polygon points="40.0,68.0 88.0,68.0 133.3,22.7 85.3,22.7" fill="#FBF5F0" stroke="#222" stroke-width="2"/><polygon points="296.0,260.0 341.3,214.7 341.3,166.7 296.0,212.0" fill="#E8906A" stroke="#222" stroke-width="2"/><polygon points="88.0,212.0 133.3,166.7 133.3,22.7 88.0,68.0" fill="#E8906A" stroke="#222" stroke-width="2"/><text x="160" y="282" font-size="15" font-weight="700" fill="#6B1A2A">80</text><text x="10" y="169" font-size="15" font-weight="700" fill="#6B1A2A">60</text><text x="333" y="247" font-size="15" font-weight="700" fill="#6B1A2A">40</text><text x="266" y="243" font-size="15" font-weight="700" fill="#6B1A2A">15</text><text x="54" y="60" font-size="15" font-weight="700" fill="#6B1A2A">15</text><text x="250" y="40" font-size="13" fill="#444">Maße in mm, Dicke überall 15 mm</text><text x="250" y="60" font-size="13" fill="#444">Tiefe 40 mm</text></svg></div>
+ <div class="frage"><p>a) Zeichne den Winkel auf Karopapier im Maßstab 1:1 in <b>Vorderansicht, Draufsicht und Seitenansicht von links</b>. Achte auf die richtige Anordnung der Ansichten.</p>
+  <p>b) Bemaße die Zeichnung normgerecht (jedes Maß nur einmal).</p>
+  <p>c) Beschreibe, wo Draufsicht und Seitenansicht von links im Verhältnis zur Vorderansicht angeordnet werden.</p><textarea data-a="" rows="2" oninput="grow(this)"></textarea></div>
+
+ <h3>Praxis: Zeichnung und Stückliste des Handyhalters</h3>
+ <div class="praxis">Zeichnet eure beste Variante auf Karopapier: <b>Abwicklung</b> (gestreckter Streifen 200 × 60 mm mit bemaßten Biegelinien) und <b>Seitenansicht</b> mit Biegewinkeln.</div>
+ <table><tr><th style="width:50px">Pos.</th><th>Anzahl</th><th>Benennung</th><th>Werkstoff</th><th>Rohmaße (L × B × D)</th><th>Bemerkung</th></tr><tr><td>1</td><td><input type="text" data-a=""></td><td><input type="text" data-a=""></td><td><input type="text" data-a=""></td><td><input type="text" data-a=""></td><td><input type="text" data-a=""></td></tr><tr><td>2</td><td><input type="text" data-a=""></td><td><input type="text" data-a=""></td><td><input type="text" data-a=""></td><td><input type="text" data-a=""></td><td><input type="text" data-a=""></td></tr><tr><td>3</td><td><input type="text" data-a=""></td><td><input type="text" data-a=""></td><td><input type="text" data-a=""></td><td><input type="text" data-a=""></td><td><input type="text" data-a=""></td></tr><tr><td>4</td><td><input type="text" data-a=""></td><td><input type="text" data-a=""></td><td><input type="text" data-a=""></td><td><input type="text" data-a=""></td><td><input type="text" data-a=""></td></tr></table>
+
+ <h3>Reflexion Einheit 2</h3>
+ <div class="frage"><p>Welcher Schritt der Konstruktionsaufgabe fiel euch am schwersten – und warum?</p><textarea data-a="" rows="2" oninput="grow(this)"></textarea></div>
+</div>
+
+<!-- ================= SEITE 7 ================= -->
+<div class="page e3" id="page7">
+ <h2>Einheit 3 · Fertigung</h2>
+
+ <h3>Fertigungsverfahren nach DIN 8580 <span class="tag">Selbstkontrolle</span></h3>
+ <table><tr><th>Arbeitsvorgang</th><th style="width:250px">Hauptgruppe</th></tr><tr><td>Aluminium wird in eine Form gegossen</td><td><select class="ans" onchange="chk(this,'Urformen')"><option value=""></option><option>Urformen</option><option>Umformen</option><option>Trennen</option><option>Fügen</option><option>Beschichten</option><option>Stoffeigenschaft ändern</option></select></td></tr><tr><td>Ein Bauteil entsteht im 3D-Drucker</td><td><select class="ans" onchange="chk(this,'Urformen')"><option value=""></option><option>Urformen</option><option>Umformen</option><option>Trennen</option><option>Fügen</option><option>Beschichten</option><option>Stoffeigenschaft ändern</option></select></td></tr><tr><td>Acrylglas wird am Biegegerät gebogen</td><td><select class="ans" onchange="chk(this,'Umformen')"><option value=""></option><option>Urformen</option><option>Umformen</option><option>Trennen</option><option>Fügen</option><option>Beschichten</option><option>Stoffeigenschaft ändern</option></select></td></tr><tr><td>Stahlblech wird zur Autotür tiefgezogen</td><td><select class="ans" onchange="chk(this,'Umformen')"><option value=""></option><option>Urformen</option><option>Umformen</option><option>Trennen</option><option>Fügen</option><option>Beschichten</option><option>Stoffeigenschaft ändern</option></select></td></tr><tr><td>Ein Loch wird gebohrt</td><td><select class="ans" onchange="chk(this,'Trennen')"><option value=""></option><option>Urformen</option><option>Umformen</option><option>Trennen</option><option>Fügen</option><option>Beschichten</option><option>Stoffeigenschaft ändern</option></select></td></tr><tr><td>Kanten werden gefeilt</td><td><select class="ans" onchange="chk(this,'Trennen')"><option value=""></option><option>Urformen</option><option>Umformen</option><option>Trennen</option><option>Fügen</option><option>Beschichten</option><option>Stoffeigenschaft ändern</option></select></td></tr><tr><td>Ein Kabel wird angelötet</td><td><select class="ans" onchange="chk(this,'Fügen')"><option value=""></option><option>Urformen</option><option>Umformen</option><option>Trennen</option><option>Fügen</option><option>Beschichten</option><option>Stoffeigenschaft ändern</option></select></td></tr><tr><td>Zwei Holzteile werden verleimt</td><td><select class="ans" onchange="chk(this,'Fügen')"><option value=""></option><option>Urformen</option><option>Umformen</option><option>Trennen</option><option>Fügen</option><option>Beschichten</option><option>Stoffeigenschaft ändern</option></select></td></tr><tr><td>Ein Gartentor wird verzinkt</td><td><select class="ans" onchange="chk(this,'Beschichten')"><option value=""></option><option>Urformen</option><option>Umformen</option><option>Trennen</option><option>Fügen</option><option>Beschichten</option><option>Stoffeigenschaft ändern</option></select></td></tr><tr><td>Ein Meißel wird gehärtet</td><td><select class="ans" onchange="chk(this,'Stoffeigenschaft ändern')"><option value=""></option><option>Urformen</option><option>Umformen</option><option>Trennen</option><option>Fügen</option><option>Beschichten</option><option>Stoffeigenschaft ändern</option></select></td></tr><tr><td>Weichholz wird imprägniert (S. 15)</td><td><select class="ans" onchange="chk(this,'Stoffeigenschaft ändern')"><option value=""></option><option>Urformen</option><option>Umformen</option><option>Trennen</option><option>Fügen</option><option>Beschichten</option><option>Stoffeigenschaft ändern</option></select></td></tr></table>
+ <div class="frage"><p>Erkläre den Unterschied zwischen <b>Urformen</b> und <b>Umformen</b>.</p><textarea data-a="" rows="3" oninput="grow(this)"></textarea></div>
+
+ <h3>Einzel-, Serien-, Massenfertigung <span class="tag">Selbstkontrolle</span></h3>
+ <table><tr><th>Produkt</th><th style="width:250px">Fertigungsart</th></tr><tr><td>maßgefertigter Einbauschrank</td><td><select class="ans" onchange="chk(this,'Einzelfertigung')"><option value=""></option><option>Einzelfertigung</option><option>Serienfertigung</option><option>Massenfertigung</option></select></td></tr><tr><td>30 gleiche Handyhalter für eine Klasse</td><td><select class="ans" onchange="chk(this,'Serienfertigung')"><option value=""></option><option>Einzelfertigung</option><option>Serienfertigung</option><option>Massenfertigung</option></select></td></tr><tr><td>Millionen Schrauben pro Jahr</td><td><select class="ans" onchange="chk(this,'Massenfertigung')"><option value=""></option><option>Einzelfertigung</option><option>Serienfertigung</option><option>Massenfertigung</option></select></td></tr><tr><td>Prototyp eines neuen Produkts</td><td><select class="ans" onchange="chk(this,'Einzelfertigung')"><option value=""></option><option>Einzelfertigung</option><option>Serienfertigung</option><option>Massenfertigung</option></select></td></tr></table>
+ <div class="frage"><p>Erkläre, warum bei der Serienfertigung Schablonen, Anschläge und Vorrichtungen eingesetzt werden.</p><textarea data-a="" rows="3" oninput="grow(this)"></textarea></div>
+
+ <h3>Messen oder Prüfen? <span class="tag">Selbstkontrolle</span></h3>
+ <table><tr><th>Vorgang</th><th style="width:250px">Messen / Prüfen</th></tr><tr><td>Die Länge wird mit dem Messschieber ermittelt: 59,6 mm</td><td><select class="ans" onchange="chk(this,'Messen')"><option value=""></option><option>Messen</option><option>Prüfen</option></select></td></tr><tr><td>Der Biegewinkel wird mit einer Winkellehre verglichen: passt</td><td><select class="ans" onchange="chk(this,'Prüfen')"><option value=""></option><option>Messen</option><option>Prüfen</option></select></td></tr><tr><td>Sichtkontrolle: Kanten sind entgratet</td><td><select class="ans" onchange="chk(this,'Prüfen')"><option value=""></option><option>Messen</option><option>Prüfen</option></select></td></tr><tr><td>Die Höhe wird mit dem Stahlmaßstab bestimmt</td><td><select class="ans" onchange="chk(this,'Messen')"><option value=""></option><option>Messen</option><option>Prüfen</option></select></td></tr></table>
+ <div class="frage"><p>Ein Maß ist mit 60 ± 1 mm angegeben. Nenne das kleinste und das größte zulässige Maß.</p><textarea data-a="" rows="2" oninput="grow(this)"></textarea></div>
+</div>
+
+<!-- ================= SEITE 8 ================= -->
+<div class="page e3" id="page8">
+ <h2>Einheit 3 · Praxis: Handyhalter fertigen</h2>
+ <div class="praxis"><b>Sicherheit:</b> Heizdraht des Biegegeräts wird sehr heiß – nicht berühren, Gerät nie unbeaufsichtigt lassen. Acrylglas nicht überhitzen (Blasen, Dämpfe). Beim Sägen fest einspannen.</div>
+
+ <h3>Arbeitsablaufplan</h3>
+ <p>Ergänze vor der Fertigung Werkzeuge/Hilfsmittel, Hauptgruppe nach DIN 8580 und Sicherheit/Prüfung.</p>
+ <table>
+  <tr><th style="width:36px">Nr.</th><th style="width:210px">Arbeitsschritt</th><th>Werkzeug / Hilfsmittel</th><th>DIN 8580</th><th>Sicherheit / Prüfung</th></tr>
+  <tr><td>1</td><td>Maße prüfen, Biegelinien anreißen</td><td><textarea data-a="" rows="2" oninput="grow(this)"></textarea></td><td><textarea data-a="" rows="2" oninput="grow(this)"></textarea></td><td><textarea data-a="" rows="2" oninput="grow(this)"></textarea></td></tr><tr><td>2</td><td>Ecken absägen / abrunden</td><td><textarea data-a="" rows="2" oninput="grow(this)"></textarea></td><td><textarea data-a="" rows="2" oninput="grow(this)"></textarea></td><td><textarea data-a="" rows="2" oninput="grow(this)"></textarea></td></tr><tr><td>3</td><td>Kanten entgraten</td><td><textarea data-a="" rows="2" oninput="grow(this)"></textarea></td><td><textarea data-a="" rows="2" oninput="grow(this)"></textarea></td><td><textarea data-a="" rows="2" oninput="grow(this)"></textarea></td></tr><tr><td>4</td><td>Schutzfolie entfernen</td><td><textarea data-a="" rows="2" oninput="grow(this)"></textarea></td><td><textarea data-a="" rows="2" oninput="grow(this)"></textarea></td><td><textarea data-a="" rows="2" oninput="grow(this)"></textarea></td></tr><tr><td>5</td><td>Erwärmen und biegen</td><td><textarea data-a="" rows="2" oninput="grow(this)"></textarea></td><td><textarea data-a="" rows="2" oninput="grow(this)"></textarea></td><td><textarea data-a="" rows="2" oninput="grow(this)"></textarea></td></tr><tr><td>6</td><td>Qualitätsprüfung</td><td><textarea data-a="" rows="2" oninput="grow(this)"></textarea></td><td><textarea data-a="" rows="2" oninput="grow(this)"></textarea></td><td><textarea data-a="" rows="2" oninput="grow(this)"></textarea></td></tr>
+ </table>
+
+ <h3>Qualitätsprüfprotokoll</h3>
+ <table>
+  <tr><th>Merkmal</th><th>Soll</th><th style="width:160px">Ist</th><th style="width:150px">Ergebnis</th></tr>
+  <tr><td>Länge gestreckt</td><td>200 ± 1 mm</td><td><input type="text" data-a=""></td><td><select class='fw'><option></option><option>erfüllt</option><option>nicht erfüllt</option></select></td></tr><tr><td>Breite</td><td>60 ± 1 mm</td><td><input type="text" data-a=""></td><td><select class='fw'><option></option><option>erfüllt</option><option>nicht erfüllt</option></select></td></tr><tr><td>Biegewinkel 1</td><td>laut Zeichnung ± 5°</td><td><input type="text" data-a=""></td><td><select class='fw'><option></option><option>erfüllt</option><option>nicht erfüllt</option></select></td></tr><tr><td>Biegewinkel 2</td><td>laut Zeichnung ± 5°</td><td><input type="text" data-a=""></td><td><select class='fw'><option></option><option>erfüllt</option><option>nicht erfüllt</option></select></td></tr><tr><td>Kanten</td><td>entgratet, keine Verletzungsgefahr</td><td><input type="text" data-a=""></td><td><select class='fw'><option></option><option>erfüllt</option><option>nicht erfüllt</option></select></td></tr><tr><td>Standfestigkeit</td><td>Handy hoch und quer, kippt nicht</td><td><input type="text" data-a=""></td><td><select class='fw'><option></option><option>erfüllt</option><option>nicht erfüllt</option></select></td></tr><tr><td>Oberfläche</td><td>keine Blasen, keine Kratzer</td><td><input type="text" data-a=""></td><td><select class='fw'><option></option><option>erfüllt</option><option>nicht erfüllt</option></select></td></tr>
+ </table>
+
+ <h3>Reflexion Einheit 3</h3>
+ <div class="frage"><p>Vergleiche dein Produkt mit der Anforderungsliste (Seite 4). Welche Forderungen sind erfüllt, welche nicht?</p><textarea data-a="" rows="3" oninput="grow(this)"></textarea></div>
+ <div class="frage"><p>Was würdest du an der Konstruktion oder am Fertigungsablauf ändern, wenn 30 Stück hergestellt werden sollen?</p><textarea data-a="" rows="3" oninput="grow(this)"></textarea></div>
+</div>
+
+<!-- ================= SEITE 9 ================= -->
+<div class="page ex" id="page9">
+ <h2>Prüfungstraining A1</h2>
+ <div class="sub">Bearbeite ohne Buch in 30 Minuten. Achte auf die Operatoren.</div>
+
+ <div class="frage"><p><b>1.</b> Nenne sechs Konstruktionskriterien.</p><textarea data-a="" rows="2" oninput="grow(this)"></textarea></div>
+ <div class="frage"><p><b>2.</b> Eine Firma möchte Frühstücksbrettchen in Serie herstellen. Zur Auswahl stehen Buche (Massivholz), Spanplatte und ein Thermoplast.<br>Beurteile die drei Werkstoffe und begründe deine Entscheidung.</p><textarea data-a="" rows="5" oninput="grow(this)"></textarea></div>
+ <div class="frage"><p><b>3.</b> Beschreibe die Schritte einer Konstruktionsaufgabe vom Auftrag bis zum fertigen Produkt.</p><textarea data-a="" rows="5" oninput="grow(this)"></textarea></div>
+ <div class="frage"><p><b>4.</b> Erkläre, welchen Zweck eine Bewertungsmatrix mit Gewichtung hat.</p><textarea data-a="" rows="3" oninput="grow(this)"></textarea></div>
+ <div class="frage"><p><b>5.</b> Nenne die Spalten einer Stückliste.</p><textarea data-a="" rows="2" oninput="grow(this)"></textarea></div>
+ <div class="frage"><p><b>6.</b> Beim Handyhalter wurden folgende Arbeiten ausgeführt: Absägen der Ecken, Biegen am Biegegerät, Anschrauben einer Gummileiste. Ordne jede Arbeit einer Hauptgruppe der DIN 8580 zu.</p><textarea data-a="" rows="3" oninput="grow(this)"></textarea></div>
+ <div class="frage"><p><b>7.</b> Begründe, warum für Gehäuse, die in großer Stückzahl hergestellt werden, oft Thermoplaste und das Spritzgießen gewählt werden.</p><textarea data-a="" rows="3" oninput="grow(this)"></textarea></div>
+ <div class="frage"><p><b>8.</b> Erkläre den Unterschied zwischen Messen und Prüfen an je einem Beispiel.</p><textarea data-a="" rows="3" oninput="grow(this)"></textarea></div>
+</div>
+
+</div>
+<input type="file" id="fileImport" accept=".json" style="display:none" onchange="loadFile(this)">
+
+<script>
+const KEY='ab_a1_konstruktion_kl10';
+function grow(ta){ta.style.height='auto';ta.style.height=ta.scrollHeight+'px';}
+function showPage(n){
+ document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+ document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+ document.getElementById('page'+n).classList.add('active');
+ document.querySelector(`.nav-btn[data-page="${n}"]`)?.classList.add('active');
+ document.querySelectorAll('#page'+n+' textarea').forEach(grow);
+ window.scrollTo(0,0);
+}
+function chk(el,correct){
+ el.classList.remove('correct','wrong');
+ if(el.value!==''){el.classList.add(el.value===correct?'correct':'wrong');}
+ save();
+}
+function calcBM(){
+ const sums={A:0,B:0,C:0};
+ document.querySelectorAll('#bm input.bw').forEach(w=>{
+  const g=parseFloat(w.value)||0,row=w.dataset.row;
+  ['A','B','C'].forEach(v=>{
+   const p=document.querySelector(`#bm input.bp[data-row="${row}"][data-var="${v}"]`);
+   sums[v]+=g*(parseFloat(p.value)||0);
+  });
+ });
+ ['A','B','C'].forEach(v=>document.getElementById('sum'+v).textContent=sums[v]);
+}
+function collectData(){
+ const fields={};
+ document.querySelectorAll('input[id], input[data-a], textarea').forEach((el,i)=>{
+  const key=i+'_'+(el.id||el.getAttribute('data-a')||'ta_'+i);
+  fields[key]=el.value;
+ });
+ const selects=[];
+ document.querySelectorAll('select').forEach(sel=>{
+  selects.push({val:sel.value,cls:sel.classList.contains('ans')?sel.className.replace('ans','').trim():''});
+ });
+ return {fields,selects,ts:Date.now()};
+}
+function applyData(data){
+ if(!data||!data.fields)return;
+ document.querySelectorAll('input[id], input[data-a], textarea').forEach((el,i)=>{
+  const key=i+'_'+(el.id||el.getAttribute('data-a')||'ta_'+i);
+  if(data.fields[key]!==undefined){
+   el.value=data.fields[key];
+   if(el.tagName==='TEXTAREA'){
+    const page=el.closest('.page');const hidden=page&&!page.classList.contains('active');
+    if(hidden)page.style.display='block';
+    grow(el);
+    if(hidden)page.style.display='';
+   }
+  }
+ });
+ if(data.selects){
+  document.querySelectorAll('select').forEach((sel,i)=>{
+   if(data.selects[i]){
+    sel.value=data.selects[i].val;
+    if(sel.classList.contains('ans'))sel.className='ans '+(data.selects[i].cls||'');
+   }
+  });
+ }
+ calcBM();
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(collectData()));}catch(e){}}
+document.addEventListener('input',()=>{calcBM();save();});
+document.addEventListener('change',save);
+window.addEventListener('load',()=>{
+ try{const s=localStorage.getItem(KEY);if(s)applyData(JSON.parse(s));}catch(e){}
+ try{if(localStorage.getItem(KEY+'_bw')==='1')document.body.classList.add('bw');}catch(e){}
+ calcBM();
+});
+function exportData(){
+ const blob=new Blob([JSON.stringify(collectData(),null,2)],{type:'application/json'});
+ const url=URL.createObjectURL(blob);const a=document.createElement('a');
+ const name=document.getElementById('f-name').value.trim();const kl=document.getElementById('f-klasse').value.trim();
+ a.download='Arbeitsheft_A1'+(name?'_'+name.replace(/\s+/g,'_'):'')+(kl?'_'+kl:'')+'.json';
+ a.href=url;a.click();URL.revokeObjectURL(url);
+}
+function importData(){document.getElementById('fileImport').click();}
+function loadFile(input){
+ const f=input.files[0];if(!f)return;
+ const r=new FileReader();
+ r.onload=e=>{try{applyData(JSON.parse(e.target.result));save();}catch(err){alert('Datei konnte nicht gelesen werden.');}};
+ r.readAsText(f);input.value='';
+}
+function toggleBW(){
+ document.body.classList.toggle('bw');
+ try{localStorage.setItem(KEY+'_bw',document.body.classList.contains('bw')?'1':'0');}catch(e){}
+}
+function printSingle(){document.body.classList.remove('print-all');document.querySelectorAll('.page.active textarea').forEach(grow);window.print();}
+function printAll(){
+ const active=document.querySelector('.page.active')?.id;
+ document.querySelectorAll('.page').forEach(p=>p.style.display='block');
+ document.body.classList.add('print-all');
+ document.querySelectorAll('textarea').forEach(grow);
+ setTimeout(()=>{window.print();setTimeout(()=>{
+  document.body.classList.remove('print-all');
+  document.querySelectorAll('.page').forEach(p=>p.style.display='');
+  if(active)document.getElementById(active)?.classList.add('active');
+ },500);},300);
+}
+</script>
+</body>
+</html>
