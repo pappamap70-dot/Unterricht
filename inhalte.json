@@ -1,6 +1,6 @@
 {
   "hinweis": "Diese Datei steuert die Uebersichtsseite. Sie wird ueber verwalten.html gepflegt - Handarbeit ist moeglich, aber nicht noetig.",
-  "aktualisiert": "2026-09-16T08:19:54.963Z",
+  "aktualisiert": "2026-09-16T13:24:50.410Z",
   "rubriken": [
     {
       "name": "Arduino",
@@ -100,6 +100,11 @@
         {
           "datei": "ab_projektplanung_handyhalter_loesung.html",
           "titel": "Ab Projektplanung Handyhalter Loesung",
+          "sichtbar": true
+        },
+        {
+          "datei": "Arbeitsheft_A1_Konstruktionsaufgabe.html",
+          "titel": "Arbeitsheft A1 Konstruktionsaufgabe",
           "sichtbar": true
         }
       ]
