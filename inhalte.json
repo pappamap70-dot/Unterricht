@@ -1,6 +1,6 @@
 {
   "hinweis": "Diese Datei steuert die Uebersichtsseite. Sie wird ueber verwalten.html gepflegt - Handarbeit ist moeglich, aber nicht noetig.",
-  "aktualisiert": "2026-09-21T07:58:03.998Z",
+  "aktualisiert": "2026-09-21T08:03:10.701Z",
   "rubriken": [
     {
       "name": "Arduino",
@@ -112,13 +112,7 @@
     {
       "name": "Sicherheit",
       "sichtbar": true,
-      "eintraege": [
-        {
-          "datei": "sicherheitsregeln_domino.html",
-          "titel": "Sicherheitsregeln Domino",
-          "sichtbar": true
-        }
-      ]
+      "eintraege": []
     }
   ]
 }
