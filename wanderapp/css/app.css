@@ -180,6 +180,27 @@ h2:first-child{margin-top:4px}
 .tabbar a span{font-size:19px;line-height:1}
 .tabbar a[aria-current="page"]{color:var(--gruen);font-weight:600}
 
+/* Kartenauswahl -------------------------------------------- */
+.menue-grund{position:fixed;inset:0;z-index:1400}
+.menue{
+  position:fixed;right:12px;bottom:calc(var(--tab-h) + var(--unten) + 16px);z-index:1500;
+  background:var(--karte);border-radius:14px;box-shadow:0 4px 24px rgba(0,0,0,.28);
+  padding:6px;min-width:214px;overflow:hidden;
+}
+.menue-kopf{
+  font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--text-schwach);
+  padding:8px 12px 4px;font-weight:600;
+}
+.menue-zeile{
+  display:flex;align-items:center;gap:10px;width:100%;padding:11px 12px;border:none;
+  background:none;color:var(--text);font:inherit;font-size:15px;text-align:left;
+  cursor:pointer;border-radius:9px;
+}
+.menue-zeile:active{background:var(--bg)}
+.menue-zeile .haken{flex:0 0 18px;color:var(--gruen);font-weight:700}
+.menue-zeile[aria-checked="true"]{font-weight:600}
+.menue-zeile[aria-checked="true"] .haken::before{content:"✓"}
+
 /* Overlays ------------------------------------------------- */
 .sperre{
   position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.45);backdrop-filter:blur(2px);

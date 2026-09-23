@@ -115,7 +115,8 @@ function route() {
     if (aktiv) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
   });
 
-  if (ziel !== 'tour') beendeNavigation(false);
+  // Die Navigation läuft weiter, auch wenn man kurz in die Übersicht
+  // schaut – beendet wird sie nur über den Knopf oder mit einer anderen Tour.
 
   if (ziel === 'touren') zeigeListe();
   if (ziel === 'karte') zeigeUebersicht();
@@ -315,6 +316,8 @@ async function zeigeTour(id) {
     location.hash = '#/touren';
     return;
   }
+  // Eine Navigation auf einer anderen Tour endet hier
+  if (S.nav && S.nav.tour.id !== tour.id) beendeNavigation(false);
   S.tour = tour;
 
   if (!S.karteT) {
@@ -324,9 +327,20 @@ async function zeigeTour(id) {
 
   if (S.tourGruppe) S.karteT.removeLayer(S.tourGruppe);
   S.tourGruppe = zeichneTour(S.karteT, tour, { kmMarken: S.einst.kmMarken });
-  setzeSheet('normal');
-  passeAn(S.karteT, tour, { untenFrei: sheetVerdeckt() });
+  const laeuft = !!S.nav;
+  setzeSheet(laeuft ? 'klein' : 'normal');
+  if (!laeuft) passeAn(S.karteT, tour, { untenFrei: sheetVerdeckt() });
   zeichneDetail(tour);
+
+  // Kehrt man zu einer laufenden Navigation zurück, muss die Ansicht sie
+  // wiedererkennen - zeichneDetail baut die Knöpfe neu auf.
+  if (laeuft) {
+    $('#btn-nav').textContent = 'Navigation beenden';
+    $('#btn-nav').classList.remove('primary');
+    $('#nav-banner').hidden = false;
+    $('#fab-locate').setAttribute('aria-pressed', 'true');
+    if (S.standort) aktualisiereNavigation(S.standort);
+  }
 }
 
 function zeichneDetail(tour) {
@@ -675,7 +689,7 @@ async function zeigeMehr() {
     + `${S.index.touren.length} Buchtouren, ${S.eigene.length} eigene</span>`;
 }
 
-const APP_VERSION = '1.2.0';
+const APP_VERSION = '1.3.0';
 
 // --- Oberfläche verdrahten ----------------------------------------------
 
@@ -708,8 +722,15 @@ function verdrahteOberflaeche() {
   };
   $('#fab-locate').onclick = () => { S.folgen = true; zeigeStandort(S.karteT); };
   $('#fab-locate-u').onclick = () => zeigeStandort(S.karteU);
-  $('#fab-layers').onclick = () => layerWechsel(S.karteT);
-  $('#fab-layers-u').onclick = () => layerWechsel(S.karteU);
+  $('#fab-layers').onclick = oeffneLayerMenue;
+  $('#fab-layers-u').onclick = oeffneLayerMenue;
+  $('#layer-grund').onclick = schliesseLayerMenue;
+  $('#layer-menue').addEventListener('click', e => {
+    const zeile = e.target.closest('.menue-zeile');
+    if (!zeile) return;
+    if (zeile.dataset.layer) waehleLayer(zeile.dataset.layer);
+    else schalteWanderwege();
+  });
   $('#map-tour').addEventListener('pointerdown', () => { S.folgen = false; });
 
   // Sheet ziehen: klein – normal – gross
@@ -766,21 +787,40 @@ function verdrahteOberflaeche() {
   });
 }
 
-async function layerWechsel(karte) {
-  const folge = [...Object.keys(LAYER), 'wege'];
-  const jetzt = S.einst.layer;
-  const idx = folge.indexOf(jetzt);
-  const next = folge[(idx + 1) % folge.length];
+/**
+ * Kartenauswahl als Menü. Ein blindes Durchschalten liess nicht erkennen,
+ * welche Karte gerade aktiv ist und wie man zurückkommt.
+ */
+function oeffneLayerMenue() {
+  zeichneLayerMenue();
+  $('#layer-menue').hidden = false;
+  $('#layer-grund').hidden = false;
+}
 
-  if (next === 'wege') {
-    S.einst = await setzeEinstellung('wanderwege', !S.einst.wanderwege);
-    for (const k of [S.karteU, S.karteT]) if (k) setzeWanderwege(k, S.einst.wanderwege);
-    toast('Wanderwege ' + (S.einst.wanderwege ? 'an' : 'aus'));
-    return;
+function schliesseLayerMenue() {
+  $('#layer-menue').hidden = true;
+  $('#layer-grund').hidden = true;
+}
+
+function zeichneLayerMenue() {
+  for (const z of $$('#layer-menue .menue-zeile')) {
+    const aktiv = z.dataset.layer
+      ? z.dataset.layer === S.einst.layer
+      : S.einst.wanderwege;
+    z.setAttribute('aria-checked', String(aktiv));
   }
-  S.einst = await setzeEinstellung('layer', next);
-  for (const k of [S.karteU, S.karteT]) if (k) setzeLayer(k, next);
-  toast(LAYER[next].name);
+}
+
+async function waehleLayer(schluessel) {
+  S.einst = await setzeEinstellung('layer', schluessel);
+  for (const k of [S.karteU, S.karteT]) if (k) setzeLayer(k, schluessel);
+  zeichneLayerMenue();
+}
+
+async function schalteWanderwege() {
+  S.einst = await setzeEinstellung('wanderwege', !S.einst.wanderwege);
+  for (const k of [S.karteU, S.karteT]) if (k) setzeWanderwege(k, S.einst.wanderwege);
+  zeichneLayerMenue();
 }
 
 // --- Service Worker ------------------------------------------------------

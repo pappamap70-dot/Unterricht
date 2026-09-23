@@ -110,6 +110,17 @@
   <a href="#/mehr"   data-tab="mehr"><span>⋯</span>Mehr</a>
 </nav>
 
+<!-- Kartenauswahl: zeigt, welche Karte gerade aktiv ist -->
+<div class="menue-grund" id="layer-grund" hidden></div>
+<div class="menue" id="layer-menue" hidden role="dialog" aria-label="Kartenauswahl">
+  <div class="menue-kopf">Karte</div>
+  <button class="menue-zeile" data-layer="topo"><span class="haken"></span>OpenTopoMap</button>
+  <button class="menue-zeile" data-layer="osm"><span class="haken"></span>OpenStreetMap</button>
+  <button class="menue-zeile" data-layer="luft"><span class="haken"></span>Luftbild</button>
+  <div class="menue-kopf">Zusätzlich</div>
+  <button class="menue-zeile" data-schalter="wanderwege"><span class="haken"></span>Wanderwege</button>
+</div>
+
 <div class="sperre" id="sperre" hidden><div class="spinner"></div><span id="sperre-text"></span></div>
 <div class="toast" id="toast" hidden></div>
 
