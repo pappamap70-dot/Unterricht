@@ -339,6 +339,7 @@ async function zeigeTour(id) {
     $('#btn-nav').classList.remove('primary');
     $('#nav-banner').hidden = false;
     $('#fab-locate').setAttribute('aria-pressed', 'true');
+    zeigeNavPunkt(true);
     if (S.standort) aktualisiereNavigation(S.standort);
   }
 }
@@ -446,6 +447,7 @@ function starteNavigation(tour) {
   $('#nav-banner').hidden = false;
   $('#fab-locate').setAttribute('aria-pressed', 'true');
   setzeSheet('klein');        // beim Wandern zählt die Karte, nicht die Tabelle
+  zeigeNavPunkt(true);
   haltWach(true);
   if (S.standort) aktualisiereNavigation(S.standort);
   else $('#nav-banner').innerHTML = '<div style="flex:1">Warte auf GPS-Signal …</div>';
@@ -460,8 +462,16 @@ function beendeNavigation(meldung) {
   if (b) { b.textContent = 'Navigation starten'; b.classList.add('primary'); }
   $('#fab-locate').setAttribute('aria-pressed', 'false');
   if (!$('#view-tour').hidden) setzeSheet('normal');
+  zeigeNavPunkt(false);
   haltWach(false);
   if (meldung) toast('Navigation beendet.');
+}
+
+/** Markiert den Touren-Reiter, solange eine Navigation läuft. */
+function zeigeNavPunkt(an) {
+  const reiter = $('#tabbar a[data-tab="touren"]');
+  reiter.classList.toggle('laeuft', an);
+  reiter.setAttribute('aria-label', an ? 'Touren – Navigation läuft' : 'Touren');
 }
 
 function aktualisiereNavigation(pos) {
@@ -689,7 +699,7 @@ async function zeigeMehr() {
     + `${S.index.touren.length} Buchtouren, ${S.eigene.length} eigene</span>`;
 }
 
-const APP_VERSION = '1.3.0';
+const APP_VERSION = '1.3.1';
 
 // --- Oberfläche verdrahten ----------------------------------------------
 

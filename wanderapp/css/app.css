@@ -177,8 +177,14 @@ h2:first-child{margin-top:4px}
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
   font-size:10.5px;color:var(--text-schwach);text-decoration:none;
 }
-.tabbar a span{font-size:19px;line-height:1}
+.tabbar a span{font-size:19px;line-height:1;position:relative}
 .tabbar a[aria-current="page"]{color:var(--gruen);font-weight:600}
+/* Punkt am Touren-Reiter, solange eine Navigation läuft – sonst sieht man
+   auf den anderen Reitern nicht, dass sie noch aktiv ist */
+.tabbar a.laeuft span::after{
+  content:"";position:absolute;top:-3px;right:-7px;width:8px;height:8px;border-radius:50%;
+  background:var(--akzent);box-shadow:0 0 0 2px var(--karte);
+}
 
 /* Kartenauswahl -------------------------------------------- */
 .menue-grund{position:fixed;inset:0;z-index:1400}
