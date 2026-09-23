@@ -1,0 +1,197 @@
+/* Mystische Pfade – mobile first, Hell/Dunkel nach Systemeinstellung */
+:root{
+  --gruen:#1a4734; --gruen-hell:#2d6a4f; --akzent:#e07a3f; --akzent-warm:#f4a261;
+  --bg:#f6f5f1; --karte:#ffffff; --text:#1c2321; --text-schwach:#5e6b66;
+  --linie:#e2e0d9; --schatten:0 1px 3px rgba(0,0,0,.09), 0 6px 18px rgba(0,0,0,.05);
+  --tab-h:58px; --oben:env(safe-area-inset-top,0px); --unten:env(safe-area-inset-bottom,0px);
+  --track:#d1471f; --track-rand:#ffffff;
+  color-scheme:light dark;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#12261e; --karte:#1a2e26; --text:#e8ece9; --text-schwach:#9aa8a2;
+    --linie:#2a3f36; --gruen:#95d5b2; --gruen-hell:#74c69d;
+    --schatten:0 1px 3px rgba(0,0,0,.5), 0 6px 18px rgba(0,0,0,.35);
+    --track:#ff7043; --track-rand:#10201a;
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+/* muss vor allen display-Regeln stehen: .sperre, .nav-banner und .btn
+   setzen display:flex und würden das hidden-Attribut sonst aushebeln */
+[hidden]{display:none!important}
+html,body{margin:0;height:100%;overscroll-behavior-y:none}
+body{
+  background:var(--bg); color:var(--text);
+  font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  padding-top:var(--oben);
+}
+a{color:var(--gruen);text-decoration:none}
+h1{font-size:20px;margin:0;letter-spacing:-.2px}
+h2{font-size:15px;margin:26px 0 8px;color:var(--text-schwach);text-transform:uppercase;letter-spacing:.7px;font-weight:600}
+h2:first-child{margin-top:4px}
+
+#app{height:calc(100dvh - var(--tab-h) - var(--unten));overflow:hidden;position:relative}
+.view{height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+.view[hidden]{display:none}
+.pad{padding:0 16px 24px}
+.hint{color:var(--text-schwach);font-size:13px;margin:8px 0}
+.hint.pad{padding:0 16px}
+
+/* Kopfzeile ------------------------------------------------ */
+.topbar{position:sticky;top:0;z-index:20;background:var(--bg);padding:10px 16px 8px;border-bottom:1px solid var(--linie)}
+.topbar-row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:34px}
+#suche{
+  width:100%;margin-top:9px;padding:10px 13px;border:1px solid var(--linie);
+  border-radius:11px;background:var(--karte);color:var(--text);font-size:15px;
+}
+#suche:focus{outline:2px solid var(--gruen);outline-offset:-1px}
+.icon-btn{background:none;border:none;color:var(--text);font-size:19px;padding:6px 8px;cursor:pointer;border-radius:9px}
+.chips{display:flex;gap:7px;overflow-x:auto;margin-top:9px;padding-bottom:2px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{
+  flex:0 0 auto;padding:6px 13px;border-radius:999px;border:1px solid var(--linie);
+  background:var(--karte);color:var(--text-schwach);font-size:13px;white-space:nowrap;cursor:pointer;
+}
+.chip[aria-pressed="true"]{background:var(--gruen);border-color:var(--gruen);color:#fff;font-weight:600}
+@media (prefers-color-scheme:dark){.chip[aria-pressed="true"]{color:#10251c}}
+
+/* Tourenliste ---------------------------------------------- */
+.list{padding:10px 12px 20px;display:flex;flex-direction:column;gap:9px}
+.karte-eintrag{
+  display:flex;gap:12px;align-items:stretch;background:var(--karte);border-radius:14px;
+  padding:12px;box-shadow:var(--schatten);cursor:pointer;border:none;width:100%;
+  text-align:left;color:inherit;font:inherit;
+}
+.karte-eintrag:active{transform:scale(.985)}
+.vorschau{flex:0 0 62px;width:62px;height:62px;border-radius:10px;background:var(--bg);overflow:hidden}
+.vorschau svg{display:block;width:100%;height:100%}
+.eintrag-text{flex:1;min-width:0}
+.eintrag-kopf{display:flex;align-items:baseline;gap:7px}
+.nummer{font-size:12px;font-weight:700;color:var(--akzent);flex:0 0 auto}
+.eintrag-titel{font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meta{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:5px;font-size:13px;color:var(--text-schwach)}
+.meta b{font-weight:600;color:var(--text)}
+.marke{font-size:11px;padding:2px 7px;border-radius:6px;background:var(--bg);color:var(--text-schwach);margin-top:6px;display:inline-block}
+
+/* Karte ---------------------------------------------------- */
+.view-map,.view-detail{overflow:hidden;position:relative}
+.map{position:absolute;inset:0;background:var(--bg)}
+.view-detail .map{bottom:auto;height:50%}
+.leaflet-container{background:var(--bg);font:inherit}
+.leaflet-control-attribution{font-size:10px;background:rgba(255,255,255,.75)}
+@media (prefers-color-scheme:dark){
+  .leaflet-control-attribution{background:rgba(10,20,16,.75);color:#9aa8a2}
+  .leaflet-control-attribution a{color:#74c69d}
+}
+.map-tools{position:absolute;right:12px;z-index:500;display:flex;flex-direction:column;gap:9px}
+.view-map .map-tools{bottom:104px}
+.view-detail .map-tools{top:calc(12px + var(--oben))}
+.fab{
+  width:44px;height:44px;border-radius:50%;border:none;background:var(--karte);color:var(--text);
+  box-shadow:var(--schatten);font-size:19px;cursor:pointer;display:grid;place-items:center;
+}
+.fab[aria-pressed="true"]{background:var(--gruen);color:#fff}
+@media (prefers-color-scheme:dark){.fab[aria-pressed="true"]{color:#10251c}}
+.back-btn{
+  position:absolute;top:calc(12px + var(--oben));left:12px;z-index:500;width:44px;height:44px;
+  border-radius:50%;border:none;background:var(--karte);color:var(--text);box-shadow:var(--schatten);
+  font-size:26px;line-height:1;cursor:pointer;padding-bottom:4px;
+}
+.map-info{
+  position:absolute;left:12px;right:12px;bottom:24px;z-index:500;background:var(--karte);
+  border-radius:14px;padding:12px 14px;box-shadow:var(--schatten);cursor:pointer;
+}
+
+/* Detail-Sheet --------------------------------------------- */
+.sheet{
+  position:absolute;left:0;right:0;bottom:0;top:50%;background:var(--karte);
+  border-radius:18px 18px 0 0;box-shadow:0 -3px 20px rgba(0,0,0,.14);
+  display:flex;flex-direction:column;transition:top .25s cubic-bezier(.3,.8,.4,1);z-index:600;
+}
+.sheet.gross{top:8%}
+.grip{flex:0 0 26px;display:grid;place-items:center;cursor:grab;touch-action:none}
+.grip::before{content:"";width:38px;height:4px;border-radius:2px;background:var(--linie)}
+.sheet-inner{flex:1;overflow-y:auto;padding:2px 16px 20px}
+.sheet h3{margin:0;font-size:18px;letter-spacing:-.3px}
+.sheet .unter{color:var(--text-schwach);font-size:13px;margin-top:3px}
+
+.stat-reihe{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0 4px}
+.stat{background:var(--bg);border-radius:11px;padding:9px 6px;text-align:center}
+.stat .wert{font-size:17px;font-weight:700;letter-spacing:-.3px}
+.stat .bez{font-size:11px;color:var(--text-schwach);margin-top:1px}
+
+.profil{width:100%;height:120px;display:block;margin-top:14px;border-radius:11px;background:var(--bg);touch-action:none}
+.profil-info{display:flex;justify-content:space-between;font-size:12px;color:var(--text-schwach);margin-top:5px;min-height:17px}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;
+  border-radius:12px;border:1px solid var(--linie);background:var(--karte);color:var(--text);
+  font-size:15px;font-weight:600;cursor:pointer;
+}
+.btn.primary{background:var(--gruen);border-color:var(--gruen);color:#fff}
+@media (prefers-color-scheme:dark){.btn.primary{color:#10251c}}
+.btn.warn{color:var(--akzent);border-color:var(--akzent)}
+.btn.block{width:100%;margin-top:10px}
+.btn:disabled{opacity:.55}
+.btn-reihe{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}
+
+.nav-banner{
+  position:absolute;left:12px;right:12px;top:calc(12px + var(--oben));z-index:550;
+  background:var(--gruen);color:#fff;border-radius:14px;padding:10px 14px;box-shadow:var(--schatten);
+  display:flex;gap:16px;align-items:center;justify-content:space-around;text-align:center;
+}
+@media (prefers-color-scheme:dark){.nav-banner{color:#10251c}}
+.nav-banner .wert{font-size:17px;font-weight:700;display:block;line-height:1.2}
+.nav-banner .bez{font-size:10px;opacity:.85;text-transform:uppercase;letter-spacing:.5px}
+.nav-banner.abseits{background:var(--akzent);color:#fff}
+
+/* Fortschritt / Status ------------------------------------- */
+.status{background:var(--karte);border:1px solid var(--linie);border-radius:12px;padding:11px 13px;font-size:13px;margin-top:10px}
+.balken{height:6px;border-radius:3px;background:var(--linie);overflow:hidden;margin-top:9px}
+.balken i{display:block;height:100%;background:var(--gruen);width:0;transition:width .2s}
+.switch{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--linie);font-size:15px}
+.switch input{width:20px;height:20px;accent-color:var(--gruen)}
+
+/* Tableiste ------------------------------------------------ */
+.tabbar{
+  position:fixed;left:0;right:0;bottom:0;height:calc(var(--tab-h) + var(--unten));
+  padding-bottom:var(--unten);background:var(--karte);border-top:1px solid var(--linie);
+  display:grid;grid-template-columns:repeat(4,1fr);z-index:1000;
+}
+.tabbar a{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  font-size:10.5px;color:var(--text-schwach);text-decoration:none;
+}
+.tabbar a span{font-size:19px;line-height:1}
+.tabbar a[aria-current="page"]{color:var(--gruen);font-weight:600}
+
+/* Overlays ------------------------------------------------- */
+.sperre{
+  position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.45);backdrop-filter:blur(2px);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:#fff;font-size:14px;
+}
+.spinner{width:34px;height:34px;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:dreh .8s linear infinite}
+@keyframes dreh{to{transform:rotate(360deg)}}
+.toast{
+  position:fixed;left:16px;right:16px;bottom:calc(var(--tab-h) + var(--unten) + 14px);z-index:2100;
+  background:var(--gruen);color:#fff;padding:12px 15px;border-radius:12px;box-shadow:var(--schatten);
+  font-size:14px;text-align:center;animation:hoch .2s ease;
+}
+@media (prefers-color-scheme:dark){.toast{color:#10251c}}
+@keyframes hoch{from{transform:translateY(12px);opacity:0}}
+
+/* Eigener Standort ----------------------------------------- */
+.ich{width:18px;height:18px;border-radius:50%;background:#2979ff;border:3px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.3),0 2px 6px rgba(0,0,0,.4)}
+.kmmarke{
+  background:var(--karte);color:var(--text);border:1px solid var(--linie);border-radius:9px;
+  font-size:10px;font-weight:700;padding:1px 5px;text-align:center;box-shadow:var(--schatten);white-space:nowrap;
+}
+.start-pin{font-size:20px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))}
+
+@media (min-width:760px){
+  .list{max-width:720px;margin:0 auto}
+  .pad,.topbar{max-width:720px;margin-left:auto;margin-right:auto}
+  .sheet{left:auto;right:0;width:400px;top:0!important;border-radius:0}
+  .view-detail .map{height:100%;right:400px}
+  .view-detail .map-tools{right:412px}
+}

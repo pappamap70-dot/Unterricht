@@ -1,0 +1,22 @@
+<!doctype html>
+<!-- Entwicklungshilfe: zeigt die App in Handygröße, damit sich das Layout
+     am Rechner prüfen lässt. Gehört nicht zur App selbst. -->
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Handy-Vorschau</title>
+<style>
+  body{margin:0;background:#20242b;display:flex;gap:24px;justify-content:center;
+       align-items:center;min-height:100vh;font:13px system-ui;color:#9aa4b2}
+  .geraet{width:400px;height:860px;border-radius:30px;overflow:hidden;
+          box-shadow:0 20px 60px rgba(0,0,0,.6);border:8px solid #11141a;background:#000}
+  iframe{width:400px;height:860px;border:0;display:block}
+</style>
+</head>
+<body>
+  <div>
+    <div class="geraet"><iframe src="../index.html" title="App"></iframe></div>
+    <p style="text-align:center">400 × 860</p>
+  </div>
+</body>
+</html>

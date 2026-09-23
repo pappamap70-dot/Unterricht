@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Mystische Pfade – Wanderapp</title>
+<meta name="description" content="38 Wandertouren im Schwarzwald. Offline-Karten, GPS-Navigation, GPX-Import. Werbefrei.">
+<meta name="theme-color" content="#1a4734">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="vendor/leaflet.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- view: Tourenliste -->
+  <section class="view" id="view-touren" hidden>
+    <header class="topbar">
+      <div class="topbar-row">
+        <h1>Mystische Pfade</h1>
+        <button class="icon-btn" id="btn-sort" aria-label="Sortierung">⇅</button>
+      </div>
+      <input type="search" id="suche" placeholder="Tour suchen …" autocomplete="off" enterkeyhint="search">
+      <div class="chips" id="filter-region"></div>
+    </header>
+    <div class="list" id="tourliste"></div>
+    <p class="hint" id="liste-leer" hidden>Keine Tour gefunden.</p>
+  </section>
+
+  <!-- view: Übersichtskarte -->
+  <section class="view view-map" id="view-karte" hidden>
+    <div class="map" id="map-uebersicht"></div>
+    <div class="map-tools">
+      <button class="fab" id="fab-locate-u" aria-label="Mein Standort">◎</button>
+      <button class="fab" id="fab-layers-u" aria-label="Kartenauswahl">▤</button>
+    </div>
+    <div class="map-info" id="karte-info" hidden></div>
+  </section>
+
+  <!-- view: Tourdetail -->
+  <section class="view view-detail" id="view-tour" hidden>
+    <div class="map" id="map-tour"></div>
+    <div class="map-tools">
+      <button class="fab" id="fab-locate" aria-label="Mein Standort">◎</button>
+      <button class="fab" id="fab-layers" aria-label="Kartenauswahl">▤</button>
+      <button class="fab" id="fab-fit" aria-label="Ganze Tour zeigen">⤢</button>
+    </div>
+    <button class="back-btn" id="btn-zurueck" aria-label="Zurück">‹</button>
+    <div class="nav-banner" id="nav-banner" hidden></div>
+    <div class="sheet" id="sheet">
+      <div class="grip" id="grip"></div>
+      <div class="sheet-inner" id="tour-detail"></div>
+    </div>
+  </section>
+
+  <!-- view: Eigene Touren -->
+  <section class="view" id="view-eigene" hidden>
+    <header class="topbar"><div class="topbar-row"><h1>Eigene Touren</h1></div></header>
+    <div class="pad">
+      <label class="btn primary block" for="datei-input">GPX- oder ZIP-Datei importieren</label>
+      <input type="file" id="datei-input" accept=".gpx,.zip,application/gpx+xml,application/zip" multiple hidden>
+      <p class="hint">Mehrere Dateien auf einmal möglich. ZIP-Archive werden direkt entpackt.</p>
+      <div id="import-status" class="status" hidden></div>
+    </div>
+    <div class="list" id="eigene-liste"></div>
+    <p class="hint pad" id="eigene-leer">Noch nichts importiert.</p>
+  </section>
+
+  <!-- view: Mehr / Einstellungen -->
+  <section class="view" id="view-mehr" hidden>
+    <header class="topbar"><div class="topbar-row"><h1>Mehr</h1></div></header>
+    <div class="pad">
+      <h2>Offline-Karten</h2>
+      <p class="hint">Heruntergeladene Kartenkacheln liegen auf dem Gerät und funktionieren ohne Empfang.</p>
+      <div class="status" id="speicher-info">wird geladen …</div>
+      <button class="btn block" id="btn-cache-leeren">Offline-Karten löschen</button>
+
+      <h2>Darstellung</h2>
+      <label class="switch"><input type="checkbox" id="opt-wach"> <span>Bildschirm beim Navigieren anlassen</span></label>
+      <label class="switch"><input type="checkbox" id="opt-km"> <span>Kilometermarken auf der Karte</span></label>
+
+      <h2>App</h2>
+      <div class="status" id="app-info"></div>
+      <button class="btn block" id="btn-install" hidden>Auf Startbildschirm installieren</button>
+
+      <h2>Karten &amp; Daten</h2>
+      <p class="hint">
+        Karten: © <a href="https://openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>-Mitwirkende,
+        Kartendarstellung © <a href="https://opentopomap.org" target="_blank" rel="noopener">OpenTopoMap</a> (CC-BY-SA),
+        Wanderwege © <a href="https://waymarkedtrails.org" target="_blank" rel="noopener">Waymarked Trails</a>,
+        Luftbild © Esri.<br>
+        Tourendaten: GPX-Tracks zum Buch „Mystische Pfade Schwarzwald“ – nur für den privaten Gebrauch.
+      </p>
+      <p class="hint">Keine Werbung, keine Analyse, keine Konten. Die App sendet nichts außer den Kartenabrufen.</p>
+    </div>
+  </section>
+
+</div>
+
+<nav class="tabbar" id="tabbar">
+  <a href="#/touren" data-tab="touren"><span>≡</span>Touren</a>
+  <a href="#/karte"  data-tab="karte"><span>◱</span>Karte</a>
+  <a href="#/eigene" data-tab="eigene"><span>↧</span>Eigene</a>
+  <a href="#/mehr"   data-tab="mehr"><span>⋯</span>Mehr</a>
+</nav>
+
+<div class="sperre" id="sperre" hidden><div class="spinner"></div><span id="sperre-text"></span></div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="vendor/leaflet.js"></script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
