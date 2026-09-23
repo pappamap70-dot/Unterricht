@@ -84,6 +84,21 @@ export function zeichneProfil(canvas, tour, { beiAuswahl, marker } = {}) {
     ctx.fillStyle = akzent;
     ctx.beginPath(); ctx.arc(x, y, 4, 0, 7); ctx.fill();
     ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+
+    // Höhe oben an der Linie – der Finger verdeckt sonst genau den Punkt
+    const txt = Math.round(h[i]) + ' m';
+    ctx.font = '600 11px system-ui, sans-serif';
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    const tw = ctx.measureText(txt).width;
+    const bx = Math.min(Math.max(x - tw / 2 - 5, padL), breite - padR - tw - 10);
+    ctx.fillStyle = akzent;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(bx, padO, tw + 10, 17, 5);
+    else ctx.rect(bx, padO, tw + 10, 17);
+    ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.fillText(txt, bx + 5, padO + 9);
+
     ctx.restore();
     return { index: i, hoehe: h[i] };
   }

@@ -273,6 +273,25 @@ function zeigeKarteInfo(tour) {
 
 // --- Tourdetail ----------------------------------------------------------
 
+// Stufen des Detail-Sheets, von flach nach hoch
+const STUFEN = ['klein', 'normal', 'gross'];
+
+/** Stellt das Sheet auf eine Stufe und hält die Ansichtsklasse nach. */
+function setzeSheet(stufe) {
+  const sheet = $('#sheet'), view = $('#view-tour');
+  sheet.classList.toggle('klein', stufe === 'klein');
+  sheet.classList.toggle('gross', stufe === 'gross');
+  for (const s of STUFEN) view.classList.toggle('sheet-' + s, s === stufe);
+  S.sheetStufe = stufe;
+}
+
+/** Wie viele Pixel der Karte das Sheet gerade verdeckt. */
+function sheetVerdeckt() {
+  const karte = $('#map-tour').getBoundingClientRect();
+  const sheet = $('#sheet').getBoundingClientRect();
+  return Math.max(0, Math.round(karte.bottom - sheet.top));
+}
+
 async function ladeGeometrie(id) {
   if (S.geometrien.has(id)) return S.geometrien.get(id);
   let tour;
@@ -305,9 +324,8 @@ async function zeigeTour(id) {
 
   if (S.tourGruppe) S.karteT.removeLayer(S.tourGruppe);
   S.tourGruppe = zeichneTour(S.karteT, tour, { kmMarken: S.einst.kmMarken });
-  passeAn(S.karteT, tour);
-
-  $('#sheet').classList.remove('gross');
+  setzeSheet('normal');
+  passeAn(S.karteT, tour, { untenFrei: sheetVerdeckt() });
   zeichneDetail(tour);
 }
 
@@ -360,8 +378,14 @@ function zeichneDetail(tour) {
   requestAnimationFrame(() => {
     const p = zeichneProfil(canvas, tour, {
       beiAuswahl: (idx, meter) => {
-        if (idx == null) { entferneProfilMarke(); info.children[1].textContent = 'Profil antippen'; return; }
+        if (idx == null) {
+          entferneProfilMarke();
+          if (S.profil) S.profil.markiere(null);     // Linie wieder weg
+          info.children[1].textContent = 'Profil antippen';
+          return;
+        }
         setzeProfilMarke(tour.c[idx]);
+        if (S.profil) S.profil.markiere(meter);      // senkrechte Linie mit Höhe
         info.children[1].textContent = `${fmtKm(meter / 1000)} km · ${tour.e[idx] ?? '–'} m`;
       },
     });
@@ -407,6 +431,7 @@ function starteNavigation(tour) {
   $('#btn-nav').classList.remove('primary');
   $('#nav-banner').hidden = false;
   $('#fab-locate').setAttribute('aria-pressed', 'true');
+  setzeSheet('klein');        // beim Wandern zählt die Karte, nicht die Tabelle
   haltWach(true);
   if (S.standort) aktualisiereNavigation(S.standort);
   else $('#nav-banner').innerHTML = '<div style="flex:1">Warte auf GPS-Signal …</div>';
@@ -420,6 +445,7 @@ function beendeNavigation(meldung) {
   const b = $('#btn-nav');
   if (b) { b.textContent = 'Navigation starten'; b.classList.add('primary'); }
   $('#fab-locate').setAttribute('aria-pressed', 'false');
+  if (!$('#view-tour').hidden) setzeSheet('normal');
   haltWach(false);
   if (meldung) toast('Navigation beendet.');
 }
@@ -505,7 +531,7 @@ async function offlineDialog(tour) {
   // Hinscrollen sieht es so aus, als sei nichts passiert. scrollIntoView
   // greift hier nicht zuverlässig, also den Innenbereich direkt setzen.
   const sheet = $('#sheet');
-  sheet.classList.add('gross');
+  setzeSheet('gross');
   const zeigeFenster = () => {
     const innen = $('.sheet-inner');
     const ziel = innen.scrollTop
@@ -649,7 +675,7 @@ async function zeigeMehr() {
     + `${S.index.touren.length} Buchtouren, ${S.eigene.length} eigene</span>`;
 }
 
-const APP_VERSION = '1.1.3';
+const APP_VERSION = '1.2.0';
 
 // --- Oberfläche verdrahten ----------------------------------------------
 
@@ -676,23 +702,30 @@ function verdrahteOberflaeche() {
 
   // Detail
   $('#btn-zurueck').onclick = () => history.length > 1 ? history.back() : (location.hash = '#/touren');
-  $('#fab-fit').onclick = () => { S.folgen = false; if (S.tour) passeAn(S.karteT, S.tour); };
+  $('#fab-fit').onclick = () => {
+    S.folgen = false;
+    if (S.tour) passeAn(S.karteT, S.tour, { untenFrei: sheetVerdeckt() });
+  };
   $('#fab-locate').onclick = () => { S.folgen = true; zeigeStandort(S.karteT); };
   $('#fab-locate-u').onclick = () => zeigeStandort(S.karteU);
   $('#fab-layers').onclick = () => layerWechsel(S.karteT);
   $('#fab-layers-u').onclick = () => layerWechsel(S.karteU);
   $('#map-tour').addEventListener('pointerdown', () => { S.folgen = false; });
 
-  // Sheet ziehen
-  const sheet = $('#sheet');
-  $('#grip').addEventListener('click', () => sheet.classList.toggle('gross'));
+  // Sheet ziehen: klein – normal – gross
+  const grip = $('#grip');
   let startY = null;
-  $('#grip').addEventListener('pointerdown', e => { startY = e.clientY; e.target.setPointerCapture(e.pointerId); });
-  $('#grip').addEventListener('pointerup', e => {
+  grip.addEventListener('pointerdown', e => {
+    startY = e.clientY;
+    grip.setPointerCapture(e.pointerId);
+  });
+  grip.addEventListener('pointerup', e => {
     if (startY == null) return;
     const dy = e.clientY - startY;
-    if (dy < -25) sheet.classList.add('gross');
-    if (dy > 25) sheet.classList.remove('gross');
+    const i = STUFEN.indexOf(S.sheetStufe);
+    if (dy < -25) setzeSheet(STUFEN[Math.min(STUFEN.length - 1, i + 1)]);
+    else if (dy > 25) setzeSheet(STUFEN[Math.max(0, i - 1)]);
+    else setzeSheet(S.sheetStufe === 'gross' ? 'normal' : 'gross');   // Tippen
     startY = null;
   });
 

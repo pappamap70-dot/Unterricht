@@ -124,9 +124,16 @@ function marken(gruppe, tour) {
   }
 }
 
-export function passeAn(karte, tour, polster = 40) {
+/**
+ * Passt den Ausschnitt an die Tour an. `untenFrei` ist die Höhe, die unten
+ * vom Sheet verdeckt wird – sonst liegt die halbe Tour darunter.
+ */
+export function passeAn(karte, tour, { polster = 30, untenFrei = 0 } = {}) {
   const [sw, no] = bbox(tour.c);
-  karte.fitBounds([sw, no], { padding: [polster, polster] });
+  karte.fitBounds([sw, no], {
+    paddingTopLeft: [polster, polster + 60],          // Platz für Zurück und Banner
+    paddingBottomRight: [polster, polster + untenFrei],
+  });
 }
 
 // --- Offline-Kacheln -----------------------------------------------------

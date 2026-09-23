@@ -79,7 +79,9 @@ h2:first-child{margin-top:4px}
 /* Karte ---------------------------------------------------- */
 .view-map,.view-detail{overflow:hidden;position:relative}
 .map{position:absolute;inset:0;background:var(--bg)}
-.view-detail .map{bottom:auto;height:50%}
+/* Die Karte füllt die ganze Ansicht, das Sheet legt sich darüber. Nur so
+   gibt ein heruntergeschobenes Sheet auch wirklich Karte frei. */
+.view-detail .map{bottom:auto;height:100%}
 .leaflet-container{background:var(--bg);font:inherit}
 .leaflet-control-attribution{font-size:10px;background:rgba(255,255,255,.75)}
 @media (prefers-color-scheme:dark){
@@ -112,6 +114,15 @@ h2:first-child{margin-top:4px}
   display:flex;flex-direction:column;transition:top .25s cubic-bezier(.3,.8,.4,1);z-index:600;
 }
 .sheet.gross{top:8%}
+/* Zusammengeschoben bleibt nur der Griff stehen – volle Karte beim Wandern */
+.sheet.klein{top:calc(100% - 30px)}
+
+/* Die Kartenhinweise wandern mit dem Sheet, damit sie sichtbar bleiben.
+   Leaflet hängt sie in .leaflet-bottom. */
+#view-tour .leaflet-bottom{transition:bottom .25s cubic-bezier(.3,.8,.4,1)}
+#view-tour.sheet-normal .leaflet-bottom{bottom:50%}
+#view-tour.sheet-gross  .leaflet-bottom{bottom:92%}
+#view-tour.sheet-klein  .leaflet-bottom{bottom:30px}
 .grip{flex:0 0 26px;display:grid;place-items:center;cursor:grab;touch-action:none}
 .grip::before{content:"";width:38px;height:4px;border-radius:2px;background:var(--linie)}
 .sheet-inner{flex:1;overflow-y:auto;padding:2px 16px 20px}
