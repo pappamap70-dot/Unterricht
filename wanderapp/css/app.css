@@ -4,6 +4,8 @@
   --bg:#f6f5f1; --karte:#ffffff; --text:#1c2321; --text-schwach:#5e6b66;
   --linie:#e2e0d9; --schatten:0 1px 3px rgba(0,0,0,.09), 0 6px 18px rgba(0,0,0,.05);
   --tab-h:58px; --oben:env(safe-area-inset-top,0px); --unten:env(safe-area-inset-bottom,0px);
+  --nav-h-an:54px;   /* Höhe des Navigationsbalkens, wenn er sichtbar ist */
+  --nav-h:0px;       /* wird bei laufender Navigation auf --nav-h-an gesetzt */
   --track:#d1471f; --track-rand:#ffffff;
   color-scheme:light dark;
 }
@@ -30,7 +32,8 @@ h1{font-size:20px;margin:0;letter-spacing:-.2px}
 h2{font-size:15px;margin:26px 0 8px;color:var(--text-schwach);text-transform:uppercase;letter-spacing:.7px;font-weight:600}
 h2:first-child{margin-top:4px}
 
-#app{height:calc(100dvh - var(--tab-h) - var(--unten));overflow:hidden;position:relative}
+body.navigiert{--nav-h:var(--nav-h-an)}
+#app{height:calc(100dvh - var(--tab-h) - var(--unten) - var(--nav-h));overflow:hidden;position:relative}
 .view{height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
 .view[hidden]{display:none}
 .pad{padding:0 16px 24px}
@@ -150,9 +153,13 @@ h2:first-child{margin-top:4px}
 .btn:disabled{opacity:.55}
 .btn-reihe{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}
 
+/* Eigene Zeile ganz oben, ausserhalb der Ansichten – bleibt dadurch auf
+   jedem Reiter stehen. Die Höhe fliesst über --nav-h in #app ein, damit
+   der Balken nichts verdeckt. */
 .nav-banner{
-  position:absolute;left:12px;right:12px;top:calc(12px + var(--oben));z-index:550;
-  background:var(--gruen);color:#fff;border-radius:14px;padding:10px 14px;box-shadow:var(--schatten);
+  width:100%;height:var(--nav-h-an);border:none;font:inherit;cursor:pointer;
+  background:var(--gruen);color:#fff;padding:0 14px;
+  box-shadow:0 2px 10px rgba(0,0,0,.18);position:relative;z-index:900;
   display:flex;gap:16px;align-items:center;justify-content:space-around;text-align:center;
 }
 @media (prefers-color-scheme:dark){.nav-banner{color:#10251c}}

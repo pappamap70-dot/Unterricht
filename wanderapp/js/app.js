@@ -337,7 +337,6 @@ async function zeigeTour(id) {
   if (laeuft) {
     $('#btn-nav').textContent = 'Navigation beenden';
     $('#btn-nav').classList.remove('primary');
-    $('#nav-banner').hidden = false;
     $('#fab-locate').setAttribute('aria-pressed', 'true');
     zeigeNavPunkt(true);
     if (S.standort) aktualisiereNavigation(S.standort);
@@ -444,7 +443,6 @@ function starteNavigation(tour) {
   S.nav = { tour, kum, restAuf, gesamt: kum[kum.length - 1], marke: null };
   $('#btn-nav').textContent = 'Navigation beenden';
   $('#btn-nav').classList.remove('primary');
-  $('#nav-banner').hidden = false;
   $('#fab-locate').setAttribute('aria-pressed', 'true');
   setzeSheet('klein');        // beim Wandern zählt die Karte, nicht die Tabelle
   zeigeNavPunkt(true);
@@ -456,7 +454,6 @@ function starteNavigation(tour) {
 function beendeNavigation(meldung) {
   if (!S.nav) return;
   S.nav = null;
-  $('#nav-banner').hidden = true;
   $('#nav-banner').classList.remove('abseits');
   const b = $('#btn-nav');
   if (b) { b.textContent = 'Navigation starten'; b.classList.add('primary'); }
@@ -467,11 +464,21 @@ function beendeNavigation(meldung) {
   if (meldung) toast('Navigation beendet.');
 }
 
-/** Markiert den Touren-Reiter, solange eine Navigation läuft. */
+/**
+ * Schaltet die Anzeigen für eine laufende Navigation: Punkt am Touren-
+ * Reiter und der Balken über allen Ansichten. Der Balken nimmt Platz weg,
+ * deshalb müssen die Karten ihre Grösse neu bestimmen.
+ */
 function zeigeNavPunkt(an) {
   const reiter = $('#tabbar a[data-tab="touren"]');
   reiter.classList.toggle('laeuft', an);
   reiter.setAttribute('aria-label', an ? 'Touren – Navigation läuft' : 'Touren');
+
+  document.body.classList.toggle('navigiert', an);
+  $('#nav-banner').hidden = !an;
+  setTimeout(() => {
+    for (const k of [S.karteU, S.karteT]) if (k) k.invalidateSize();
+  }, 60);
 }
 
 function aktualisiereNavigation(pos) {
@@ -699,7 +706,7 @@ async function zeigeMehr() {
     + `${S.index.touren.length} Buchtouren, ${S.eigene.length} eigene</span>`;
 }
 
-const APP_VERSION = '1.3.2';
+const APP_VERSION = '1.4.0';
 
 // --- Oberfläche verdrahten ----------------------------------------------
 
@@ -776,6 +783,10 @@ function verdrahteOberflaeche() {
     await kachelnLoeschen();
     toast('Offline-Karten gelöscht.');
     zeigeMehr();
+  };
+
+  $('#nav-banner').onclick = () => {
+    if (S.nav) location.hash = '#/tour/' + S.nav.tour.id;
   };
 
   window.addEventListener('beforeinstallprompt', e => {

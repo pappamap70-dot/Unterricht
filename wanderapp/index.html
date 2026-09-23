@@ -17,6 +17,10 @@
 </head>
 <body>
 
+<!-- Navigationsbalken: steht ausserhalb der Ansichten und bleibt deshalb
+     auf jedem Reiter sichtbar. Antippen führt zur laufenden Tour zurück. -->
+<button class="nav-banner" id="nav-banner" hidden aria-label="Zur laufenden Tour"></button>
+
 <div id="app">
 
   <!-- view: Tourenliste -->
@@ -52,7 +56,6 @@
       <button class="fab" id="fab-fit" aria-label="Ganze Tour zeigen">⤢</button>
     </div>
     <button class="back-btn" id="btn-zurueck" aria-label="Zurück">‹</button>
-    <div class="nav-banner" id="nav-banner" hidden></div>
     <div class="sheet" id="sheet">
       <div class="grip" id="grip"></div>
       <div class="sheet-inner" id="tour-detail"></div>
