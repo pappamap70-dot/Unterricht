@@ -1,6 +1,6 @@
 // Service Worker: App offline lauffähig halten und Kartenkacheln zwischenspeichern
 
-const VERSION = 'v1.1.1';
+const VERSION = 'v1.1.2';
 
 // Eigenes Namenspräfix: caches.keys() liefert alle Caches der Domain, nicht nur
 // die dieser App. Liegt die App neben anderen Seiten auf derselben Domain
@@ -43,15 +43,24 @@ const KACHEL_HOSTS = [
 
 self.addEventListener('install', e => {
   e.waitUntil((async () => {
+    // cache: 'reload' erzwingt frische Antworten vom Server. Ohne das darf
+    // addAll() den HTTP-Cache des Browsers verwenden – dann landen bei einem
+    // Update alte Dateien im Offline-Vorrat und bleiben dort hängen.
+    const frisch = async (cache, pfad) => {
+      const antwort = await fetch(pfad, { cache: 'reload' });
+      if (!antwort.ok) throw new Error(`${pfad}: HTTP ${antwort.status}`);
+      await cache.put(pfad, antwort);
+    };
+
     const shell = await caches.open(SHELL_CACHE);
-    await shell.addAll(SHELL);
+    await Promise.all(SHELL.map(pfad => frisch(shell, pfad)));
 
     // Alle Tourendaten gleich mitnehmen – zusammen unter 300 KB
     const daten = await caches.open(DATEN_CACHE);
     try {
-      await daten.add('./data/index.json');
+      await frisch(daten, './data/index.json');
       const index = await (await daten.match('./data/index.json')).json();
-      await daten.addAll(index.touren.map(t => `./data/tracks/${t.id}.json`));
+      await Promise.all(index.touren.map(t => frisch(daten, `./data/tracks/${t.id}.json`)));
     } catch (err) {
       console.warn('Tourendaten konnten nicht vorgeladen werden:', err);
     }
