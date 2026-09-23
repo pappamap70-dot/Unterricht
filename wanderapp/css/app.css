@@ -36,6 +36,9 @@ h2:first-child{margin-top:4px}
 .pad{padding:0 16px 24px}
 .hint{color:var(--text-schwach);font-size:13px;margin:8px 0}
 .hint.pad{padding:0 16px}
+/* Leerzustand der Tourenliste: steht außerhalb von .list und braucht
+   deshalb eigene Polsterung, sonst klebt er am Bildschirmrand */
+#liste-leer{padding:34px 16px;text-align:center;max-width:720px;margin:0 auto}
 
 /* Kopfzeile ------------------------------------------------ */
 .topbar{position:sticky;top:0;z-index:20;background:var(--bg);padding:10px 16px 8px;border-bottom:1px solid var(--linie)}
