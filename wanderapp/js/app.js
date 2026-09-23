@@ -50,6 +50,7 @@ async function start() {
   window.addEventListener('hashchange', route);
   route();
 
+  stelleNavigationWiederHer();
   registriereServiceWorker();
   sichereSpeicher();
   starteStandort();
@@ -340,6 +341,10 @@ async function zeigeTour(id) {
     $('#fab-locate').setAttribute('aria-pressed', 'true');
     zeigeNavPunkt(true);
     if (S.standort) aktualisiereNavigation(S.standort);
+  } else if (S.navWiederaufnehmen === tour.id) {
+    S.navWiederaufnehmen = null;
+    starteNavigation(tour);
+    toast('Navigation fortgesetzt.');
   }
 }
 
@@ -445,6 +450,7 @@ function starteNavigation(tour) {
   $('#btn-nav').classList.remove('primary');
   $('#fab-locate').setAttribute('aria-pressed', 'true');
   setzeSheet('klein');        // beim Wandern zählt die Karte, nicht die Tabelle
+  merkeNavigation(tour.id);
   zeigeNavPunkt(true);
   haltWach(true);
   if (S.standort) aktualisiereNavigation(S.standort);
@@ -454,6 +460,7 @@ function starteNavigation(tour) {
 function beendeNavigation(meldung) {
   if (!S.nav) return;
   S.nav = null;
+  merkeNavigation(null);
   $('#nav-banner').classList.remove('abseits');
   const b = $('#btn-nav');
   if (b) { b.textContent = 'Navigation starten'; b.classList.add('primary'); }
@@ -462,6 +469,30 @@ function beendeNavigation(meldung) {
   zeigeNavPunkt(false);
   haltWach(false);
   if (meldung) toast('Navigation beendet.');
+}
+
+// Android darf die Seite bei ausgeschaltetem Bildschirm aus dem Speicher
+// werfen. Damit eine laufende Navigation das übersteht, wird sie vermerkt.
+const NAV_SCHLUESSEL = 'laufende-navigation';
+const NAV_FRIST = 12 * 60 * 60 * 1000;   // nach 12 Stunden nicht mehr aufnehmen
+
+function merkeNavigation(tourId) {
+  try {
+    if (tourId) localStorage.setItem(NAV_SCHLUESSEL, JSON.stringify({ id: tourId, zeit: Date.now() }));
+    else localStorage.removeItem(NAV_SCHLUESSEL);
+  } catch { /* privater Modus o. ä. */ }
+}
+
+/** Nimmt eine Navigation wieder auf, die vom Neuladen unterbrochen wurde. */
+function stelleNavigationWiederHer() {
+  let vermerk = null;
+  try { vermerk = JSON.parse(localStorage.getItem(NAV_SCHLUESSEL) || 'null'); } catch { return; }
+  if (!vermerk) return;
+  if (Date.now() - vermerk.zeit > NAV_FRIST) { merkeNavigation(null); return; }
+
+  S.navWiederaufnehmen = vermerk.id;
+  const ziel = '#/tour/' + vermerk.id;
+  if (location.hash === ziel) route(); else location.hash = ziel;
 }
 
 /**
@@ -544,10 +575,21 @@ function zeigeStandort(karte) {
 }
 
 async function haltWach(an) {
-  if (!S.einst.wachhalten || !('wakeLock' in navigator)) return;
+  if (!('wakeLock' in navigator)) return;
   try {
-    if (an && !S.wakeLock) S.wakeLock = await navigator.wakeLock.request('screen');
-    if (!an && S.wakeLock) { await S.wakeLock.release(); S.wakeLock = null; }
+    if (an && S.einst.wachhalten) {
+      // Android gibt die Sperre selbst frei, sobald die Seite in den
+      // Hintergrund geht. Der Verweis bleibt dann bestehen, zeigt aber auf
+      // eine freigegebene Sperre – deshalb 'released' prüfen und nicht nur,
+      // ob überhaupt etwas da ist.
+      if (S.wakeLock && !S.wakeLock.released) return;
+      S.wakeLock = await navigator.wakeLock.request('screen');
+      S.wakeLock.addEventListener('release', () => { S.wakeLock = null; }, { once: true });
+    } else if (S.wakeLock) {
+      const sperre = S.wakeLock;
+      S.wakeLock = null;
+      if (!sperre.released) await sperre.release();
+    }
   } catch { /* Akkusparmodus o. ä. – nicht kritisch */ }
 }
 
@@ -706,7 +748,7 @@ async function zeigeMehr() {
     + `${S.index.touren.length} Buchtouren, ${S.eigene.length} eigene</span>`;
 }
 
-const APP_VERSION = '1.4.0';
+const APP_VERSION = '1.5.0';
 
 // --- Oberfläche verdrahten ----------------------------------------------
 
