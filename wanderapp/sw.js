@@ -1,6 +1,6 @@
 // Service Worker: App offline lauffähig halten und Kartenkacheln zwischenspeichern
 
-const VERSION = 'v1.3.1';
+const VERSION = 'v1.3.2';
 
 // Eigenes Namenspräfix: caches.keys() liefert alle Caches der Domain, nicht nur
 // die dieser App. Liegt die App neben anderen Seiten auf derselben Domain
@@ -104,13 +104,18 @@ self.addEventListener('fetch', e => {
 
   if (url.origin !== self.location.origin) return;
 
-  // Seitenaufrufe immer auf die App-Shell zurückführen (Hash-Routing)
+  // Seitenaufrufe immer auf die App-Shell zurückführen (Hash-Routing).
+  // Wichtig: nicht nur bei Netzwerkfehlern auf den Cache zurückfallen,
+  // sondern auch bei 404 & Co. Ein vom Server entfernter Ordner antwortet
+  // mit einer gültigen Fehlerseite – die würde sonst die App ersetzen.
   if (anfrage.mode === 'navigate') {
     e.respondWith((async () => {
+      const ausCache = async () => (await caches.match('./index.html')) || Response.error();
       try {
-        return await fetch(anfrage);
+        const antwort = await fetch(anfrage);
+        return antwort.ok ? antwort : await ausCache();
       } catch {
-        return (await caches.match('./index.html')) || Response.error();
+        return ausCache();
       }
     })());
     return;
