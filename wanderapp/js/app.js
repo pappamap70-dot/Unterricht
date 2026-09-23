@@ -501,6 +501,22 @@ async function offlineDialog(tour) {
   const urls = kachelListe(tour.bbox, S.einst.layer, 12, 16, 800, S.einst.wanderwege);
   const mb = fmtBytes(schaetzeGroesse(urls.length));
 
+  // Das Fenster erscheint unterhalb des Knopfes – ohne Hochfahren und
+  // Hinscrollen sieht es so aus, als sei nichts passiert. scrollIntoView
+  // greift hier nicht zuverlässig, also den Innenbereich direkt setzen.
+  const sheet = $('#sheet');
+  sheet.classList.add('gross');
+  const zeigeFenster = () => {
+    const innen = $('.sheet-inner');
+    const ziel = innen.scrollTop
+      + (box.getBoundingClientRect().top - innen.getBoundingClientRect().top) - 12;
+    // ohne Animation: ein weicher Lauf wird vom hochfahrenden Sheet abgebrochen
+    innen.scrollTop = Math.max(0, ziel);
+  };
+  // sobald das Sheet oben ist; die Frist greift, wenn es schon oben war
+  sheet.addEventListener('transitionend', zeigeFenster, { once: true });
+  setTimeout(zeigeFenster, 320);
+
   box.innerHTML = `
     <div class="status">
       <b>${urls.length} Kacheln</b> (Zoom 12–16, etwa ${mb})<br>
@@ -633,7 +649,7 @@ async function zeigeMehr() {
     + `${S.index.touren.length} Buchtouren, ${S.eigene.length} eigene</span>`;
 }
 
-const APP_VERSION = '1.1.2';
+const APP_VERSION = '1.1.3';
 
 // --- Oberfläche verdrahten ----------------------------------------------
 

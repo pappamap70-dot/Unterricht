@@ -1,6 +1,6 @@
 // Service Worker: App offline lauffähig halten und Kartenkacheln zwischenspeichern
 
-const VERSION = 'v1.1.2';
+const VERSION = 'v1.1.3';
 
 // Eigenes Namenspräfix: caches.keys() liefert alle Caches der Domain, nicht nur
 // die dieser App. Liegt die App neben anderen Seiten auf derselben Domain

@@ -101,14 +101,18 @@ export function zeichneProfil(canvas, tour, { beiAuswahl, marker } = {}) {
       const idx = naechsterIndex(canvas._kum, meter);
       beiAuswahl(idx, meter, canvas._hoehen[idx]);
     };
-    canvas.addEventListener('pointerdown', e => {
-      canvas.setPointerCapture(e.pointerId); auswerten(e); e.preventDefault();
-    });
-    canvas.addEventListener('pointermove', e => {
-      if (canvas.hasPointerCapture(e.pointerId)) auswerten(e);
-    });
-    canvas.addEventListener('pointerup', () => beiAuswahl(null));
-    canvas.addEventListener('pointercancel', () => beiAuswahl(null));
+    // Bewusst ohne setPointerCapture und ohne preventDefault: sonst schluckt
+    // das Profil die senkrechte Wischgeste und das Sheet lässt sich darüber
+    // nicht mehr scrollen. touch-action: pan-y überlässt dem Browser das
+    // Scrollen und uns die waagerechte Bewegung; beginnt der Browser zu
+    // scrollen, kommt pointercancel und die Marke verschwindet.
+    let aktiv = false;
+    const ende = () => { if (aktiv) { aktiv = false; beiAuswahl(null); } };
+    canvas.addEventListener('pointerdown', e => { aktiv = true; auswerten(e); });
+    canvas.addEventListener('pointermove', e => { if (aktiv) auswerten(e); });
+    canvas.addEventListener('pointerup', ende);
+    canvas.addEventListener('pointercancel', ende);
+    canvas.addEventListener('pointerleave', ende);
   }
   canvas._kum = kum; canvas._gesamt = gesamt; canvas._hoehen = h;
 
