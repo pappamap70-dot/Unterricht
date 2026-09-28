@@ -287,6 +287,15 @@ function setzeSheet(stufe) {
   S.sheetStufe = stufe;
 }
 
+/**
+ * Schaltet das Mitwandern der Karte. Der Knopf zeigt den Zustand an, damit
+ * man sieht, ob die Karte der eigenen Position folgt.
+ */
+function setzeFolgen(an) {
+  S.folgen = an;
+  $('#fab-locate').setAttribute('aria-pressed', String(an));
+}
+
 /** Wie viele Pixel der Karte das Sheet gerade verdeckt. */
 function sheetVerdeckt() {
   const karte = $('#map-tour').getBoundingClientRect();
@@ -323,6 +332,9 @@ async function zeigeTour(id) {
 
   if (!S.karteT) {
     S.karteT = erstelleKarte($('#map-tour'), S.einst);
+    // Nur wer die Karte wegzieht, will sie nicht mehr nachgeführt haben.
+    // Ein Antippen oder Zoomen lässt das Folgen bestehen.
+    S.karteT.on('dragstart', () => { if (S.folgen) { setzeFolgen(false); toast('Karte folgt nicht mehr – ◎ tippen'); } });
   }
   setTimeout(() => S.karteT.invalidateSize(), 60);
 
@@ -338,7 +350,7 @@ async function zeigeTour(id) {
   if (laeuft) {
     $('#btn-nav').textContent = 'Navigation beenden';
     $('#btn-nav').classList.remove('primary');
-    $('#fab-locate').setAttribute('aria-pressed', 'true');
+    setzeFolgen(true);
     zeigeNavPunkt(true);
     if (S.standort) aktualisiereNavigation(S.standort);
   } else if (S.navWiederaufnehmen === tour.id) {
@@ -448,7 +460,7 @@ function starteNavigation(tour) {
   S.nav = { tour, kum, restAuf, gesamt: kum[kum.length - 1], marke: null };
   $('#btn-nav').textContent = 'Navigation beenden';
   $('#btn-nav').classList.remove('primary');
-  $('#fab-locate').setAttribute('aria-pressed', 'true');
+  setzeFolgen(true);
   setzeSheet('klein');        // beim Wandern zählt die Karte, nicht die Tabelle
   merkeNavigation(tour.id);
   zeigeNavPunkt(true);
@@ -464,7 +476,7 @@ function beendeNavigation(meldung) {
   $('#nav-banner').classList.remove('abseits');
   const b = $('#btn-nav');
   if (b) { b.textContent = 'Navigation starten'; b.classList.add('primary'); }
-  $('#fab-locate').setAttribute('aria-pressed', 'false');
+  setzeFolgen(false);
   if (!$('#view-tour').hidden) setzeSheet('normal');
   zeigeNavPunkt(false);
   haltWach(false);
@@ -528,7 +540,6 @@ function aktualisiereNavigation(pos) {
     <div><span class="wert">${abseits ? fmtM(p.abstand) : 'auf Weg'}</span><span class="bez">${abseits ? 'abseits' : 'Position'}</span></div>`;
 
   if (S.profil && S.profil.markiere) S.profil.markiere(p.entlang);
-  if (S.folgen !== false) S.karteT.panTo([pos.coords.latitude, pos.coords.longitude], { animate: true, duration: .5 });
 }
 
 // --- Standort ------------------------------------------------------------
@@ -540,6 +551,10 @@ function starteStandort() {
       S.standort = pos;
       zeichneStandort(S.karteU, pos);
       zeichneStandort(S.karteT, pos);
+      // Karte mitziehen, solange das Folgen eingeschaltet ist
+      if (S.folgen && S.karteT && !$('#view-tour').hidden) {
+        S.karteT.panTo([pos.coords.latitude, pos.coords.longitude], { animate: true, duration: .8 });
+      }
       aktualisiereNavigation(pos);
     },
     fehler => {
@@ -748,7 +763,7 @@ async function zeigeMehr() {
     + `${S.index.touren.length} Buchtouren, ${S.eigene.length} eigene</span>`;
 }
 
-const APP_VERSION = '1.5.0';
+const APP_VERSION = '1.6.0';
 
 // --- Oberfläche verdrahten ----------------------------------------------
 
@@ -776,10 +791,10 @@ function verdrahteOberflaeche() {
   // Detail
   $('#btn-zurueck').onclick = () => history.length > 1 ? history.back() : (location.hash = '#/touren');
   $('#fab-fit').onclick = () => {
-    S.folgen = false;
+    setzeFolgen(false);
     if (S.tour) passeAn(S.karteT, S.tour, { untenFrei: sheetVerdeckt() });
   };
-  $('#fab-locate').onclick = () => { S.folgen = true; zeigeStandort(S.karteT); };
+  $('#fab-locate').onclick = () => { setzeFolgen(true); zeigeStandort(S.karteT); };
   $('#fab-locate-u').onclick = () => zeigeStandort(S.karteU);
   $('#fab-layers').onclick = oeffneLayerMenue;
   $('#fab-layers-u').onclick = oeffneLayerMenue;
@@ -790,7 +805,6 @@ function verdrahteOberflaeche() {
     if (zeile.dataset.layer) waehleLayer(zeile.dataset.layer);
     else schalteWanderwege();
   });
-  $('#map-tour').addEventListener('pointerdown', () => { S.folgen = false; });
 
   // Sheet ziehen: klein – normal – gross
   const grip = $('#grip');
