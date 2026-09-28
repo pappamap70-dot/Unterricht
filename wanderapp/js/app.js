@@ -29,6 +29,7 @@ const S = {
   standort: null,       // letzte bekannte Position
   watchId: null,
   wakeLock: null,
+  folgen: true,         // Karte zieht mit der eigenen Position mit
   filter: { region: null, suche: '' },
   installEreignis: null,
 };
@@ -47,6 +48,7 @@ async function start() {
 
   baueFilterChips();
   verdrahteOberflaeche();
+  setzeFolgen(S.folgen);      // Knöpfe zeigen den Zustand von Anfang an
   window.addEventListener('hashchange', route);
   route();
 
@@ -223,6 +225,7 @@ async function zeigeUebersicht() {
   if (!S.karteU) {
     S.karteU = erstelleKarte($('#map-uebersicht'), S.einst);
     S.karteU.setView([48.2, 8.2], 9);
+    S.karteU.on('dragstart', wegGezogen);
   }
   setTimeout(() => S.karteU.invalidateSize(), 60);
 
@@ -291,9 +294,38 @@ function setzeSheet(stufe) {
  * Schaltet das Mitwandern der Karte. Der Knopf zeigt den Zustand an, damit
  * man sieht, ob die Karte der eigenen Position folgt.
  */
+let folgenUhr = null;
+
 function setzeFolgen(an) {
   S.folgen = an;
-  $('#fab-locate').setAttribute('aria-pressed', String(an));
+  for (const wahl of ['#fab-locate', '#fab-locate-u']) {
+    const knopf = $(wahl);
+    if (knopf) knopf.setAttribute('aria-pressed', String(an));
+  }
+  if (an) { clearTimeout(folgenUhr); folgenUhr = null; }
+}
+
+/**
+ * Nach dem Wegziehen der Karte hört das Mitwandern auf – aber nur für eine
+ * Weile. Sonst bleibt es nach einer unbeabsichtigten Wischbewegung für den
+ * Rest der Tour aus, ohne dass man merkt, warum.
+ */
+function wegGezogen() {
+  if (!S.folgen) return;
+  setzeFolgen(false);
+  toast('Karte folgt nicht mehr – ◎ tippen oder 20 s warten');
+  clearTimeout(folgenUhr);
+  folgenUhr = setTimeout(() => {
+    setzeFolgen(true);
+    toast('Karte folgt wieder');
+  }, 20000);
+}
+
+/** Die Karte der gerade sichtbaren Ansicht, sonst nichts. */
+function sichtbareKarte() {
+  if (!$('#view-tour').hidden) return S.karteT;
+  if (!$('#view-karte').hidden) return S.karteU;
+  return null;
 }
 
 /** Wie viele Pixel der Karte das Sheet gerade verdeckt. */
@@ -334,7 +366,7 @@ async function zeigeTour(id) {
     S.karteT = erstelleKarte($('#map-tour'), S.einst);
     // Nur wer die Karte wegzieht, will sie nicht mehr nachgeführt haben.
     // Ein Antippen oder Zoomen lässt das Folgen bestehen.
-    S.karteT.on('dragstart', () => { if (S.folgen) { setzeFolgen(false); toast('Karte folgt nicht mehr – ◎ tippen'); } });
+    S.karteT.on('dragstart', wegGezogen);
   }
   setTimeout(() => S.karteT.invalidateSize(), 60);
 
@@ -551,9 +583,11 @@ function starteStandort() {
       S.standort = pos;
       zeichneStandort(S.karteU, pos);
       zeichneStandort(S.karteT, pos);
-      // Karte mitziehen, solange das Folgen eingeschaltet ist
-      if (S.folgen && S.karteT && !$('#view-tour').hidden) {
-        S.karteT.panTo([pos.coords.latitude, pos.coords.longitude], { animate: true, duration: .8 });
+      // Karte mitziehen, solange das Folgen eingeschaltet ist – auf der
+      // Übersicht genauso wie im Tourdetail
+      const karte = sichtbareKarte();
+      if (S.folgen && karte) {
+        karte.panTo([pos.coords.latitude, pos.coords.longitude], { animate: true, duration: .8 });
       }
       aktualisiereNavigation(pos);
     },
@@ -756,6 +790,14 @@ async function zeigeMehr() {
   $('#opt-wach').checked = S.einst.wachhalten;
   $('#opt-km').checked = S.einst.kmMarken;
 
+  const alter = S.standort ? Math.round((Date.now() - S.standort.timestamp) / 1000) : null;
+  const gps = S.standort
+    ? `letzte Ortung vor ${alter} s, auf ${Math.round(S.standort.coords.accuracy)} m genau`
+    : 'noch keine Ortung empfangen';
+  $('#gps-info').innerHTML =
+    `${gps}<br><span class="hint">Karte folgt: <b>${S.folgen ? 'ja' : 'nein'}</b>`
+    + ` · Navigation: <b>${S.nav ? 'läuft' : 'aus'}</b></span>`;
+
   const sw = navigator.serviceWorker && navigator.serviceWorker.controller;
   $('#app-info').innerHTML =
     `Version ${APP_VERSION}<br>`
@@ -763,7 +805,7 @@ async function zeigeMehr() {
     + `${S.index.touren.length} Buchtouren, ${S.eigene.length} eigene</span>`;
 }
 
-const APP_VERSION = '1.6.0';
+const APP_VERSION = '1.7.0';
 
 // --- Oberfläche verdrahten ----------------------------------------------
 
@@ -795,7 +837,7 @@ function verdrahteOberflaeche() {
     if (S.tour) passeAn(S.karteT, S.tour, { untenFrei: sheetVerdeckt() });
   };
   $('#fab-locate').onclick = () => { setzeFolgen(true); zeigeStandort(S.karteT); };
-  $('#fab-locate-u').onclick = () => zeigeStandort(S.karteU);
+  $('#fab-locate-u').onclick = () => { setzeFolgen(true); zeigeStandort(S.karteU); };
   $('#fab-layers').onclick = oeffneLayerMenue;
   $('#fab-layers-u').onclick = oeffneLayerMenue;
   $('#layer-grund').onclick = schliesseLayerMenue;
@@ -908,8 +950,15 @@ function registriereServiceWorker() {
     reg.addEventListener('updatefound', () => {
       const neu = reg.installing;
       neu.addEventListener('statechange', () => {
-        if (neu.state === 'installed' && navigator.serviceWorker.controller) {
-          toast('Neue Version verfügbar – App neu öffnen.', 5000);
+        if (neu.state !== 'installed' || !navigator.serviceWorker.controller) return;
+        // Ohne Neuladen läuft der alte Programmcode weiter, auch wenn der
+        // neue längst im Speicher liegt. Während einer Navigation wäre ein
+        // Neustart aber störend – dann nur Bescheid sagen.
+        if (S.nav) {
+          toast('Neue Version verfügbar – nach der Tour neu öffnen.', 6000);
+        } else {
+          toast('Neue Version wird geladen …');
+          setTimeout(() => location.reload(), 1500);
         }
       });
     });
