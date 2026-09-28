@@ -587,7 +587,7 @@ function starteStandort() {
       // Übersicht genauso wie im Tourdetail
       const karte = sichtbareKarte();
       if (S.folgen && karte) {
-        karte.panTo([pos.coords.latitude, pos.coords.longitude], { animate: true, duration: .8 });
+        karte.panTo([pos.coords.latitude, pos.coords.longitude], { animate: true, duration: .35 });
       }
       aktualisiereNavigation(pos);
     },
@@ -805,7 +805,7 @@ async function zeigeMehr() {
     + `${S.index.touren.length} Buchtouren, ${S.eigene.length} eigene</span>`;
 }
 
-const APP_VERSION = '1.7.0';
+const APP_VERSION = '1.7.1';
 
 // --- Oberfläche verdrahten ----------------------------------------------
 
