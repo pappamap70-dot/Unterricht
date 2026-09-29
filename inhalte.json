@@ -1,6 +1,6 @@
 {
   "hinweis": "Diese Datei steuert die Uebersichtsseite. Sie wird ueber verwalten.html gepflegt - Handarbeit ist moeglich, aber nicht noetig.",
-  "aktualisiert": "2026-09-21T12:35:49.215Z",
+  "aktualisiert": "2026-09-29T06:18:58.732Z",
   "rubriken": [
     {
       "name": "Arduino",
@@ -77,14 +77,14 @@
       "sichtbar": true,
       "eintraege": [
         {
-          "datei": "FiTe_getriebe_exp.html",
-          "titel": "FiTe Getriebe Exp",
-          "sichtbar": true
-        },
-        {
           "datei": "musterloesung-industrielle-revolution.html",
           "titel": "Musterloesung Industrielle Revolution",
           "sichtbar": false
+        },
+        {
+          "datei": "FiTe_getriebe_exp.html",
+          "titel": "FiTe Getriebe Exp",
+          "sichtbar": true
         }
       ]
     },
