@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Übersetzung & Drehzahl</title>
+<style>
+  :root{
+    --drv:#f6cfae; --drv-dk:#c98a3d;
+    --outc:#bcd6ee; --outc-dk:#3f7cb0;
+    --ink:#232323; --paper:#fffdf8; --line:#d8d2c4;
+    --accent:#b3261e; --good:#2f7d4f;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;background:#1c1a17;font-family:'Segoe UI',Arial,Helvetica,sans-serif;color:var(--ink);}
+  #deck{position:relative;width:100%;height:100vh;overflow:hidden;}
+  .slide{
+    position:absolute; inset:0; display:none;
+    flex-direction:column; align-items:center; justify-content:center;
+    padding:6vh 8vw; text-align:center;
+    background:var(--paper);
+  }
+  .slide.active{display:flex;}
+  .slide h1{font-size:clamp(2rem,5vw,3.4rem); margin:0 0 .3em; color:var(--drv-dk);}
+  .slide h2{font-size:clamp(1.5rem,3.6vw,2.3rem); margin:0 0 .6em; color:var(--outc-dk);}
+  .kicker{letter-spacing:.12em; text-transform:uppercase; font-size:.95rem; color:#8a8374; margin-bottom:.6em; font-weight:600;}
+  .slide p{font-size:clamp(1.1rem,2.2vw,1.5rem); line-height:1.5; max-width:60ch;}
+  .lead{font-size:clamp(1.3rem,2.6vw,1.8rem); max-width:52ch;}
+  .formula{
+    font-size:clamp(2rem,5vw,3.2rem); font-weight:700; letter-spacing:.02em;
+    background:#fff; border:3px solid var(--ink); border-radius:16px;
+    padding:.5em 1em; margin:.6em 0; box-shadow:6px 6px 0 var(--line);
+  }
+  .formula .fr{display:inline-block; text-align:center; vertical-align:middle; margin:0 .25em;}
+  .formula .fr .num{display:block; border-bottom:3px solid var(--ink); padding:0 .25em .12em;}
+  .formula .fr .den{display:block; padding:.12em .25em 0;}
+  .legend{display:flex; gap:2em; flex-wrap:wrap; justify-content:center; margin-top:1em; font-size:1.05rem;}
+  .legend span{display:inline-flex; align-items:center; gap:.5em;}
+  .swatch{width:1em; height:1em; border-radius:3px; border:2px solid var(--ink); display:inline-block;}
+  .row{display:flex; align-items:center; justify-content:center; gap:3vw; flex-wrap:wrap;}
+  .card{
+    background:#fff; border:3px solid var(--ink); border-radius:16px;
+    padding:1.4em 1.8em; box-shadow:6px 6px 0 var(--line); max-width:26em;
+  }
+  .card h3{margin:.1em 0 .4em; font-size:1.3rem;}
+  .rule-good{color:var(--good); font-weight:700;}
+  .rule-bad{color:var(--accent); font-weight:700;}
+  .merksatz{
+    font-size:clamp(1.6rem,3.4vw,2.4rem); font-weight:700; font-style:italic;
+    color:var(--drv-dk); max-width:22ch; line-height:1.35; position:relative;
+  }
+  .merksatz::before,.merksatz::after{content:'"'; color:var(--line); font-size:2em; position:absolute;}
+  .merksatz::before{top:-.3em; left:-.7em;}
+  .merksatz::after{bottom:-.9em; right:-.6em;}
+  .steps{text-align:left; font-size:clamp(1.1rem,2.2vw,1.4rem); max-width:34em;}
+  .steps li{margin-bottom:.5em;}
+  .steps b{color:var(--drv-dk);}
+  table.recap{border-collapse:collapse; font-size:clamp(1rem,2vw,1.25rem); margin-top:.5em;}
+  table.recap th, table.recap td{border:2px solid var(--ink); padding:.5em 1em; text-align:left;}
+  table.recap th{background:var(--outc);}
+  .quiz-q{font-size:clamp(1.15rem,2.4vw,1.5rem); font-weight:600; margin-bottom:.8em;}
+  .quiz-opts{display:flex; gap:1em; flex-wrap:wrap; justify-content:center; margin-bottom:1em;}
+  .opt{
+    background:#fff; border:2px solid var(--ink); border-radius:10px; padding:.6em 1.1em;
+    cursor:pointer; font-size:1.05rem; transition:transform .1s;
+  }
+  .opt:hover{transform:translateY(-2px);}
+  .opt.correct{background:#d9f0e2; border-color:var(--good);}
+  .opt.wrong{background:#f7dcd9; border-color:var(--accent);}
+  .feedback{min-height:1.6em; font-weight:700; font-size:1.15rem;}
+  .feedback.good{color:var(--good);}
+  .feedback.bad{color:var(--accent);}
+  footer.progress{
+    position:fixed; bottom:0; left:0; right:0; height:6px; background:#00000022; z-index:5;
+  }
+  footer.progress .bar{height:100%; background:var(--drv-dk); width:0%; transition:width .25s;}
+  .nav{
+    position:fixed; bottom:16px; left:0; right:0; display:flex; justify-content:center;
+    align-items:center; gap:1em; z-index:6; pointer-events:none;
+  }
+  .nav button{
+    pointer-events:auto; background:var(--ink); color:#fff; border:none; border-radius:50%;
+    width:44px; height:44px; font-size:1.3rem; cursor:pointer;
+  }
+  .nav button:disabled{opacity:.25; cursor:default;}
+  .dots{pointer-events:auto; display:flex; gap:.4em;}
+  .dots span{width:9px; height:9px; border-radius:50%; background:#00000030;}
+  .dots span.on{background:var(--drv-dk);}
+  .num-tag{position:fixed; top:14px; right:18px; font-size:.85rem; color:#00000055; z-index:6;}
+  svg{max-width:100%;}
+</style>
+</head>
+<body>
+<div id="deck">
+
+  <section class="slide active">
+    <div class="kicker">Technik · Klasse 8 · Getriebe</div>
+    <h1>Übersetzung &amp; Drehzahl</h1>
+    <p class="lead">Wie schnell dreht sich ein Zahnrad, wenn ein anderes es antreibt? Eine kleine Faustformel für alle Getriebe.</p>
+    <svg width="260" height="150" viewBox="0 0 260 150">
+      <circle cx="70" cy="75" r="42" fill="var(--drv)" stroke="#232323" stroke-width="2.5"/>
+      <circle cx="70" cy="75" r="7" fill="#fff" stroke="#232323" stroke-width="1.4"/>
+      <circle cx="190" cy="75" r="26" fill="var(--outc)" stroke="#232323" stroke-width="2.5"/>
+      <circle cx="190" cy="75" r="5" fill="#fff" stroke="#232323" stroke-width="1.4"/>
+    </svg>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">Wiederholung</div>
+    <h2>Antrieb und Abtrieb</h2>
+    <svg width="380" height="180" viewBox="0 0 380 180">
+      <circle cx="110" cy="90" r="56" fill="var(--drv)" stroke="#232323" stroke-width="2.5"/>
+      <circle cx="110" cy="90" r="9" fill="#fff" stroke="#232323" stroke-width="1.6"/>
+      <circle cx="270" cy="90" r="56" fill="var(--outc)" stroke="#232323" stroke-width="2.5"/>
+      <circle cx="270" cy="90" r="9" fill="#fff" stroke="#232323" stroke-width="1.6"/>
+      <rect x="55" y="150" width="110" height="26" rx="5" fill="var(--drv)" stroke="#232323" stroke-width="1.4"/>
+      <text x="110" y="168" text-anchor="middle" font-size="15" font-weight="700" fill="#232323">Antrieb (z₁)</text>
+      <rect x="215" y="150" width="110" height="26" rx="5" fill="var(--outc)" stroke="#232323" stroke-width="1.4"/>
+      <text x="270" y="168" text-anchor="middle" font-size="15" font-weight="700" fill="#232323">Abtrieb (z₂)</text>
+    </svg>
+    <p>Der <b>Antrieb</b> ist das Zahnrad, an dem die Kraft ankommt (z. B. vom Motor). Der <b>Abtrieb</b> ist das Rad, das dadurch mitgedreht wird.</p>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">Formel 1</div>
+    <h2>Die Übersetzung <i>i</i></h2>
+    <div class="formula">i&nbsp;=&nbsp;<span class="fr"><span class="num">z₂</span><span class="den">z₁</span></span></div>
+    <div class="legend">
+      <span><span class="swatch" style="background:var(--drv)"></span> z₁ = Zähnezahl Antrieb</span>
+      <span><span class="swatch" style="background:var(--outc)"></span> z₂ = Zähnezahl Abtrieb</span>
+    </div>
+    <p style="margin-top:1em">Die Übersetzung sagt: Wie oft passt die Zähnezahl des Antriebs in die des Abtriebs?</p>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">Formel 2</div>
+    <h2>Und wie schnell dreht sich der Abtrieb?</h2>
+    <div class="formula">n₂&nbsp;=&nbsp;<span class="fr"><span class="num">n₁</span><span class="den">i</span></span></div>
+    <p>n₁ = Drehzahl Antrieb, n₂ = Drehzahl Abtrieb (z. B. in Umdrehungen pro Minute)</p>
+    <p class="lead" style="margin-top:.8em">Je größer die Übersetzung <i>i</i>, desto <b>langsamer</b> dreht sich der Abtrieb.</p>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">Regel 1</div>
+    <h2>Abtrieb ist das größere Rad</h2>
+    <svg width="340" height="160" viewBox="0 0 340 160">
+      <circle cx="80" cy="90" r="30" fill="var(--drv)" stroke="#232323" stroke-width="2.5"/>
+      <circle cx="80" cy="90" r="5" fill="#fff" stroke="#232323" stroke-width="1.2"/>
+      <circle cx="230" cy="90" r="58" fill="var(--outc)" stroke="#232323" stroke-width="2.5"/>
+      <circle cx="230" cy="90" r="9" fill="#fff" stroke="#232323" stroke-width="1.6"/>
+      <text x="80" y="140" text-anchor="middle" font-size="14" font-weight="700">klein (Antrieb)</text>
+      <text x="230" y="158" text-anchor="middle" font-size="14" font-weight="700">groß (Abtrieb)</text>
+    </svg>
+    <p><span class="rule-good">i &gt; 1</span> → Abtrieb dreht <b>langsamer</b>, aber mit <b>mehr Kraft</b> (mehr Drehmoment).</p>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">Regel 2</div>
+    <h2>Abtrieb ist das kleinere Rad</h2>
+    <svg width="340" height="160" viewBox="0 0 340 160">
+      <circle cx="90" cy="90" r="58" fill="var(--drv)" stroke="#232323" stroke-width="2.5"/>
+      <circle cx="90" cy="90" r="9" fill="#fff" stroke="#232323" stroke-width="1.6"/>
+      <circle cx="255" cy="90" r="30" fill="var(--outc)" stroke="#232323" stroke-width="2.5"/>
+      <circle cx="255" cy="90" r="5" fill="#fff" stroke="#232323" stroke-width="1.2"/>
+      <text x="90" y="158" text-anchor="middle" font-size="14" font-weight="700">groß (Antrieb)</text>
+      <text x="255" y="140" text-anchor="middle" font-size="14" font-weight="700">klein (Abtrieb)</text>
+    </svg>
+    <p><span class="rule-bad">i &lt; 1</span> → Abtrieb dreht <b>schneller</b>, aber mit <b>weniger Kraft</b>.</p>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">Merksatz</div>
+    <div class="merksatz">Viele Zähne treiben wenige Zähne schnell.</div>
+    <p style="margin-top:1.4em">Kleines Rad am Abtrieb → <b>schnell</b>, aber schwach.<br>Großes Rad am Abtrieb → <b>langsam</b>, aber stark.</p>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">Rechenbeispiel</div>
+    <h2>z₁ = 12, z₂ = 24, n₁ = 10 U/min</h2>
+    <div class="row">
+      <svg width="200" height="140" viewBox="0 0 200 140">
+        <circle cx="55" cy="65" r="26" fill="var(--drv)" stroke="#232323" stroke-width="2.5"/>
+        <circle cx="55" cy="65" r="4.5" fill="#fff" stroke="#232323" stroke-width="1.2"/>
+        <circle cx="150" cy="65" r="46" fill="var(--outc)" stroke="#232323" stroke-width="2.5"/>
+        <circle cx="150" cy="65" r="7" fill="#fff" stroke="#232323" stroke-width="1.4"/>
+        <text x="55" y="122" text-anchor="middle" font-size="13" font-weight="700">z₁=12</text>
+        <text x="150" y="122" text-anchor="middle" font-size="13" font-weight="700">z₂=24</text>
+      </svg>
+      <ol class="steps">
+        <li><b>Schritt 1 – Übersetzung:</b><br>i = z₂ / z₁ = 24 / 12 = 2</li>
+        <li><b>Schritt 2 – Drehzahl Abtrieb:</b><br>n₂ = n₁ / i = 10 / 2 = 5 U/min</li>
+      </ol>
+    </div>
+    <p style="margin-top:.6em">Der Abtrieb dreht sich also <b>halb so schnell</b> wie der Antrieb.</p>
+  </section>
+
+  <section class="slide" id="quizSlide">
+    <div class="kicker">Kurzer Check</div>
+    <h2>Teste dich selbst</h2>
+    <div class="quiz-q">z₁ = 10, z₂ = 40 – was passiert am Abtrieb?</div>
+    <div class="quiz-opts" data-q="1">
+      <div class="opt" data-correct="false">Er dreht schneller</div>
+      <div class="opt" data-correct="true">Er dreht langsamer, aber kräftiger</div>
+      <div class="opt" data-correct="false">Er dreht genauso schnell</div>
+    </div>
+    <div class="feedback" data-fb="1"></div>
+    <div class="quiz-q" style="margin-top:1em">z₁ = 30, z₂ = 10 – wie groß ist i?</div>
+    <div class="quiz-opts" data-q="2">
+      <div class="opt" data-correct="false">i = 3</div>
+      <div class="opt" data-correct="true">i = 0,33</div>
+      <div class="opt" data-correct="false">i = 1</div>
+    </div>
+    <div class="feedback" data-fb="2"></div>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">Zusammenfassung</div>
+    <h2>Das Wichtigste auf einen Blick</h2>
+    <table class="recap">
+      <tr><th>Größe</th><th>Formel</th></tr>
+      <tr><td>Übersetzung</td><td>i = z₂ / z₁</td></tr>
+      <tr><td>Drehzahl Abtrieb</td><td>n₂ = n₁ / i</td></tr>
+      <tr><td>Abtrieb größer (i &gt; 1)</td><td>langsamer, kräftiger</td></tr>
+      <tr><td>Abtrieb kleiner (i &lt; 1)</td><td>schneller, schwächer</td></tr>
+    </table>
+    <p class="lead" style="margin-top:1em; font-style:italic;">„Viele Zähne treiben wenige Zähne schnell.“</p>
+  </section>
+
+</div>
+
+<footer class="progress"><div class="bar" id="bar"></div></footer>
+<div class="nav">
+  <button id="prev" aria-label="zurück">‹</button>
+  <div class="dots" id="dots"></div>
+  <button id="next" aria-label="weiter">›</button>
+</div>
+<div class="num-tag" id="numTag"></div>
+
+<script>
+(function(){
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const dotsWrap = document.getElementById('dots');
+  slides.forEach((_,i)=>{
+    const d = document.createElement('span');
+    if(i===0) d.classList.add('on');
+    d.addEventListener('click', ()=>go(i));
+    dotsWrap.appendChild(d);
+  });
+  const dots = Array.from(dotsWrap.children);
+  let idx = 0;
+  const bar = document.getElementById('bar');
+  const numTag = document.getElementById('numTag');
+  const prevBtn = document.getElementById('prev');
+  const nextBtn = document.getElementById('next');
+
+  function go(i){
+    if(i<0 || i>=slides.length) return;
+    slides[idx].classList.remove('active');
+    dots[idx].classList.remove('on');
+    idx = i;
+    slides[idx].classList.add('active');
+    dots[idx].classList.add('on');
+    bar.style.width = ((idx+1)/slides.length*100)+'%';
+    numTag.textContent = (idx+1)+' / '+slides.length;
+    prevBtn.disabled = idx===0;
+    nextBtn.disabled = idx===slides.length-1;
+  }
+  prevBtn.addEventListener('click', ()=>go(idx-1));
+  nextBtn.addEventListener('click', ()=>go(idx+1));
+  document.addEventListener('keydown', e=>{
+    if(['ArrowRight',' ','PageDown'].includes(e.key)){ go(idx+1); e.preventDefault(); }
+    if(['ArrowLeft','PageUp'].includes(e.key)){ go(idx-1); e.preventDefault(); }
+  });
+  go(0);
+
+  // Quiz-Logik
+  document.querySelectorAll('.quiz-opts').forEach(group=>{
+    const fb = document.querySelector('.feedback[data-fb="'+group.dataset.q+'"]');
+    group.querySelectorAll('.opt').forEach(opt=>{
+      opt.addEventListener('click', ()=>{
+        if(group.dataset.answered) return;
+        group.dataset.answered = '1';
+        const ok = opt.dataset.correct === 'true';
+        group.querySelectorAll('.opt').forEach(o=>{
+          if(o.dataset.correct==='true') o.classList.add('correct');
+          else if(o===opt) o.classList.add('wrong');
+        });
+        fb.textContent = ok ? 'Richtig! ✓' : 'Nicht ganz – die richtige Antwort ist grün markiert.';
+        fb.className = 'feedback ' + (ok ? 'good' : 'bad');
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>
