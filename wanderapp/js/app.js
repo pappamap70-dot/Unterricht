@@ -1440,7 +1440,7 @@ async function zeigeMehr() {
     + `${S.index.touren.length} Buchtouren, ${S.eigene.length} eigene</span>`;
 }
 
-const APP_VERSION = '1.16.0';
+const APP_VERSION = '1.16.1';
 
 // --- Oberfläche verdrahten ----------------------------------------------
 

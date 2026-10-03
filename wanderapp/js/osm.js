@@ -49,6 +49,10 @@ async function frage(abfrage, zeit = 60000, melde = null, versuche = 3) {
         signal: abbruch.signal,
       });
       if (antwort.status === 429 || antwort.status === 504) continue;   // erneut
+      if (antwort.status === 400) {
+        throw new Error('Der Dienst konnte die Anfrage nicht verarbeiten. '
+          + 'Meist hilft es, auf die gewünschte Gegend hineinzuzoomen.');
+      }
       if (!antwort.ok) throw new Error('Abfrage fehlgeschlagen (HTTP ' + antwort.status + ')');
       return await antwort.json();
     } catch (e) {
@@ -72,7 +76,12 @@ async function frage(abfrage, zeit = 60000, melde = null, versuche = 3) {
 export async function sucheRouten(lat, lon, umkreisM = 15000, grenze = 60, melde = null) {
   const dLat = umkreisM / 111320;
   const dLon = umkreisM / (111320 * Math.cos(grad(lat)));
-  const box = [lat - dLat, lon - dLon, lat + dLat, lon + dLon]
+  if (!isFinite(lat) || !isFinite(lon)) {
+    throw new Error('Ohne gültigen Standort lässt sich die Umgebung nicht durchsuchen.');
+  }
+  const klemm = (x, g) => Math.max(-g, Math.min(g, x));
+  const box = [klemm(lat - dLat, 90), klemm(lon - dLon, 180),
+               klemm(lat + dLat, 90), klemm(lon + dLon, 180)]
     .map(x => x.toFixed(5)).join(',');
 
   const daten = await frage(
@@ -81,9 +90,33 @@ export async function sucheRouten(lat, lon, umkreisM = 15000, grenze = 60, melde
   return zuRouten(daten.elements || [], lat, lon);
 }
 
-/** Sucht Routen in einem Kartenausschnitt. */
+/**
+ * Sucht Routen in einem Kartenausschnitt.
+ *
+ * Der Ausschnitt wird auf gültige Koordinaten begrenzt: Weit herausgezoomt
+ * liefert Leaflet Längengrade jenseits von ±180, und bei gedrehter Karte ist
+ * der Kartenbereich auf die Bildschirmdiagonale vergrössert. Overpass lehnt
+ * solche Angaben mit HTTP 400 ab.
+ */
 export async function sucheImAusschnitt(box, lat, lon, grenze = 60, melde = null) {
-  const b = [box[0], box[1], box[2], box[3]].map(x => x.toFixed(5)).join(',');
+  const klemm = (x, grenzwert) => Math.max(-grenzwert, Math.min(grenzwert, x));
+  const s = klemm(Math.min(box[0], box[2]), 90);
+  const n = klemm(Math.max(box[0], box[2]), 90);
+  const w = klemm(Math.min(box[1], box[3]), 180);
+  const o = klemm(Math.max(box[1], box[3]), 180);
+
+  if (!isFinite(s) || !isFinite(w) || !isFinite(n) || !isFinite(o) || n - s < 1e-4) {
+    throw new Error('Der Kartenausschnitt lässt sich nicht auswerten. '
+      + 'Bitte etwas hineinzoomen und erneut versuchen.');
+  }
+  // Grob über ein Grad Breite sind mehrere hundert Kilometer – so viele
+  // Relationen auf einmal weist der Dienst ohnehin ab.
+  if (n - s > 1.2 || o - w > 1.8) {
+    throw new Error('Der Ausschnitt ist zu gross. Bitte auf die Gegend '
+      + 'hineinzoomen, die dich interessiert.');
+  }
+
+  const b = [s, w, n, o].map(x => x.toFixed(5)).join(',');
   const daten = await frage(
     `[out:json][timeout:30];rel["route"="hiking"]["name"](${b});out tags center ${grenze};`,
     60000, melde);
