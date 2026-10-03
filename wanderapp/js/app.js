@@ -10,7 +10,7 @@ import { sucheRouten, sucheImAusschnitt, sucheNachNamen, ladeRoute, QUELLE } fro
 import {
   erstelleKarte, setzeLayer, setzeWanderwege, zeichneTour, passeAn,
   LAYER, kachelListe, ladeKacheln, kachelBestand, kachelnLoeschen, schaetzeGroesse,
-  dreheKarte, peilung,
+  dreheKarte, peilung, erlaubeFingerDrehung,
 } from './karte.js';
 import { zeichneProfil } from './profil.js';
 import {
@@ -235,6 +235,7 @@ async function zeigeUebersicht() {
     S.karteU = erstelleKarte($('#map-uebersicht'), S.einst);
     S.karteU.setView([48.2, 8.2], 9);
     S.karteU.on('dragstart', wegGezogen);
+    erlaubeFingerDrehung(S.karteU, w => dreheVonHand(S.karteU, w));
   }
   setTimeout(() => S.karteU.invalidateSize(), 60);
 
@@ -370,6 +371,21 @@ function richtung(pos) {
   return S.blickRichtung;
 }
 
+/**
+ * Drehen mit zwei Fingern. Von Hand gedreht gilt vorrangig: Die automatische
+ * Ausrichtung nach Fahrtrichtung setzt erst wieder ein, wenn man sie über den
+ * Standortknopf neu einschaltet.
+ */
+function dreheVonHand(karte, winkel) {
+  S.handDrehung = true;
+  S.blickRichtung = winkel;
+  dreheKarte(karte, winkel);
+  if (!S.handHinweis) {
+    S.handHinweis = true;
+    toast('Karte von Hand gedreht – ◎ stellt sie wieder nach Fahrtrichtung');
+  }
+}
+
 /** Peilung als Himmelsrichtung, für die Anzeige unter "Mehr". */
 function himmelsrichtung(grad) {
   const namen = ['N', 'NO', 'O', 'SO', 'S', 'SW', 'W', 'NW'];
@@ -422,6 +438,7 @@ async function zeigeTour(id) {
     // Nur wer die Karte wegzieht, will sie nicht mehr nachgeführt haben.
     // Ein Antippen oder Zoomen lässt das Folgen bestehen.
     S.karteT.on('dragstart', wegGezogen);
+    erlaubeFingerDrehung(S.karteT, w => dreheVonHand(S.karteT, w));
   }
   setTimeout(() => S.karteT.invalidateSize(), 60);
 
@@ -643,8 +660,10 @@ function starteStandort() {
       }
       // Karte in Fahrtrichtung drehen – nur solange sie auch mitwandert
       if (karte) {
-        const winkel = (S.einst.drehen && S.folgen) ? richtung(pos) : null;
-        dreheKarte(karte, winkel);
+        if (!S.handDrehung) {
+          const winkel = (S.einst.drehen && S.folgen) ? richtung(pos) : null;
+          dreheKarte(karte, winkel);
+        }
       }
       aktualisiereNavigation(pos);
       recPunkt(pos);
@@ -700,6 +719,8 @@ function standortKnopf(karte) {
     toast('Karte folgt nicht mehr');
     return;
   }
+  S.handDrehung = false;
+  S.handHinweis = false;
   setzeFolgen(true, true);
   zeigeStandort(karte);
   toast('Karte folgt deinem Standort');
@@ -877,7 +898,9 @@ async function starteAufnahme(wieder = null) {
   haltWach(true);
   if (!wieder) {
     await sichereAufnahme();
-    toast('Aufzeichnung läuft');
+    toast(S.einst.wachhalten
+      ? 'Aufzeichnung läuft – Bildschirm bleibt an'
+      : 'Aufzeichnung läuft – bei gesperrtem Bildschirm pausiert sie', 5000);
   }
 }
 
@@ -944,6 +967,24 @@ async function verwirfAufnahme() {
   toast('Aufzeichnung verworfen');
 }
 
+/**
+ * Meldet eine Lücke, wenn die Seite im Hintergrund eingefroren war. Chrome
+ * hält unsichtbare Seiten an, dann liefert die Ortung nichts – zwischen dem
+ * letzten und dem nächsten Punkt liegt dann eine Luftlinie statt des
+ * wirklichen Weges. Das soll man wissen, statt es im Track zu übersehen.
+ */
+function pruefeAufnahmeLuecke() {
+  const a = S.aufnahme;
+  if (!a || a.pausiert || !a.punkte.length) return;
+  const letzter = a.punkte[a.punkte.length - 1];
+  const still = Date.now() - letzter[3];
+  if (still < 120000) return;                    // unter zwei Minuten: unauffällig
+  if (a.gemeldeteLuecke === letzter[3]) return;  // schon gemeldet
+  a.gemeldeteLuecke = letzter[3];
+  toast(`Aufzeichnung stand ${fmtDauer(Math.round(still / 60000))} still – `
+    + 'bei gesperrtem Bildschirm hält Android sie an.', 6000);
+}
+
 /** Nimmt einen Standort in die Aufzeichnung auf, wenn er brauchbar ist. */
 function recPunkt(pos) {
   const a = S.aufnahme;
@@ -961,7 +1002,15 @@ function recPunkt(pos) {
   ]);
   zeichneAufnahmeLinie();
   zeigeRecBanner();
-  if (a.punkte.length % 10 === 0) sichereAufnahme();
+
+  // Sichern alle zehn Punkte, spätestens aber nach 30 Sekunden: Bei
+  // langsamem Gehen lägen zwischen zehn Punkten sonst Minuten, die ein
+  // Absturz mitnähme.
+  const jetzt = Date.now();
+  if (a.punkte.length % 10 === 0 || jetzt - (S.recGesichert || 0) > 30000) {
+    S.recGesichert = jetzt;
+    sichereAufnahme();
+  }
 }
 
 const recStrecke = punkte => {
@@ -1170,7 +1219,7 @@ async function zeigeMehr() {
     + `${S.index.touren.length} Buchtouren, ${S.eigene.length} eigene</span>`;
 }
 
-const APP_VERSION = '1.11.0';
+const APP_VERSION = '1.12.0';
 
 // --- Oberfläche verdrahten ----------------------------------------------
 
@@ -1327,7 +1376,11 @@ function verdrahteOberflaeche() {
 
   // Bildschirmsperre kann den WakeLock verlieren
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible' && S.nav) haltWach(true);
+    if (document.visibilityState !== 'visible') return;
+    // Android gibt die Bildschirmsperre beim Wegschalten frei – sie muss für
+    // Navigation UND Aufzeichnung neu angefordert werden.
+    if (S.nav || S.aufnahme) haltWach(true);
+    if (S.aufnahme) pruefeAufnahmeLuecke();
   });
 }
 

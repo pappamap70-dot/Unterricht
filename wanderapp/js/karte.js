@@ -202,6 +202,42 @@ export function dreheKarte(karte, winkel) {
 
 }
 
+/**
+ * Erlaubt das Drehen der Karte mit zwei Fingern. Leaflet behandelt zwei
+ * Finger als Zoomgeste; die Drehung läuft daneben her und greift erst ab
+ * einem deutlichen Winkel, damit reines Zoomen die Karte nicht verdreht.
+ *
+ * `beiDrehung(winkel)` wird mit der neuen Blickrichtung gerufen.
+ */
+export function erlaubeFingerDrehung(karte, beiDrehung) {
+  const el = karte.getContainer();
+  let startWinkel = null, startBlick = 0, aktiv = false;
+
+  const zwischenWinkel = b =>
+    Math.atan2(b[1].clientY - b[0].clientY, b[1].clientX - b[0].clientX) * 180 / Math.PI;
+
+  el.addEventListener('touchstart', e => {
+    if (e.touches.length !== 2) return;
+    startWinkel = zwischenWinkel(e.touches);
+    startBlick = el._winkel ?? 0;
+    aktiv = false;
+  }, { passive: true });
+
+  el.addEventListener('touchmove', e => {
+    if (e.touches.length !== 2 || startWinkel == null) return;
+    const jetzt = zwischenWinkel(e.touches);
+    let d = ((jetzt - startWinkel + 540) % 360) - 180;
+    // Erst ab 12 Grad als Drehung werten – darunter ist es Zoomen
+    if (!aktiv && Math.abs(d) < 12) return;
+    aktiv = true;
+    beiDrehung((startBlick - d + 360) % 360);
+  }, { passive: true });
+
+  const ende = () => { startWinkel = null; aktiv = false; };
+  el.addEventListener('touchend', ende);
+  el.addEventListener('touchcancel', ende);
+}
+
 /** Peilung von Punkt a nach b in Grad, 0 = Norden. */
 export function peilung(lat1, lon1, lat2, lon2) {
   const p1 = grad(lat1), p2 = grad(lat2), dl = grad(lon2 - lon1);
