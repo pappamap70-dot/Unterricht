@@ -50,6 +50,10 @@ const vorgabe = {
   wachhalten: true,
   kmMarken: true,
   sortierung: 'nr',
+  // Karte der eigenen Position nachführen. Standard aus: beim blossen
+  // Anschauen einer Tour soll die Karte stehen bleiben. Der Start einer
+  // Navigation schaltet es für diese Fahrt ein.
+  folgen: false,
 };
 
 let cache = null;

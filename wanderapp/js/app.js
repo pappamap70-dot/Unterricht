@@ -29,7 +29,6 @@ const S = {
   standort: null,       // letzte bekannte Position
   watchId: null,
   wakeLock: null,
-  folgen: true,         // Karte zieht mit der eigenen Position mit
   filter: { region: null, suche: '' },
   installEreignis: null,
 };
@@ -48,7 +47,7 @@ async function start() {
 
   baueFilterChips();
   verdrahteOberflaeche();
-  setzeFolgen(S.folgen);      // Knöpfe zeigen den Zustand von Anfang an
+  setzeFolgen(S.einst.folgen);   // gespeicherte Wahl übernehmen
   window.addEventListener('hashchange', route);
   route();
 
@@ -158,16 +157,17 @@ function zeigeListe() {
   const suche = S.filter.suche.toLowerCase().trim();
   let touren = alleTouren();
 
+  // Entfernung zum Start, sobald der Standort bekannt ist – sie wird für
+  // den Filter, die Sortierung und die Anzeige im Eintrag gebraucht.
+  if (S.standort) {
+    const { latitude: la, longitude: lo } = S.standort.coords;
+    touren = touren.map(t => ({ ...t, entfernung: dist(la, lo, t.start[0], t.start[1]) }));
+  }
+
   if (S.filter.region === 'In meiner Nähe') {
-    if (!S.standort) {
-      toast('Warte auf GPS-Signal …');
-    } else {
-      const { latitude: la, longitude: lo } = S.standort.coords;
-      touren = touren
-        .map(t => ({ ...t, entfernung: dist(la, lo, t.start[0], t.start[1]) }))
-        .filter(t => t.entfernung < 60000)
-        .sort((a, b) => a.entfernung - b.entfernung);
-    }
+    if (!S.standort) toast('Warte auf GPS-Signal …');
+    else touren = touren.filter(t => t.entfernung < 60000)
+                        .sort((a, b) => a.entfernung - b.entfernung);
   } else if (S.filter.region) {
     touren = touren.filter(t => t.region === S.filter.region);
   }
@@ -180,7 +180,11 @@ function zeigeListe() {
 
   if (S.filter.region !== 'In meiner Nähe') {
     const s = S.einst.sortierung;
-    if (s === 'km') touren.sort((a, b) => a.km - b.km);
+    if (s === 'naehe') {
+      if (S.standort) touren.sort((a, b) => a.entfernung - b.entfernung);
+      else toast('Ohne GPS-Signal keine Sortierung nach Entfernung');
+    }
+    else if (s === 'km') touren.sort((a, b) => a.km - b.km);
     else if (s === 'km-ab') touren.sort((a, b) => b.km - a.km);
     else if (s === 'hm') touren.sort((a, b) => b.auf - a.auf);
     // Buchtouren nach Nummer; importierte haben keine und werden nach Titel
@@ -294,31 +298,28 @@ function setzeSheet(stufe) {
  * Schaltet das Mitwandern der Karte. Der Knopf zeigt den Zustand an, damit
  * man sieht, ob die Karte der eigenen Position folgt.
  */
-let folgenUhr = null;
-
-function setzeFolgen(an) {
+/**
+ * Schaltet das Mitwandern der Karte. `merken` schreibt die Wahl in die
+ * Einstellungen – das unterbleibt beim Wegziehen der Karte und beim Start
+ * einer Navigation, damit die bewusste Wahl des Nutzers erhalten bleibt.
+ */
+function setzeFolgen(an, merken = false) {
   S.folgen = an;
   for (const wahl of ['#fab-locate', '#fab-locate-u']) {
     const knopf = $(wahl);
     if (knopf) knopf.setAttribute('aria-pressed', String(an));
   }
-  if (an) { clearTimeout(folgenUhr); folgenUhr = null; }
+  const schalter = $('#opt-folgen');
+  if (schalter) schalter.checked = an;
+  if (!$('#view-mehr').hidden) zeigeMehr();   // Statuszeile nachziehen
+  if (merken) setzeEinstellung('folgen', an).then(e => { S.einst = e; });
 }
 
-/**
- * Nach dem Wegziehen der Karte hört das Mitwandern auf – aber nur für eine
- * Weile. Sonst bleibt es nach einer unbeabsichtigten Wischbewegung für den
- * Rest der Tour aus, ohne dass man merkt, warum.
- */
+/** Wer die Karte wegzieht, will sie dort haben – also Nachführen aus. */
 function wegGezogen() {
   if (!S.folgen) return;
   setzeFolgen(false);
-  toast('Karte folgt nicht mehr – ◎ tippen oder 20 s warten');
-  clearTimeout(folgenUhr);
-  folgenUhr = setTimeout(() => {
-    setzeFolgen(true);
-    toast('Karte folgt wieder');
-  }, 20000);
+  toast('Karte folgt nicht mehr – ◎ tippen');
 }
 
 /** Die Karte der gerade sichtbaren Ansicht, sonst nichts. */
@@ -508,7 +509,7 @@ function beendeNavigation(meldung) {
   $('#nav-banner').classList.remove('abseits');
   const b = $('#btn-nav');
   if (b) { b.textContent = 'Navigation starten'; b.classList.add('primary'); }
-  setzeFolgen(false);
+  setzeFolgen(S.einst.folgen);   // zurück auf die eigene Wahl
   if (!$('#view-tour').hidden) setzeSheet('normal');
   zeigeNavPunkt(false);
   haltWach(false);
@@ -590,6 +591,20 @@ function starteStandort() {
         karte.panTo([pos.coords.latitude, pos.coords.longitude], { animate: true, duration: .35 });
       }
       aktualisiereNavigation(pos);
+
+      // Nach Entfernung sortierte oder gefilterte Liste nachziehen, sobald
+      // sich die Position nennenswert geändert hat – nicht bei jedem Tick.
+      const braucht = S.einst.sortierung === 'naehe' || S.filter.region === 'In meiner Nähe'
+        || !S.listeHatteStandort;
+      if (braucht && !$('#view-touren').hidden) {
+        const weit = !S.listeStand || dist(S.listeStand[0], S.listeStand[1],
+                                           pos.coords.latitude, pos.coords.longitude) > 200;
+        if (weit) {
+          S.listeStand = [pos.coords.latitude, pos.coords.longitude];
+          S.listeHatteStandort = true;
+          zeigeListe();
+        }
+      }
     },
     fehler => {
       if (fehler.code === 1) toast('Standortfreigabe verweigert – Navigation ist ohne sie nicht möglich.');
@@ -616,6 +631,21 @@ function zeichneStandort(karte, pos) {
     m.punkt.setLatLng([la, lo]);
     m.kreis.setLatLng([la, lo]).setRadius(g);
   }
+}
+
+/**
+ * Erster Druck zentriert und schaltet das Mitwandern ein, der zweite
+ * schaltet es wieder aus. So lässt sich die Karte in Ruhe betrachten.
+ */
+function standortKnopf(karte) {
+  if (S.folgen) {
+    setzeFolgen(false, true);
+    toast('Karte folgt nicht mehr');
+    return;
+  }
+  setzeFolgen(true, true);
+  zeigeStandort(karte);
+  toast('Karte folgt deinem Standort');
 }
 
 function zeigeStandort(karte) {
@@ -787,6 +817,7 @@ async function zeigeMehr() {
         + 'Hilft meist: App auf den Startbildschirm legen.')
     + '</span>';
 
+  $('#opt-folgen').checked = S.folgen;
   $('#opt-wach').checked = S.einst.wachhalten;
   $('#opt-km').checked = S.einst.kmMarken;
 
@@ -805,7 +836,7 @@ async function zeigeMehr() {
     + `${S.index.touren.length} Buchtouren, ${S.eigene.length} eigene</span>`;
 }
 
-const APP_VERSION = '1.7.1';
+const APP_VERSION = '1.8.0';
 
 // --- Oberfläche verdrahten ----------------------------------------------
 
@@ -822,8 +853,9 @@ function verdrahteOberflaeche() {
   $('#suche').addEventListener('input', e => { S.filter.suche = e.target.value; zeigeListe(); });
 
   $('#btn-sort').onclick = async () => {
-    const folge = ['nr', 'km', 'km-ab', 'hm'];
-    const namen = { nr: 'Buchreihenfolge', km: 'kürzeste zuerst', 'km-ab': 'längste zuerst', hm: 'meiste Höhenmeter' };
+    const folge = ['nr', 'naehe', 'km', 'km-ab', 'hm'];
+    const namen = { nr: 'Buchreihenfolge', naehe: 'nächste zuerst', km: 'kürzeste zuerst',
+                    'km-ab': 'längste zuerst', hm: 'meiste Höhenmeter' };
     const next = folge[(folge.indexOf(S.einst.sortierung) + 1) % folge.length];
     S.einst = await setzeEinstellung('sortierung', next);
     toast('Sortierung: ' + namen[next]);
@@ -836,8 +868,8 @@ function verdrahteOberflaeche() {
     setzeFolgen(false);
     if (S.tour) passeAn(S.karteT, S.tour, { untenFrei: sheetVerdeckt() });
   };
-  $('#fab-locate').onclick = () => { setzeFolgen(true); zeigeStandort(S.karteT); };
-  $('#fab-locate-u').onclick = () => { setzeFolgen(true); zeigeStandort(S.karteU); };
+  $('#fab-locate').onclick = () => standortKnopf(S.karteT);
+  $('#fab-locate-u').onclick = () => standortKnopf(S.karteU);
   $('#fab-layers').onclick = oeffneLayerMenue;
   $('#fab-layers-u').onclick = oeffneLayerMenue;
   $('#layer-grund').onclick = schliesseLayerMenue;
@@ -872,6 +904,7 @@ function verdrahteOberflaeche() {
   });
 
   // Einstellungen
+  $('#opt-folgen').onchange = e => setzeFolgen(e.target.checked, true);
   $('#opt-wach').onchange = async e => { S.einst = await setzeEinstellung('wachhalten', e.target.checked); };
   $('#opt-km').onchange = async e => {
     S.einst = await setzeEinstellung('kmMarken', e.target.checked);
