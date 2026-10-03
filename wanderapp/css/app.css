@@ -83,6 +83,12 @@ h2:first-child{margin-top:4px}
 .eintrag-titel{font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .meta{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:5px;font-size:13px;color:var(--text-schwach)}
 .meta b{font-weight:600;color:var(--text)}
+.loeschen{
+  flex:0 0 34px;align-self:center;display:grid;place-items:center;
+  width:34px;height:34px;border-radius:50%;color:var(--text-schwach);
+  font-size:15px;cursor:pointer;
+}
+.loeschen:active{background:var(--bg);color:var(--akzent)}
 .marke{font-size:11px;padding:2px 7px;border-radius:6px;background:var(--bg);color:var(--text-schwach);margin-top:6px;display:inline-block}
 
 /* Karte ---------------------------------------------------- */

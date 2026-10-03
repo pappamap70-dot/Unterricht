@@ -123,15 +123,22 @@ const WMT_GRUPPE = {
   LOC: 'Örtlicher Wanderweg',
 };
 
-/** Sucht Routen nach Namen – deutschlandweit, über den Suchindex. */
-export async function sucheNachNamen(text, grenze = 25) {
+/**
+ * Sucht Routen nach Namen – deutschlandweit, über den Suchindex.
+ *
+ * Der Index liefert nur Name und Art. Länge und Lage stehen in den
+ * Einzelheiten, die deshalb nachgeladen werden – gedrosselt, weil es je
+ * Treffer eine Abfrage ist.
+ */
+export async function sucheNachNamen(text, grenze = 20, lat = null, lon = null, melde = null) {
   const sauber = text.trim();
   if (sauber.length < 3) return [];
   const antwort = await fetch(
     `${WMT}/list/search?query=${encodeURIComponent(sauber)}&limit=${grenze}`);
   if (!antwort.ok) throw new Error('Die Suche ist gerade nicht erreichbar (HTTP ' + antwort.status + ')');
   const daten = await antwort.json();
-  return (daten.results || []).map(r => ({
+
+  const treffer = (daten.results || []).map(r => ({
     id: r.id,
     titel: r.name,
     netz: WMT_GRUPPE[r.group] || 'Wanderweg',
@@ -140,6 +147,37 @@ export async function sucheNachNamen(text, grenze = 25) {
     zeichen: r.symbol_description || '',
     entfernung: null,
   }));
+
+  if (treffer.length) {
+    if (melde) melde(`${treffer.length} gefunden – Einzelheiten werden geholt …`);
+    await ergaenzeEinzelheiten(treffer, lat, lon);
+  }
+  return treffer.sort((a, b) => (a.entfernung ?? 1e9) - (b.entfernung ?? 1e9));
+}
+
+/** Holt Länge, Betreiber und Lage nach – höchstens vier Abfragen gleichzeitig. */
+async function ergaenzeEinzelheiten(treffer, lat, lon) {
+  const reihe = treffer.slice();
+  const arbeiter = async () => {
+    while (reihe.length) {
+      const r = reihe.shift();
+      try {
+        const a = await fetch(`${WMT}/details/relation/${r.id}`);
+        if (!a.ok) continue;
+        const d = await a.json();
+        const t = d.tags || {};
+        const km = parseFloat(String(t.distance || '').replace(',', '.'));
+        if (isFinite(km)) r.kmLautOsm = km;
+        if (d.operator) r.betreiber = d.operator;
+        if (Array.isArray(d.bbox) && d.bbox.length === 4 && lat != null) {
+          // bbox ist Web-Mercator: Mittelpunkt umrechnen und Abstand messen
+          const [la, lo] = ausMercator((d.bbox[0] + d.bbox[2]) / 2, (d.bbox[1] + d.bbox[3]) / 2);
+          r.entfernung = dist(lat, lon, la, lo);
+        }
+      } catch { /* einzelner Treffer ohne Einzelheiten ist kein Beinbruch */ }
+    }
+  };
+  await Promise.all([arbeiter(), arbeiter(), arbeiter(), arbeiter()]);
 }
 
 /** Web-Mercator (wie ihn Waymarked Trails liefert) nach WGS84. */

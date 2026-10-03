@@ -225,6 +225,8 @@ function eintrag(t) {
       </div>
       <span class="marke">${t.rundweg ? 'Rundweg' : 'Streckenweg'}${t.eigen ? ' · importiert' : ''}</span>
     </div>
+    ${t.eigen ? `<span class="loeschen" data-weg="${esc(t.id)}" role="button"
+        aria-label="${esc(t.titel)} löschen" title="Löschen">✕</span>` : ''}
   </button>`;
 }
 
@@ -898,6 +900,22 @@ function exportiere(tour) {
   setTimeout(() => URL.revokeObjectURL(url), 4000);
 }
 
+/** Löschen aus der Liste heraus, mit Rückfrage. */
+async function fragenUndLoeschen(id) {
+  const tour = alleTouren().find(t => t.id === id);
+  if (!tour) return;
+  if (!confirm(`„${tour.titel}" löschen?
+
+Die Tour wird vom Gerät entfernt. `
+    + 'Heruntergeladene Karten bleiben erhalten.')) return;
+  await tourLoeschen(id);
+  S.geometrien.delete(id);
+  S.eigene = await eigeneTouren();
+  zeigeEigene();
+  zeigeListe();
+  toast(`„${tour.titel}" gelöscht`);
+}
+
 async function loescheTour(tour) {
   await tourLoeschen(tour.id);
   S.geometrien.delete(tour.id);
@@ -1266,20 +1284,24 @@ async function zeigeMehr() {
     + `${S.index.touren.length} Buchtouren, ${S.eigene.length} eigene</span>`;
 }
 
-const APP_VERSION = '1.12.3';
+const APP_VERSION = '1.13.0';
 
 // --- Oberfläche verdrahten ----------------------------------------------
 
 function verdrahteOberflaeche() {
   // Liste
-  $('#tourliste').addEventListener('click', e => {
-    const k = e.target.closest('.karte-eintrag');
-    if (k) location.hash = '#/tour/' + k.dataset.id;
-  });
-  $('#eigene-liste').addEventListener('click', e => {
-    const k = e.target.closest('.karte-eintrag');
-    if (k) location.hash = '#/tour/' + k.dataset.id;
-  });
+  for (const wahl of ['#tourliste', '#eigene-liste']) {
+    $(wahl).addEventListener('click', e => {
+      const weg = e.target.closest('.loeschen');
+      if (weg) {
+        e.stopPropagation();
+        fragenUndLoeschen(weg.dataset.weg);
+        return;
+      }
+      const k = e.target.closest('.karte-eintrag');
+      if (k) location.hash = '#/tour/' + k.dataset.id;
+    });
+  }
   $('#suche').addEventListener('input', e => { S.filter.suche = e.target.value; zeigeListe(); });
 
   $('#btn-sort').onclick = async () => {
@@ -1380,7 +1402,10 @@ function verdrahteOberflaeche() {
     if (e.key !== 'Enter') return;
     const text = e.target.value.trim();
     if (text.length < 3) { osmStatus('Bitte mindestens drei Buchstaben.', 'warn'); return; }
-    osmSuche(() => sucheNachNamen(text), `für „${esc(text)}"`);
+    const o = S.standort ? S.standort.coords : null;
+    S.osmBezugStandort = !!o;
+    osmSuche(m => sucheNachNamen(text, 20, o ? o.latitude : null, o ? o.longitude : null, m),
+      `für „${esc(text)}"`);
   });
   $('#osm-liste').addEventListener('click', e => {
     const k = e.target.closest('[data-osm]');
