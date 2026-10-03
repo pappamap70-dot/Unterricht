@@ -461,13 +461,26 @@ async function zeigeTour(id) {
     erlaubeFingerDrehung(S.karteT, w => dreheVonHand(S.karteT, w));
     richteZiehenAus(S.karteT);
   }
-  setTimeout(() => S.karteT.invalidateSize(), 60);
-
   if (S.tourGruppe) S.karteT.removeLayer(S.tourGruppe);
   S.tourGruppe = zeichneTour(S.karteT, tour, { kmMarken: S.einst.kmMarken });
   const laeuft = !!S.nav;
   setzeSheet(laeuft ? 'klein' : 'normal');
-  if (!laeuft) passeAn(S.karteT, tour, { untenFrei: sheetVerdeckt() });
+
+  if (!laeuft) {
+    // Die Karte muss ihre Grösse kennen, bevor der Ausschnitt berechnet wird –
+    // sonst passt er zum vorherigen Zustand. Zweimal, weil das Sheet seine
+    // Höhe erst nach dem Übergang erreicht.
+    S.karteT.invalidateSize({ animate: false });
+    S.folgenPausiert = true;        // der Blick gilt jetzt der Tour, nicht uns
+    passeAn(S.karteT, tour, { untenFrei: sheetVerdeckt() });
+    setTimeout(() => {
+      if (S.tour !== tour) return;
+      S.karteT.invalidateSize({ animate: false });
+      passeAn(S.karteT, tour, { untenFrei: sheetVerdeckt() });
+    }, 320);
+  } else {
+    S.karteT.invalidateSize({ animate: false });
+  }
   zeichneDetail(tour);
 
   // Kehrt man zu einer laufenden Navigation zurück, muss die Ansicht sie
@@ -585,6 +598,7 @@ function starteNavigation(tour) {
   S.nav = { tour, kum, restAuf, gesamt: kum[kum.length - 1], marke: null };
   $('#btn-nav').textContent = 'Navigation beenden';
   $('#btn-nav').classList.remove('primary');
+  S.folgenPausiert = false;
   setzeFolgen(true);
   setzeSheet('klein');        // beim Wandern zählt die Karte, nicht die Tabelle
   merkeNavigation(tour.id);
@@ -676,7 +690,7 @@ function starteStandort() {
       // Karte mitziehen, solange das Folgen eingeschaltet ist – auf der
       // Übersicht genauso wie im Tourdetail
       const karte = sichtbareKarte();
-      if (S.folgen && karte) {
+      if (S.folgen && !S.folgenPausiert && karte) {
         karte.panTo([pos.coords.latitude, pos.coords.longitude], { animate: true, duration: .35 });
       }
       // Karte in Fahrtrichtung drehen – nur solange sie auch mitwandert
@@ -742,6 +756,7 @@ function standortKnopf(karte) {
   }
   S.handDrehung = false;
   S.handHinweis = false;
+  S.folgenPausiert = false;
   setzeFolgen(true, true);
   zeigeStandort(karte);
   toast('Karte folgt deinem Standort');
@@ -1284,7 +1299,7 @@ async function zeigeMehr() {
     + `${S.index.touren.length} Buchtouren, ${S.eigene.length} eigene</span>`;
 }
 
-const APP_VERSION = '1.13.0';
+const APP_VERSION = '1.13.1';
 
 // --- Oberfläche verdrahten ----------------------------------------------
 
@@ -1318,7 +1333,10 @@ function verdrahteOberflaeche() {
   $('#btn-zurueck').onclick = () => history.length > 1 ? history.back() : (location.hash = '#/touren');
   $('#fab-fit').onclick = () => {
     setzeFolgen(false);
-    if (S.tour) passeAn(S.karteT, S.tour, { untenFrei: sheetVerdeckt() });
+    S.folgenPausiert = true;
+    if (!S.tour) return;
+    S.karteT.invalidateSize({ animate: false });
+    passeAn(S.karteT, S.tour, { untenFrei: sheetVerdeckt() });
   };
   $('#fab-locate').onclick = () => standortKnopf(S.karteT);
   $('#fab-locate-u').onclick = () => standortKnopf(S.karteU);
