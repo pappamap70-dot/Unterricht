@@ -248,6 +248,32 @@ export function erlaubeFingerDrehung(karte, beiDrehung) {
   el.addEventListener('touchcancel', ende);
 }
 
+/**
+ * Rechnet Ziehbewegungen auf die Drehung um.
+ *
+ * Leaflet weiss nichts von der CSS-Drehung und verschiebt die Karte in ihrem
+ * ungedrehten Koordinatensystem. Auf einer um 180 Grad gedrehten Karte liefe
+ * der Ausschnitt dem Finger dann entgegen. Vor dem Anwenden der neuen
+ * Position wird die Verschiebung deshalb um den Drehwinkel zurückgedreht,
+ * damit die Karte immer der Wischrichtung folgt.
+ */
+export function richteZiehenAus(karte) {
+  const zieher = karte.dragging && karte.dragging._draggable;
+  if (!zieher) return;
+  const el = karte.getContainer();
+
+  zieher.on('predrag', () => {
+    const winkel = el._winkel;
+    if (!winkel || !zieher._newPos || !zieher._startPos) return;
+    const b = winkel * Math.PI / 180;
+    const sin = Math.sin(b), cos = Math.cos(b);
+    const dx = zieher._newPos.x - zieher._startPos.x;
+    const dy = zieher._newPos.y - zieher._startPos.y;
+    zieher._newPos = zieher._startPos.add(
+      L.point(dx * cos - dy * sin, dx * sin + dy * cos));
+  });
+}
+
 /** Peilung von Punkt a nach b in Grad, 0 = Norden. */
 export function peilung(lat1, lon1, lat2, lon2) {
   const p1 = grad(lat1), p2 = grad(lat2), dl = grad(lon2 - lon1);

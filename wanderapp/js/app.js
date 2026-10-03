@@ -10,7 +10,7 @@ import { sucheRouten, sucheImAusschnitt, sucheNachNamen, ladeRoute, QUELLE } fro
 import {
   erstelleKarte, setzeLayer, setzeWanderwege, zeichneTour, passeAn,
   LAYER, kachelListe, ladeKacheln, kachelBestand, kachelnLoeschen, schaetzeGroesse,
-  dreheKarte, peilung, erlaubeFingerDrehung,
+  dreheKarte, peilung, erlaubeFingerDrehung, richteZiehenAus,
 } from './karte.js';
 import { zeichneProfil } from './profil.js';
 import {
@@ -237,6 +237,7 @@ async function zeigeUebersicht() {
     S.karteU.on('dragstart', wegGezogen);
     merkeZoomen(S.karteU);
     erlaubeFingerDrehung(S.karteU, w => dreheVonHand(S.karteU, w));
+    richteZiehenAus(S.karteU);
   }
   setTimeout(() => S.karteU.invalidateSize(), 60);
 
@@ -456,6 +457,7 @@ async function zeigeTour(id) {
     S.karteT.on('dragstart', wegGezogen);
     merkeZoomen(S.karteT);
     erlaubeFingerDrehung(S.karteT, w => dreheVonHand(S.karteT, w));
+    richteZiehenAus(S.karteT);
   }
   setTimeout(() => S.karteT.invalidateSize(), 60);
 
@@ -1255,7 +1257,7 @@ async function zeigeMehr() {
     + `${S.index.touren.length} Buchtouren, ${S.eigene.length} eigene</span>`;
 }
 
-const APP_VERSION = '1.12.1';
+const APP_VERSION = '1.12.2';
 
 // --- Oberfläche verdrahten ----------------------------------------------
 
