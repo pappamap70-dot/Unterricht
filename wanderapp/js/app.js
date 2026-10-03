@@ -1143,7 +1143,12 @@ async function osmSuche(aufgabe, womit) {
       return;
     }
     const wort = treffer.length === 1 ? 'Wanderweg' : 'Wanderwege';
-    osmStatus(`<b>${treffer.length} ${wort}</b> gefunden · ${QUELLE}`);
+    const bezug = treffer.some(t => t.entfernung != null)
+      ? (S.osmBezugStandort
+          ? '<br>Entfernungen von deinem Standort zur Mitte des Weges.'
+          : '<br>Ohne GPS gemessen ab Kartenmitte.')
+      : '';
+    osmStatus(`<b>${treffer.length} ${wort}</b> gefunden · ${QUELLE}${bezug}`);
     $('#osm-liste').innerHTML = treffer.map(osmEintrag).join('');
     toast(`${treffer.length} ${wort} gefunden`);
     zeigeOsmBereich();
@@ -1159,8 +1164,12 @@ function zeigeOsmBereich() {
 }
 
 function osmEintrag(r) {
-  const km = r.kmLautOsm ? `<span><b>${fmtKm(r.kmLautOsm)}</b> km</span>` : '';
-  const weit = r.entfernung != null ? `<span>${fmtM(r.entfernung)} entfernt</span>` : '';
+  const km = r.kmLautOsm ? `<span><b>${fmtKm(r.kmLautOsm)}</b> km lang</span>` : '';
+  // Die Entfernung zielt auf die Mitte des Weges: Den Startpunkt kennt man
+  // erst, wenn der Verlauf geladen ist – das wäre eine Abfrage je Treffer.
+  const weit = r.entfernung != null
+    ? `<span>${fmtM(r.entfernung)} ${S.osmBezugStandort ? 'zur Wegmitte' : 'von der Kartenmitte'}</span>`
+    : '';
   return `
   <button class="karte-eintrag" data-osm="${r.id}">
     <div class="osm-zeichen">🥾</div>
@@ -1257,7 +1266,7 @@ async function zeigeMehr() {
     + `${S.index.touren.length} Buchtouren, ${S.eigene.length} eigene</span>`;
 }
 
-const APP_VERSION = '1.12.2';
+const APP_VERSION = '1.12.3';
 
 // --- Oberfläche verdrahten ----------------------------------------------
 
@@ -1350,15 +1359,21 @@ function verdrahteOberflaeche() {
   $('#btn-osm-nah').onclick = () => {
     if (!S.standort) { osmStatus('Noch kein GPS-Signal – bitte kurz warten.', 'warn'); return; }
     const { latitude: la, longitude: lo } = S.standort.coords;
+    S.osmBezugStandort = true;
     osmSuche(m => sucheRouten(la, lo, 15000, 60, m), 'in der Nähe');
   };
   $('#btn-osm-karte').onclick = () => {
     const karte = S.karteU || S.karteT;
     if (!karte) { osmStatus('Bitte zuerst die Karte öffnen.', 'warn'); return; }
     const b = karte.getBounds();
-    const mitte = karte.getCenter();
+    // Entfernungen immer vom eigenen Standort aus – die Kartenmitte wäre ein
+    // anderer Bezugspunkt als bei "In der Nähe" und damit irreführend.
+    const bezug = S.standort
+      ? [S.standort.coords.latitude, S.standort.coords.longitude]
+      : [karte.getCenter().lat, karte.getCenter().lng];
+    S.osmBezugStandort = !!S.standort;
     osmSuche(m => sucheImAusschnitt(
-      [b.getSouth(), b.getWest(), b.getNorth(), b.getEast()], mitte.lat, mitte.lng, 60, m),
+      [b.getSouth(), b.getWest(), b.getNorth(), b.getEast()], bezug[0], bezug[1], 60, m),
       'im Kartenausschnitt');
   };
   $('#osm-suche').addEventListener('keydown', e => {
