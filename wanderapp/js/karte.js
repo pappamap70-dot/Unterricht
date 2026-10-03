@@ -211,24 +211,34 @@ export function dreheKarte(karte, winkel) {
  */
 export function erlaubeFingerDrehung(karte, beiDrehung) {
   const el = karte.getContainer();
-  let startWinkel = null, startBlick = 0, aktiv = false;
+  let startWinkel = null, startAbstand = 0, startBlick = 0, aktiv = false;
 
-  const zwischenWinkel = b =>
+  const winkelVon = b =>
     Math.atan2(b[1].clientY - b[0].clientY, b[1].clientX - b[0].clientX) * 180 / Math.PI;
+  const abstandVon = b =>
+    Math.hypot(b[1].clientX - b[0].clientX, b[1].clientY - b[0].clientY);
 
   el.addEventListener('touchstart', e => {
-    if (e.touches.length !== 2) return;
-    startWinkel = zwischenWinkel(e.touches);
+    if (e.touches.length !== 2) { startWinkel = null; return; }
+    startWinkel = winkelVon(e.touches);
+    startAbstand = abstandVon(e.touches);
     startBlick = el._winkel ?? 0;
     aktiv = false;
   }, { passive: true });
 
   el.addEventListener('touchmove', e => {
     if (e.touches.length !== 2 || startWinkel == null) return;
-    const jetzt = zwischenWinkel(e.touches);
-    let d = ((jetzt - startWinkel + 540) % 360) - 180;
-    // Erst ab 12 Grad als Drehung werten – darunter ist es Zoomen
-    if (!aktiv && Math.abs(d) < 12) return;
+    const jetzt = winkelVon(e.touches);
+    const d = ((jetzt - startWinkel + 540) % 360) - 180;
+
+    if (!aktiv) {
+      // Zoomen und Drehen auseinanderhalten: Beim Aufziehen ändert sich vor
+      // allem der Fingerabstand, beim Drehen vor allem der Winkel. Nur wenn
+      // der Winkel klar überwiegt, ist es eine Drehung. 30 Grad, weil zwei
+      // Finger sich auch beim reinen Zoomen leicht gegeneinander verdrehen.
+      const zoomAnteil = Math.abs(abstandVon(e.touches) / startAbstand - 1);
+      if (Math.abs(d) < 30 || zoomAnteil > 0.25) return;
+    }
     aktiv = true;
     beiDrehung((startBlick - d + 360) % 360);
   }, { passive: true });

@@ -235,6 +235,7 @@ async function zeigeUebersicht() {
     S.karteU = erstelleKarte($('#map-uebersicht'), S.einst);
     S.karteU.setView([48.2, 8.2], 9);
     S.karteU.on('dragstart', wegGezogen);
+    merkeZoomen(S.karteU);
     erlaubeFingerDrehung(S.karteU, w => dreheVonHand(S.karteU, w));
   }
   setTimeout(() => S.karteU.invalidateSize(), 60);
@@ -325,11 +326,26 @@ function setzeFolgen(an, merken = false) {
   if (merken) setzeEinstellung('folgen', an).then(e => { S.einst = e; });
 }
 
-/** Wer die Karte wegzieht, will sie dort haben – also Nachführen aus. */
-function wegGezogen() {
+/**
+ * Wer die Karte wegzieht, will sie dort haben – also Nachführen aus.
+ * Beim Zoomen gilt das nicht: Zwei Finger auf der Karte verschieben sie
+ * leicht mit, das ist keine Absicht, die Karte zu verlassen.
+ */
+function wegGezogen(e) {
   if (!S.folgen) return;
+  const karte = e && e.target;
+  if (karte && (karte._zoomtGerade || karte._animatingZoom)) return;
   setzeFolgen(false);
   toast('Karte folgt nicht mehr – ◎ tippen');
+}
+
+/** Merkt sich, dass gerade gezoomt wird – siehe wegGezogen(). */
+function merkeZoomen(karte) {
+  karte.on('zoomstart', () => { karte._zoomtGerade = true; });
+  karte.on('zoomend', () => {
+    // kurz nachwirken lassen: dragend trifft manchmal erst danach ein
+    setTimeout(() => { karte._zoomtGerade = false; }, 400);
+  });
 }
 
 /**
@@ -438,6 +454,7 @@ async function zeigeTour(id) {
     // Nur wer die Karte wegzieht, will sie nicht mehr nachgeführt haben.
     // Ein Antippen oder Zoomen lässt das Folgen bestehen.
     S.karteT.on('dragstart', wegGezogen);
+    merkeZoomen(S.karteT);
     erlaubeFingerDrehung(S.karteT, w => dreheVonHand(S.karteT, w));
   }
   setTimeout(() => S.karteT.invalidateSize(), 60);
@@ -741,13 +758,20 @@ async function haltWach(an) {
       // ob überhaupt etwas da ist.
       if (S.wakeLock && !S.wakeLock.released) return;
       S.wakeLock = await navigator.wakeLock.request('screen');
-      S.wakeLock.addEventListener('release', () => { S.wakeLock = null; }, { once: true });
+      S.wachGrund = 'gehalten';
+      S.wakeLock.addEventListener('release', () => {
+        S.wakeLock = null;
+        S.wachGrund = 'vom System freigegeben';
+      }, { once: true });
     } else if (S.wakeLock) {
       const sperre = S.wakeLock;
       S.wakeLock = null;
       if (!sperre.released) await sperre.release();
     }
-  } catch { /* Akkusparmodus o. ä. – nicht kritisch */ }
+  } catch (e) {
+    // Häufigster Grund: Akkusparmodus. Dann bleibt der Bildschirm nicht an.
+    S.wachGrund = 'abgelehnt (' + (e.name || 'Fehler') + ')';
+  }
 }
 
 // --- Offline-Karten ------------------------------------------------------
@@ -1207,10 +1231,22 @@ async function zeigeMehr() {
   const blick = S.blickRichtung != null
     ? Math.round(S.blickRichtung) + '° (' + himmelsrichtung(S.blickRichtung) + ')'
     : 'noch keine';
+  const wach = !('wakeLock' in navigator)
+    ? 'vom Browser nicht unterstützt'
+    : (S.wakeLock && !S.wakeLock.released)
+      ? 'Bildschirm wird wachgehalten'
+      : (S.wachGrund || 'nicht angefordert');
+  const aufn = S.aufnahme
+    ? `${S.aufnahme.punkte.length} Punkte, zuletzt vor `
+      + `${S.aufnahme.punkte.length ? Math.round((Date.now() - S.aufnahme.punkte.at(-1)[3]) / 1000) : '–'} s`
+    : 'keine';
+
   $('#gps-info').innerHTML =
     `${gps}<br><span class="hint">Karte folgt: <b>${S.folgen ? 'ja' : 'nein'}</b>`
     + ` · Navigation: <b>${S.nav ? 'läuft' : 'aus'}</b><br>`
-    + `Tempo: ${tempo} · Richtung: <b>${blick}</b></span>`;
+    + `Tempo: ${tempo} · Richtung: <b>${blick}</b><br>`
+    + `Aufzeichnung: ${aufn}<br>`
+    + `Bildschirmsperre: <b>${wach}</b></span>`;
 
   const sw = navigator.serviceWorker && navigator.serviceWorker.controller;
   $('#app-info').innerHTML =
@@ -1219,7 +1255,7 @@ async function zeigeMehr() {
     + `${S.index.touren.length} Buchtouren, ${S.eigene.length} eigene</span>`;
 }
 
-const APP_VERSION = '1.12.0';
+const APP_VERSION = '1.12.1';
 
 // --- Oberfläche verdrahten ----------------------------------------------
 
