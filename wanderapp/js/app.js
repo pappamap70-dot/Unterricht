@@ -820,7 +820,7 @@ async function osmSuche(aufgabe, womit) {
   $('#osm-liste').innerHTML = '';
   zeigeOsmBereich();
   try {
-    const treffer = await aufgabe();
+    const treffer = await aufgabe(text => osmStatus(esc(text)));
     S.osmTreffer = treffer;
     if (!treffer.length) {
       osmStatus(`Keine Wanderwege ${womit} gefunden.`);
@@ -861,8 +861,9 @@ async function osmUebernehmen(id) {
   const gefunden = (S.osmTreffer || []).find(r => String(r.id) === String(id));
   sperre('Wegverlauf wird geladen …');
   try {
-    const roh = await ladeRoute(id);
-    const tour = bauTour(roh.titel, roh.haupt, roh.haupt.map(() => null),
+    const roh = await ladeRoute(id, text => sperre(text));
+    const tour = bauTour(roh.titel, roh.haupt,
+      roh.hoehen || roh.haupt.map(() => null),
       roh.varianten.map(v => ({ km: 0, c: v })));
     tour.id = neueId();
     tour.quelle = 'OpenStreetMap, Relation ' + id;
@@ -919,7 +920,7 @@ async function zeigeMehr() {
     + `${S.index.touren.length} Buchtouren, ${S.eigene.length} eigene</span>`;
 }
 
-const APP_VERSION = '1.9.1';
+const APP_VERSION = '1.9.2';
 
 // --- Oberfläche verdrahten ----------------------------------------------
 
@@ -990,15 +991,15 @@ function verdrahteOberflaeche() {
   $('#btn-osm-nah').onclick = () => {
     if (!S.standort) { osmStatus('Noch kein GPS-Signal – bitte kurz warten.', 'warn'); return; }
     const { latitude: la, longitude: lo } = S.standort.coords;
-    osmSuche(() => sucheRouten(la, lo, 15000), 'in der Nähe');
+    osmSuche(m => sucheRouten(la, lo, 15000, 60, m), 'in der Nähe');
   };
   $('#btn-osm-karte').onclick = () => {
     const karte = S.karteU || S.karteT;
     if (!karte) { osmStatus('Bitte zuerst die Karte öffnen.', 'warn'); return; }
     const b = karte.getBounds();
     const mitte = karte.getCenter();
-    osmSuche(() => sucheImAusschnitt(
-      [b.getSouth(), b.getWest(), b.getNorth(), b.getEast()], mitte.lat, mitte.lng),
+    osmSuche(m => sucheImAusschnitt(
+      [b.getSouth(), b.getWest(), b.getNorth(), b.getEast()], mitte.lat, mitte.lng, 60, m),
       'im Kartenausschnitt');
   };
   $('#osm-suche').addEventListener('keydown', e => {
