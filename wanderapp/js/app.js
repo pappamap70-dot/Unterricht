@@ -139,6 +139,7 @@ function alleTouren() {
     id: t.id, nr: null, titel: t.titel, km: t.km, auf: t.auf, ab: t.ab,
     emin: t.emin, emax: t.emax, rundweg: t.rundweg, region: 'Eigene',
     start: t.start, bbox: t.bbox, eigen: true,
+    c: t.c,                 // Verlauf für das Vorschaubild – liegt ohnehin vor
   }));
   return [...S.index.touren, ...eigen];
 }
@@ -211,10 +212,12 @@ function eintrag(t) {
   const dauer = fmtDauer(gehzeit(t.km, t.auf, t.ab));
   const nr = t.nr != null ? `<span class="nummer">${String(t.nr).padStart(2, '0')}</span>` : '';
   const naehe = t.entfernung != null ? `<span>${fmtM(t.entfernung)} entfernt</span>` : '';
-  const geo = S.geometrien.get(t.id);
+  // Eigene Touren bringen ihren Verlauf mit; für die Buchtouren liegt er
+  // nach dem Vorladen im Zwischenspeicher.
+  const form = t.c || (S.geometrien.get(t.id) || {}).c;
   return `
   <button class="karte-eintrag" data-id="${esc(t.id)}">
-    <div class="vorschau" style="color:var(--gruen)">${geo ? miniVorschau(geo.c) : ''}</div>
+    <div class="vorschau" style="color:var(--gruen)">${form ? miniVorschau(form) : ''}</div>
     <div class="eintrag-text">
       <div class="eintrag-kopf">${nr}<span class="eintrag-titel">${esc(t.titel)}</span></div>
       <div class="meta">
@@ -1398,7 +1401,7 @@ async function zeigeMehr() {
     + `${S.index.touren.length} Buchtouren, ${S.eigene.length} eigene</span>`;
 }
 
-const APP_VERSION = '1.15.0';
+const APP_VERSION = '1.15.1';
 
 // --- Oberfläche verdrahten ----------------------------------------------
 
