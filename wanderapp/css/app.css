@@ -33,10 +33,17 @@ h2{font-size:15px;margin:26px 0 8px;color:var(--text-schwach);text-transform:upp
 h2:first-child{margin-top:4px}
 
 body.navigiert{--nav-h:var(--nav-h-an)}
-#app{height:calc(100dvh - var(--tab-h) - var(--unten) - var(--nav-h));overflow:hidden;position:relative}
+/* --oben muss mit abgezogen werden: body schiebt den Inhalt um die
+   Statusleiste nach unten, sonst ragt die Ansicht genau um diesen Betrag
+   unter die Tableiste und der untere Rand ist nicht mehr erreichbar. */
+#app{
+  height:calc(100dvh - var(--oben) - var(--tab-h) - var(--unten) - var(--nav-h));
+  overflow:hidden;position:relative;
+}
 .view{height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
 .view[hidden]{display:none}
 .pad{padding:0 16px 24px}
+.view > .pad:last-child{padding-bottom:40px}
 .hint{color:var(--text-schwach);font-size:13px;margin:8px 0}
 .hint.pad{padding:0 16px}
 /* Leerzustand der Tourenliste: steht außerhalb von .list und braucht

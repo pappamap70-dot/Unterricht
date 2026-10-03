@@ -813,8 +813,12 @@ function osmStatus(text, art = '') {
 }
 
 async function osmSuche(aufgabe, womit) {
+  // Sichtbare Rückmeldung: Das Statusfeld steht weit unten, ein Toast wird
+  // überall gesehen.
+  toast('Suche läuft …', 4000);
   osmStatus('Suche läuft …');
   $('#osm-liste').innerHTML = '';
+  zeigeOsmBereich();
   try {
     const treffer = await aufgabe();
     S.osmTreffer = treffer;
@@ -825,9 +829,17 @@ async function osmSuche(aufgabe, womit) {
     const wort = treffer.length === 1 ? 'Wanderweg' : 'Wanderwege';
     osmStatus(`<b>${treffer.length} ${wort}</b> gefunden · ${QUELLE}`);
     $('#osm-liste').innerHTML = treffer.map(osmEintrag).join('');
+    toast(`${treffer.length} ${wort} gefunden`);
+    zeigeOsmBereich();
   } catch (e) {
     osmStatus(esc(e.message), 'warn');
   }
+}
+
+/** Rollt den Suchbereich ins Bild – er steht am Ende einer langen Liste. */
+function zeigeOsmBereich() {
+  const ziel = $('#osm-status');
+  setTimeout(() => ziel.scrollIntoView({ behavior: 'smooth', block: 'center' }), 60);
 }
 
 function osmEintrag(r) {
@@ -907,7 +919,7 @@ async function zeigeMehr() {
     + `${S.index.touren.length} Buchtouren, ${S.eigene.length} eigene</span>`;
 }
 
-const APP_VERSION = '1.9.0';
+const APP_VERSION = '1.9.1';
 
 // --- Oberfläche verdrahten ----------------------------------------------
 
