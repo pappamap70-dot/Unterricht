@@ -173,7 +173,7 @@ export function gpxSchreiben(tour) {
     return `      <trkpt lat="${la}" lon="${lo}">${e}${t}</trkpt>`;
   }).join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="Mystische Pfade Wanderapp" xmlns="http://www.topografix.com/GPX/1/1">
+<gpx version="1.1" creator="Pfadfinder Wanderapp" xmlns="http://www.topografix.com/GPX/1/1">
   <metadata><name>${x(tour.titel)}</name><time>${new Date().toISOString()}</time></metadata>
   <trk>
     <name>${x(tour.titel)}</name>

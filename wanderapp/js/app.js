@@ -1,4 +1,4 @@
-// Mystische Pfade – Wanderapp
+// Pfadfinder – Wanderapp
 // Router, Ansichten, GPS-Navigation, Import/Export, Offline-Karten
 
 import {
@@ -74,7 +74,7 @@ async function ladeIndex() {
     if (!antwort.ok) throw new Error('HTTP ' + antwort.status);
     return await antwort.json();
   } catch {
-    return { titel: 'Mystische Pfade Schwarzwald', touren: [] };
+    return { titel: 'Pfadfinder', touren: [] };
   }
 }
 
@@ -139,17 +139,27 @@ function alleTouren() {
     id: t.id, nr: null, titel: t.titel, km: t.km, auf: t.auf, ab: t.ab,
     emin: t.emin, emax: t.emax, rundweg: t.rundweg, region: 'Eigene',
     start: t.start, bbox: t.bbox, eigen: true,
+    sammlung: t.sammlung || null,
     c: t.c,                 // Verlauf für das Vorschaubild – liegt ohnehin vor
   }));
   return [...S.index.touren, ...eigen];
 }
 
+/**
+ * Baut die Filterknöpfe aus dem, was da ist: den Regionen der Buchtouren und
+ * den Sammlungen, unter denen Archive importiert wurden.
+ */
 function baueFilterChips() {
   const regionen = [...new Set(S.index.touren.map(t => t.region))];
+  const sammlungen = [...new Set(S.eigene.map(t => t.sammlung).filter(Boolean))].sort();
   const box = $('#filter-region');
-  box.innerHTML = ['Alle', ...regionen, 'In meiner Nähe']
-    .map(r => `<button class="chip" data-region="${esc(r)}" aria-pressed="${r === 'Alle'}">${esc(r)}</button>`)
+  const aktiv = S.filter.region;
+  box.innerHTML = ['Alle', ...sammlungen, ...regionen, 'In meiner Nähe']
+    .map(r => `<button class="chip" data-region="${esc(r)}" aria-pressed="${
+      aktiv ? r === aktiv : r === 'Alle'}">${esc(r)}</button>`)
     .join('');
+  if (box._verdrahtet) return;
+  box._verdrahtet = true;
   box.addEventListener('click', e => {
     const chip = e.target.closest('.chip');
     if (!chip) return;
@@ -175,7 +185,8 @@ function zeigeListe() {
     else touren = touren.filter(t => t.entfernung < 60000)
                         .sort((a, b) => a.entfernung - b.entfernung);
   } else if (S.filter.region) {
-    touren = touren.filter(t => t.region === S.filter.region);
+    const f = S.filter.region;
+    touren = touren.filter(t => t.region === f || t.sammlung === f);
   }
 
   if (suche) {
@@ -226,7 +237,8 @@ function eintrag(t) {
         <span>${dauer}</span>
         ${naehe}
       </div>
-      <span class="marke">${t.rundweg ? 'Rundweg' : 'Streckenweg'}${t.eigen ? ' · importiert' : ''}</span>
+      <span class="marke">${t.rundweg ? 'Rundweg' : 'Streckenweg'}${
+        t.sammlung ? ' · ' + esc(t.sammlung) : (t.eigen ? ' · importiert' : '')}</span>
     </div>
     ${t.eigen ? `<span class="loeschen" data-weg="${esc(t.id)}" role="button"
         aria-label="${esc(t.titel)} löschen" title="Löschen">✕</span>` : ''}
@@ -882,13 +894,24 @@ async function importiere(dateien) {
       if (/\.zip$/i.test(datei.name)) {
         const eintraege = await zipEntpacken(await datei.arrayBuffer());
         if (!eintraege.length) { fehler.push(`${datei.name}: keine GPX-Dateien enthalten`); continue; }
+
+        // Ein Archiv gehört zusammen – es wird zu einer Sammlung, nach der
+        // sich die Tourenliste filtern lässt.
+        const vorschlag = sammlungAusDateiname(datei.name);
+        const sammlung = (prompt(
+          `${eintraege.length} Touren aus „${datei.name}".
+
+`
+          + 'Unter welchem Namen sollen sie zusammengefasst werden?',
+          vorschlag) || '').trim();
+
         for (const e of eintraege) {
           status.textContent = `Lese ${e.name} …`;
-          neu += await speichereAusGpx(e.inhalt, e.name, fehler);
+          neu += await speichereAusGpx(e.inhalt, e.name, fehler, sammlung);
         }
       } else {
         status.textContent = `Lese ${datei.name} …`;
-        neu += await speichereAusGpx(await datei.text(), datei.name, fehler);
+        neu += await speichereAusGpx(await datei.text(), datei.name, fehler, '');
       }
     } catch (e) {
       fehler.push(`${datei.name}: ${e.message}`);
@@ -896,13 +919,23 @@ async function importiere(dateien) {
   }
 
   S.eigene = await eigeneTouren();
+  baueFilterChips();
   zeigeEigene();
   status.innerHTML = `<b>${neu} Tour(en) importiert.</b>`
     + (fehler.length ? `<br><span class="hint">${fehler.map(esc).join('<br>')}</span>` : '');
   if (neu) toast(`${neu} Tour(en) hinzugefügt.`);
 }
 
-async function speichereAusGpx(inhalt, name, fehler) {
+/** Macht aus einem Archivnamen einen lesbaren Sammlungsnamen. */
+function sammlungAusDateiname(name) {
+  const ohne = name.replace(/\.[^.]+$/, '');
+  const worte = ohne.split(/[\s_\-]+/)
+    .filter(w => w && !/^\d+$/.test(w) && !/^(gps|tracks?|gpx|export|download)$/i.test(w))
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1));
+  return worte.join(' ') || ohne;
+}
+
+async function speichereAusGpx(inhalt, name, fehler, sammlung = '') {
   let touren;
   try {
     touren = gpxLesen(inhalt, name);
@@ -912,10 +945,16 @@ async function speichereAusGpx(inhalt, name, fehler) {
   }
   if (!touren.length) { fehler.push(`${name}: keine Trackpunkte gefunden`); return 0; }
   for (const t of touren) {
-    t.id = neueId();
+    // Gleicher Titel und nahezu gleiche Länge: dieselbe Tour, also
+    // auffrischen statt ein zweites Mal anlegen.
+    const schon = S.eigene.find(a => a.titel === t.titel && Math.abs(a.km - t.km) < 0.3);
+    t.id = schon ? schon.id : neueId();
     t.quelle = name;
-    t.angelegt = Date.now();
+    if (sammlung) t.sammlung = sammlung;
+    else if (schon && schon.sammlung) t.sammlung = schon.sammlung;
+    t.angelegt = schon ? schon.angelegt : Date.now();
     await tourSpeichern(t);
+    if (schon) Object.assign(schon, t); else S.eigene.push(t);
   }
   return touren.length;
 }
@@ -1401,7 +1440,7 @@ async function zeigeMehr() {
     + `${S.index.touren.length} Buchtouren, ${S.eigene.length} eigene</span>`;
 }
 
-const APP_VERSION = '1.15.1';
+const APP_VERSION = '1.16.0';
 
 // --- Oberfläche verdrahten ----------------------------------------------
 

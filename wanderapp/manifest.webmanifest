@@ -1,7 +1,7 @@
 {
-  "name": "Mystische Pfade Schwarzwald",
-  "short_name": "Mystische Pfade",
-  "description": "38 Wandertouren im Schwarzwald mit Offline-Karten und GPS-Navigation. Werbefrei.",
+  "name": "Pfadfinder",
+  "short_name": "Pfadfinder",
+  "description": "Wandern mit Offline-Karten, GPS-Navigation, Aufzeichnung und GPX-Import. Werbefrei.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
