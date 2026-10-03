@@ -42,7 +42,8 @@ h2:first-child{margin-top:4px}
 .view{height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
 .view[hidden]{display:none}
 .pad{padding:0 16px 24px}
-.view > .pad:last-child{padding-bottom:40px}
+.view > :last-child{padding-bottom:40px}
+h2.pad{margin-bottom:0}
 .hint{color:var(--text-schwach);font-size:13px;margin:8px 0}
 .hint.pad{padding:0 16px}
 /* Leerzustand der Tourenliste: steht außerhalb von .list und braucht

@@ -1299,7 +1299,7 @@ async function zeigeMehr() {
     + `${S.index.touren.length} Buchtouren, ${S.eigene.length} eigene</span>`;
 }
 
-const APP_VERSION = '1.13.1';
+const APP_VERSION = '1.13.2';
 
 // --- Oberfläche verdrahten ----------------------------------------------
 
