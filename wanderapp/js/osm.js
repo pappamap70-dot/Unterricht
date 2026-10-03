@@ -104,6 +104,9 @@ function zuRouten(elemente, lat, lon) {
         kmLautOsm: isFinite(km) ? km : null,
         betreiber: t.operator || '',
         lat: mitte.lat, lon: mitte.lon,
+        bbox: Array.isArray(e.bounds)
+          ? [e.bounds.minlat, e.bounds.minlon, e.bounds.maxlat, e.bounds.maxlon]
+          : (e.bounds ? [e.bounds.minlat, e.bounds.minlon, e.bounds.maxlat, e.bounds.maxlon] : null),
         entfernung: (mitte.lat != null && lat != null) ? dist(lat, lon, mitte.lat, mitte.lon) : null,
       };
     })
@@ -169,10 +172,15 @@ async function ergaenzeEinzelheiten(treffer, lat, lon) {
         const km = parseFloat(String(t.distance || '').replace(',', '.'));
         if (isFinite(km)) r.kmLautOsm = km;
         if (d.operator) r.betreiber = d.operator;
-        if (Array.isArray(d.bbox) && d.bbox.length === 4 && lat != null) {
-          // bbox ist Web-Mercator: Mittelpunkt umrechnen und Abstand messen
+        if (Array.isArray(d.bbox) && d.bbox.length === 4) {
+          // bbox ist Web-Mercator: Mittelpunkt umrechnen – er dient als Lage
+          // auf der Karte und als Bezug für die Entfernung
           const [la, lo] = ausMercator((d.bbox[0] + d.bbox[2]) / 2, (d.bbox[1] + d.bbox[3]) / 2);
-          r.entfernung = dist(lat, lon, la, lo);
+          r.lat = la; r.lon = lo;
+          const [s1, w1] = ausMercator(d.bbox[0], d.bbox[1]);
+          const [n1, o1] = ausMercator(d.bbox[2], d.bbox[3]);
+          r.bbox = [s1, w1, n1, o1];
+          if (lat != null) r.entfernung = dist(lat, lon, la, lo);
         }
       } catch { /* einzelner Treffer ohne Einzelheiten ist kein Beinbruch */ }
     }

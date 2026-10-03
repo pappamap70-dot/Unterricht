@@ -245,6 +245,12 @@ h2.pad{margin-bottom:0}
 .view > .leaflet-control-container .leaflet-control{pointer-events:auto}
 
 /* OpenStreetMap-Suche -------------------------------------- */
+.osm-marke{
+  width:26px;height:26px;border-radius:50%;background:var(--gruen);color:#fff;
+  display:grid;place-items:center;font-size:13px;font-weight:700;
+  border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);cursor:pointer;
+}
+@media (prefers-color-scheme:dark){.osm-marke{color:#10251c;border-color:#10251c}}
 #osm-suche{
   width:100%;margin-top:10px;padding:10px 13px;border:1px solid var(--linie);
   border-radius:11px;background:var(--karte);color:var(--text);font-size:15px;

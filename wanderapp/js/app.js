@@ -1181,6 +1181,8 @@ async function osmSuche(aufgabe, womit) {
   toast('Suche läuft …', 4000);
   osmStatus('Suche läuft …');
   $('#osm-liste').innerHTML = '';
+  if (S.osmMarken && S.karteU) { S.karteU.removeLayer(S.osmMarken); S.osmMarken = null; }
+  S.osmMarkenGebiet = null;
   zeigeOsmBereich();
   try {
     const treffer = await aufgabe(text => osmStatus(esc(text)));
@@ -1195,13 +1197,68 @@ async function osmSuche(aufgabe, womit) {
           ? '<br>Entfernungen von deinem Standort zur Mitte des Weges.'
           : '<br>Ohne GPS gemessen ab Kartenmitte.')
       : '';
-    osmStatus(`<b>${treffer.length} ${wort}</b> gefunden · ${QUELLE}${bezug}`);
+    zeigeTrefferAufKarte(treffer);
+    const aufKarte = S.osmMarkenGebiet
+      ? '<br><button class="btn" id="btn-osm-karte-zeigen" '
+        + 'style="margin-top:10px">Alle auf der Karte zeigen</button>'
+      : '';
+    osmStatus(`<b>${treffer.length} ${wort}</b> gefunden · ${QUELLE}${bezug}${aufKarte}`);
+    const knopf = $('#btn-osm-karte-zeigen');
+    if (knopf) knopf.onclick = trefferAufKarteZeigen;
     $('#osm-liste').innerHTML = treffer.map(osmEintrag).join('');
     toast(`${treffer.length} ${wort} gefunden`);
     zeigeOsmBereich();
   } catch (e) {
     osmStatus(esc(e.message), 'warn');
   }
+}
+
+/**
+ * Setzt für jeden Treffer eine nummerierte Marke auf die Übersichtskarte,
+ * passend zur Reihenfolge in der Liste. Eine Liste allein sagt nicht, wo die
+ * Wege liegen; der volle Verlauf wäre dagegen eine Abfrage je Treffer.
+ */
+function zeigeTrefferAufKarte(treffer) {
+  const mitLage = treffer.filter(r => r.lat != null && r.lon != null);
+  S.osmFuerKarte = mitLage;            // auch merken, falls die Karte noch fehlt
+  if (!S.karteU || !mitLage.length) {
+    S.osmMarkenGebiet = mitLage.length ? true : null;   // Knopf trotzdem anbieten
+    return;
+  }
+  if (S.osmMarken) { S.karteU.removeLayer(S.osmMarken); S.osmMarken = null; }
+
+  const gruppe = L.layerGroup().addTo(S.karteU);
+  mitLage.forEach((r, i) => {
+    const marke = L.marker([r.lat, r.lon], {
+      icon: L.divIcon({
+        className: '', iconSize: [26, 26], iconAnchor: [13, 13],
+        html: `<div class="osm-marke">${i + 1}</div>`,
+      }),
+      title: r.titel,
+    }).addTo(gruppe);
+    marke.bindTooltip(
+      `${esc(r.titel)}${r.kmLautOsm ? ' · ' + fmtKm(r.kmLautOsm) + ' km' : ''}`,
+      { direction: 'top', offset: [0, -12] });
+    marke.on('click', () => osmAnsehen(r.id));
+  });
+  S.osmMarken = gruppe;
+  S.osmMarkenGebiet = L.featureGroup(gruppe.getLayers()).getBounds();
+}
+
+/** Wechselt zur Karte und passt sie auf die Treffer an. */
+function trefferAufKarteZeigen() {
+  location.hash = '#/karte';
+  setTimeout(() => {
+    if (!S.karteU) return;
+    // Die Karte entsteht erst beim ersten Öffnen – dann jetzt nachzeichnen
+    if (!S.osmMarken && S.osmFuerKarte && S.osmFuerKarte.length) {
+      zeigeTrefferAufKarte(S.osmFuerKarte);
+    }
+    if (!S.osmMarkenGebiet || S.osmMarkenGebiet === true) return;
+    S.folgenPausiert = true;
+    S.karteU.invalidateSize({ animate: false });
+    S.karteU.fitBounds(S.osmMarkenGebiet, { padding: [50, 50], maxZoom: 14 });
+  }, 500);
 }
 
 /** Rollt den Suchbereich ins Bild – er steht am Ende einer langen Liste. */
@@ -1341,7 +1398,7 @@ async function zeigeMehr() {
     + `${S.index.touren.length} Buchtouren, ${S.eigene.length} eigene</span>`;
 }
 
-const APP_VERSION = '1.14.0';
+const APP_VERSION = '1.15.0';
 
 // --- Oberfläche verdrahten ----------------------------------------------
 
