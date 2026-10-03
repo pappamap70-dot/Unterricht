@@ -1,7 +1,7 @@
 // Kleiner IndexedDB-Wrapper für importierte Touren und Einstellungen
 
 const DB_NAME = 'mystische-pfade';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 let dbPromise;
 
 function db() {
@@ -12,6 +12,9 @@ function db() {
         const d = anfrage.result;
         if (!d.objectStoreNames.contains('touren')) d.createObjectStore('touren', { keyPath: 'id' });
         if (!d.objectStoreNames.contains('einst')) d.createObjectStore('einst');
+        // Laufende Aufzeichnung: wird fortlaufend gesichert, damit sie das
+        // Verwerfen der Seite durch Android übersteht.
+        if (!d.objectStoreNames.contains('aufnahme')) d.createObjectStore('aufnahme');
       };
       anfrage.onsuccess = () => ok(anfrage.result);
       anfrage.onerror = () => fehler(anfrage.error);
@@ -41,6 +44,12 @@ export const tourLoeschen = id => tx('touren', 'readwrite', s => s.delete(id));
 export function neueId() {
   return 'e' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 }
+
+// Laufende Aufzeichnung ---------------------------------------------------
+
+export const aufnahmeLesen = () => tx('aufnahme', 'readonly', s => s.get('aktuell'));
+export const aufnahmeSchreiben = a => tx('aufnahme', 'readwrite', s => s.put(a, 'aktuell'));
+export const aufnahmeLoeschen = () => tx('aufnahme', 'readwrite', s => s.delete('aktuell'));
 
 // Einstellungen -----------------------------------------------------------
 

@@ -17,9 +17,12 @@
 </head>
 <body>
 
-<!-- Navigationsbalken: steht ausserhalb der Ansichten und bleibt deshalb
-     auf jedem Reiter sichtbar. Antippen führt zur laufenden Tour zurück. -->
-<button class="nav-banner" id="nav-banner" hidden aria-label="Zur laufenden Tour"></button>
+<!-- Balken stehen ausserhalb der Ansichten und bleiben deshalb auf jedem
+     Reiter sichtbar. Ihre Gesamthöhe fliesst über --nav-h in die Ansicht ein. -->
+<div id="balken-leiste">
+  <button class="nav-banner" id="nav-banner" hidden aria-label="Zur laufenden Tour"></button>
+  <button class="rec-banner" id="rec-banner" hidden aria-label="Aufzeichnung"></button>
+</div>
 
 <div id="app">
 
@@ -43,6 +46,7 @@
     <div class="map-tools">
       <button class="fab" id="fab-locate-u" aria-label="Mein Standort">◎</button>
       <button class="fab" id="fab-layers-u" aria-label="Kartenauswahl">▤</button>
+      <button class="fab fab-rec" id="fab-rec-u" aria-label="Wanderung aufzeichnen">⏺</button>
     </div>
     <div class="map-info" id="karte-info" hidden></div>
   </section>
@@ -54,6 +58,7 @@
       <button class="fab" id="fab-locate" aria-label="Mein Standort">◎</button>
       <button class="fab" id="fab-layers" aria-label="Kartenauswahl">▤</button>
       <button class="fab" id="fab-fit" aria-label="Ganze Tour zeigen">⤢</button>
+      <button class="fab fab-rec" id="fab-rec" aria-label="Wanderung aufzeichnen">⏺</button>
     </div>
     <button class="back-btn" id="btn-zurueck" aria-label="Zurück">‹</button>
     <div class="sheet" id="sheet">

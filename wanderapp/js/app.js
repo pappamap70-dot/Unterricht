@@ -3,7 +3,7 @@
 
 import {
   $, $$, esc, toast, sperre, dist, kumDistanz, aufTrack, bbox,
-  fmtKm, fmtM, fmtDauer, fmtBytes, gehzeit, miniVorschau,
+  fmtKm, fmtM, fmtDauer, fmtBytes, gehzeit, miniVorschau, hoehenmeter,
 } from './util.js';
 import { gpxLesen, gpxSchreiben, zipEntpacken, bauTour } from './gpx.js';
 import { sucheRouten, sucheImAusschnitt, sucheNachNamen, ladeRoute, QUELLE } from './osm.js';
@@ -16,6 +16,7 @@ import { zeichneProfil } from './profil.js';
 import {
   eigeneTouren, eigeneTour, tourSpeichern, tourLoeschen, neueId,
   einstellungen, setzeEinstellung,
+  aufnahmeLesen, aufnahmeSchreiben, aufnahmeLoeschen,
 } from './store.js';
 
 const S = {
@@ -54,6 +55,8 @@ async function start() {
   route();
 
   stelleNavigationWiederHer();
+  stelleAufnahmeWiederHer();
+  setInterval(() => { if (S.aufnahme && !S.aufnahme.pausiert) zeigeRecBanner(); }, 20000);
   registriereServiceWorker();
   sichereSpeicher();
   starteStandort();
@@ -601,11 +604,8 @@ function zeigeNavPunkt(an) {
   reiter.classList.toggle('laeuft', an);
   reiter.setAttribute('aria-label', an ? 'Touren – Navigation läuft' : 'Touren');
 
-  document.body.classList.toggle('navigiert', an);
   $('#nav-banner').hidden = !an;
-  setTimeout(() => {
-    for (const k of [S.karteU, S.karteT]) if (k) k.invalidateSize();
-  }, 60);
+  passeBalkenHoeheAn();
 }
 
 function aktualisiereNavigation(pos) {
@@ -647,6 +647,7 @@ function starteStandort() {
         dreheKarte(karte, winkel);
       }
       aktualisiereNavigation(pos);
+      recPunkt(pos);
 
       // Nach Entfernung sortierte oder gefilterte Liste nachziehen, sobald
       // sich die Position nennenswert geändert hat – nicht bei jedem Tick.
@@ -858,6 +859,191 @@ async function loescheTour(tour) {
   location.hash = '#/eigene';
 }
 
+// --- Aufzeichnung --------------------------------------------------------
+
+const REC_GENAU = 50;    // Punkte mit schlechterer Ortung werden verworfen
+const REC_MIND = 5;      // Mindestabstand in Metern – darunter ist es Rauschen
+
+/** Startet eine neue Aufzeichnung oder nimmt eine unterbrochene wieder auf. */
+async function starteAufnahme(wieder = null) {
+  S.aufnahme = wieder || {
+    punkte: [],          // [lat, lon, höhe|null, zeit]
+    start: Date.now(),
+    pausiert: false,
+    pausiertSeit: null,
+    pausenDauer: 0,
+  };
+  zeigeRecBanner();
+  haltWach(true);
+  if (!wieder) {
+    await sichereAufnahme();
+    toast('Aufzeichnung läuft');
+  }
+}
+
+function pausiereAufnahme() {
+  const a = S.aufnahme;
+  if (!a) return;
+  if (a.pausiert) {
+    a.pausenDauer += Date.now() - a.pausiertSeit;
+    a.pausiertSeit = null;
+    a.pausiert = false;
+    toast('Aufzeichnung fortgesetzt');
+  } else {
+    a.pausiert = true;
+    a.pausiertSeit = Date.now();
+    toast('Aufzeichnung pausiert');
+  }
+  zeigeRecBanner();
+  sichereAufnahme();
+}
+
+/** Beendet die Aufzeichnung und legt sie als eigene Tour ab. */
+async function beendeAufnahme() {
+  const a = S.aufnahme;
+  if (!a) return;
+  const strecke = recStrecke(a.punkte);
+
+  if (a.punkte.length < 2 || strecke < 50) {
+    if (!confirm('Die Aufzeichnung ist zu kurz zum Speichern. Verwerfen?')) return;
+    await verwirfAufnahme();
+    return;
+  }
+
+  const minuten = Math.round(recDauer(a) / 60000);
+  const name = prompt('Name der Aufzeichnung:',
+    'Wanderung ' + new Date(a.start).toLocaleDateString('de-DE'));
+  if (name === null) return;                 // abgebrochen, weiter aufzeichnen
+
+  const coords = a.punkte.map(p => [p[0], p[1]]);
+  const hoehen = a.punkte.map(p => p[2]);
+  const tour = bauTour(name.trim() || 'Wanderung', coords, hoehen, []);
+  tour.id = neueId();
+  tour.quelle = 'Eigene Aufzeichnung';
+  tour.angelegt = Date.now();
+  tour.gelaufenAm = a.start;
+  tour.gelaufenMin = minuten;
+  tour.region = 'Aufgezeichnet';
+  await tourSpeichern(tour);
+
+  S.aufnahme = null;
+  await aufnahmeLoeschen();
+  zeigeRecBanner();
+  haltWach(!!S.nav);
+  S.eigene = await eigeneTouren();
+  zeigeEigene();
+  toast(`„${tour.titel}" gespeichert – ${fmtKm(tour.km)} km in ${fmtDauer(minuten)}`);
+  location.hash = '#/tour/' + tour.id;
+}
+
+async function verwirfAufnahme() {
+  S.aufnahme = null;
+  await aufnahmeLoeschen();
+  zeigeRecBanner();
+  haltWach(!!S.nav);
+  toast('Aufzeichnung verworfen');
+}
+
+/** Nimmt einen Standort in die Aufzeichnung auf, wenn er brauchbar ist. */
+function recPunkt(pos) {
+  const a = S.aufnahme;
+  if (!a || a.pausiert) return;
+  const { latitude: la, longitude: lo, altitude, accuracy } = pos.coords;
+  if (typeof accuracy === 'number' && accuracy > REC_GENAU) return;
+
+  const letzter = a.punkte[a.punkte.length - 1];
+  if (letzter && dist(letzter[0], letzter[1], la, lo) < REC_MIND) return;
+
+  a.punkte.push([
+    +la.toFixed(6), +lo.toFixed(6),
+    (typeof altitude === 'number' && isFinite(altitude)) ? Math.round(altitude) : null,
+    pos.timestamp || Date.now(),
+  ]);
+  zeichneAufnahmeLinie();
+  zeigeRecBanner();
+  if (a.punkte.length % 10 === 0) sichereAufnahme();
+}
+
+const recStrecke = punkte => {
+  let s = 0;
+  for (let i = 1; i < punkte.length; i++) {
+    s += dist(punkte[i-1][0], punkte[i-1][1], punkte[i][0], punkte[i][1]);
+  }
+  return s;
+};
+
+const recDauer = a => (a.pausiert ? a.pausiertSeit : Date.now()) - a.start - a.pausenDauer;
+
+function sichereAufnahme() {
+  return S.aufnahme ? aufnahmeSchreiben(S.aufnahme).catch(() => {}) : Promise.resolve();
+}
+
+/** Zeichnet den bisher gelaufenen Weg auf der sichtbaren Karte mit. */
+function zeichneAufnahmeLinie() {
+  const karte = sichtbareKarte();
+  const a = S.aufnahme;
+  if (!karte || !a || a.punkte.length < 2) return;
+  const linie = a.punkte.map(p => [p[0], p[1]]);
+  if (S.recLinie && S.recLinie._karte === karte) {
+    S.recLinie.setLatLngs(linie);
+  } else {
+    if (S.recLinie) S.recLinie.remove();
+    S.recLinie = L.polyline(linie, { color: '#d13b2f', weight: 4, opacity: .9, dashArray: '1 7', lineCap: 'round' })
+      .addTo(karte);
+    S.recLinie._karte = karte;
+  }
+}
+
+function zeigeRecBanner() {
+  const a = S.aufnahme;
+  const banner = $('#rec-banner');
+  banner.hidden = !a;
+  for (const wahl of ['#fab-rec', '#fab-rec-u']) {
+    const k = $(wahl);
+    if (k) k.setAttribute('aria-pressed', String(!!a));
+  }
+  if (a) {
+    const km = recStrecke(a.punkte) / 1000;
+    const hm = hoehenmeter(a.punkte.map(p => p[2]));
+    banner.classList.toggle('pause', a.pausiert);
+    banner.innerHTML = `
+      <span class="rec-punkt"></span>
+      <div><span class="wert">${fmtKm(km)}</span><span class="bez">km</span></div>
+      <div><span class="wert">${fmtDauer(Math.round(recDauer(a) / 60000))}</span><span class="bez">${a.pausiert ? 'pausiert' : 'unterwegs'}</span></div>
+      <div><span class="wert">${hm.auf}</span><span class="bez">Hm</span></div>`;
+  } else if (S.recLinie) {
+    S.recLinie.remove();
+    S.recLinie = null;
+  }
+  passeBalkenHoeheAn();
+}
+
+/** Die Ansicht muss so viel Platz lassen, wie die Balken zusammen brauchen. */
+function passeBalkenHoeheAn() {
+  const hoehe = $('#balken-leiste').offsetHeight;
+  document.body.classList.toggle('navigiert', hoehe > 0);
+  document.documentElement.style.setProperty('--nav-h', hoehe + 'px');
+  setTimeout(() => {
+    for (const k of [S.karteU, S.karteT]) if (k) k.invalidateSize();
+  }, 60);
+}
+
+/** Fragt beim Start, ob eine unterbrochene Aufzeichnung weitergehen soll. */
+async function stelleAufnahmeWiederHer() {
+  let a = null;
+  try { a = await aufnahmeLesen(); } catch { return; }
+  if (!a || !a.punkte || !a.punkte.length) return;
+  const km = fmtKm(recStrecke(a.punkte) / 1000);
+  const wann = new Date(a.start).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' });
+  if (confirm(`Unterbrochene Aufzeichnung gefunden (${km} km, begonnen ${wann}).
+
+Fortsetzen?`)) {
+    await starteAufnahme(a);
+  } else {
+    await aufnahmeLoeschen();
+  }
+}
+
 // --- Wanderwege aus OpenStreetMap ---------------------------------------
 
 function osmStatus(text, art = '') {
@@ -984,7 +1170,7 @@ async function zeigeMehr() {
     + `${S.index.touren.length} Buchtouren, ${S.eigene.length} eigene</span>`;
 }
 
-const APP_VERSION = '1.10.1';
+const APP_VERSION = '1.11.0';
 
 // --- Oberfläche verdrahten ----------------------------------------------
 
@@ -1050,6 +1236,28 @@ function verdrahteOberflaeche() {
     if (e.target.files.length) importiere([...e.target.files]);
     e.target.value = '';
   });
+
+  // Aufzeichnung: tippen startet, erneut tippen beendet; langes Drücken pausiert
+  for (const wahl of ['#fab-rec', '#fab-rec-u']) {
+    const knopf = $(wahl);
+    if (!knopf) continue;
+    let lange = null, warLang = false;
+    knopf.addEventListener('pointerdown', () => {
+      warLang = false;
+      lange = setTimeout(() => { warLang = true; if (S.aufnahme) pausiereAufnahme(); }, 600);
+    });
+    const beenden = () => { clearTimeout(lange); lange = null; };
+    knopf.addEventListener('pointerup', () => {
+      beenden();
+      if (warLang) return;
+      if (S.aufnahme) beendeAufnahme(); else starteAufnahme();
+    });
+    knopf.addEventListener('pointercancel', beenden);
+    knopf.addEventListener('pointerleave', beenden);
+  }
+  $('#rec-banner').onclick = () => {
+    if (S.aufnahme) pausiereAufnahme();
+  };
 
   // Wanderwege aus OpenStreetMap
   $('#btn-osm-nah').onclick = () => {
