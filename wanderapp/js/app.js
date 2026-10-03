@@ -6,6 +6,7 @@ import {
   fmtKm, fmtM, fmtDauer, fmtBytes, gehzeit, miniVorschau,
 } from './util.js';
 import { gpxLesen, gpxSchreiben, zipEntpacken, bauTour } from './gpx.js';
+import { sucheRouten, sucheImAusschnitt, sucheNachNamen, ladeRoute, QUELLE } from './osm.js';
 import {
   erstelleKarte, setzeLayer, setzeWanderwege, zeichneTour, passeAn,
   LAYER, kachelListe, ladeKacheln, kachelBestand, kachelnLoeschen, schaetzeGroesse,
@@ -802,6 +803,76 @@ async function loescheTour(tour) {
   location.hash = '#/eigene';
 }
 
+// --- Wanderwege aus OpenStreetMap ---------------------------------------
+
+function osmStatus(text, art = '') {
+  const el = $('#osm-status');
+  el.hidden = !text;
+  el.innerHTML = text;
+  el.style.color = art === 'warn' ? 'var(--akzent)' : '';
+}
+
+async function osmSuche(aufgabe, womit) {
+  osmStatus('Suche läuft …');
+  $('#osm-liste').innerHTML = '';
+  try {
+    const treffer = await aufgabe();
+    S.osmTreffer = treffer;
+    if (!treffer.length) {
+      osmStatus(`Keine Wanderwege ${womit} gefunden.`);
+      return;
+    }
+    const wort = treffer.length === 1 ? 'Wanderweg' : 'Wanderwege';
+    osmStatus(`<b>${treffer.length} ${wort}</b> gefunden · ${QUELLE}`);
+    $('#osm-liste').innerHTML = treffer.map(osmEintrag).join('');
+  } catch (e) {
+    osmStatus(esc(e.message), 'warn');
+  }
+}
+
+function osmEintrag(r) {
+  const km = r.kmLautOsm ? `<span><b>${fmtKm(r.kmLautOsm)}</b> km</span>` : '';
+  const weit = r.entfernung != null ? `<span>${fmtM(r.entfernung)} entfernt</span>` : '';
+  return `
+  <button class="karte-eintrag" data-osm="${r.id}">
+    <div class="osm-zeichen">🥾</div>
+    <div class="eintrag-text">
+      <div class="eintrag-kopf"><span class="eintrag-titel">${esc(r.titel)}</span></div>
+      <div class="meta">${km}${weit}</div>
+      <span class="marke">${esc(r.netz)}${r.betreiber ? ' · ' + esc(r.betreiber) : ''}</span>
+    </div>
+  </button>`;
+}
+
+/** Lädt eine OSM-Route und legt sie als eigene Tour ab. */
+async function osmUebernehmen(id) {
+  const gefunden = (S.osmTreffer || []).find(r => String(r.id) === String(id));
+  sperre('Wegverlauf wird geladen …');
+  try {
+    const roh = await ladeRoute(id);
+    const tour = bauTour(roh.titel, roh.haupt, roh.haupt.map(() => null),
+      roh.varianten.map(v => ({ km: 0, c: v })));
+    tour.id = neueId();
+    tour.quelle = 'OpenStreetMap, Relation ' + id;
+    tour.lizenz = QUELLE;
+    tour.angelegt = Date.now();
+    if (gefunden) tour.region = gefunden.netz;
+    await tourSpeichern(tour);
+    S.eigene = await eigeneTouren();
+    zeigeEigene();
+
+    const teile = roh.varianten.length;
+    sperre(null);
+    toast(teile
+      ? `„${tour.titel}" übernommen – ${teile} Abzweigung(en) gestrichelt.`
+      : `„${tour.titel}" übernommen.`);
+    location.hash = '#/tour/' + tour.id;
+  } catch (e) {
+    sperre(null);
+    osmStatus(esc(e.message), 'warn');
+  }
+}
+
 // --- Einstellungen -------------------------------------------------------
 
 async function zeigeMehr() {
@@ -836,7 +907,7 @@ async function zeigeMehr() {
     + `${S.index.touren.length} Buchtouren, ${S.eigene.length} eigene</span>`;
 }
 
-const APP_VERSION = '1.8.0';
+const APP_VERSION = '1.9.0';
 
 // --- Oberfläche verdrahten ----------------------------------------------
 
@@ -901,6 +972,32 @@ function verdrahteOberflaeche() {
   $('#datei-input').addEventListener('change', e => {
     if (e.target.files.length) importiere([...e.target.files]);
     e.target.value = '';
+  });
+
+  // Wanderwege aus OpenStreetMap
+  $('#btn-osm-nah').onclick = () => {
+    if (!S.standort) { osmStatus('Noch kein GPS-Signal – bitte kurz warten.', 'warn'); return; }
+    const { latitude: la, longitude: lo } = S.standort.coords;
+    osmSuche(() => sucheRouten(la, lo, 15000), 'in der Nähe');
+  };
+  $('#btn-osm-karte').onclick = () => {
+    const karte = S.karteU || S.karteT;
+    if (!karte) { osmStatus('Bitte zuerst die Karte öffnen.', 'warn'); return; }
+    const b = karte.getBounds();
+    const mitte = karte.getCenter();
+    osmSuche(() => sucheImAusschnitt(
+      [b.getSouth(), b.getWest(), b.getNorth(), b.getEast()], mitte.lat, mitte.lng),
+      'im Kartenausschnitt');
+  };
+  $('#osm-suche').addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    const text = e.target.value.trim();
+    if (text.length < 3) { osmStatus('Bitte mindestens drei Buchstaben.', 'warn'); return; }
+    osmSuche(() => sucheNachNamen(text), `für „${esc(text)}"`);
+  });
+  $('#osm-liste').addEventListener('click', e => {
+    const k = e.target.closest('[data-osm]');
+    if (k) osmUebernehmen(k.dataset.osm);
   });
 
   // Einstellungen

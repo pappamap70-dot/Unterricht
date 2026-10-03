@@ -193,6 +193,19 @@ body.navigiert{--nav-h:var(--nav-h-an)}
   background:var(--akzent);box-shadow:0 0 0 2px var(--karte);
 }
 
+/* OpenStreetMap-Suche -------------------------------------- */
+#osm-suche{
+  width:100%;margin-top:10px;padding:10px 13px;border:1px solid var(--linie);
+  border-radius:11px;background:var(--karte);color:var(--text);font-size:15px;
+}
+#osm-suche:focus{outline:2px solid var(--gruen);outline-offset:-1px}
+#osm-liste{padding:12px 0 0}
+#osm-liste:empty{display:none}
+.osm-zeichen{
+  flex:0 0 42px;width:42px;height:42px;border-radius:9px;background:var(--bg);
+  display:grid;place-items:center;font-size:17px;align-self:center;
+}
+
 /* Kartenauswahl -------------------------------------------- */
 .menue-grund{position:fixed;inset:0;z-index:1400}
 .menue{

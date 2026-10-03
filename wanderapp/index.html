@@ -73,6 +73,21 @@
     </div>
     <div class="list" id="eigene-liste"></div>
     <p class="hint pad" id="eigene-leer">Noch nichts importiert.</p>
+
+    <div class="pad">
+      <h2>Wanderwege aus OpenStreetMap</h2>
+      <p class="hint">Markierte Wanderwege in deiner Umgebung – frei nutzbar unter
+        der ODbL. Die Daten stammen von Freiwilligen; Verlauf und Vollständigkeit
+        schwanken, Tourbeschreibungen gibt es keine.</p>
+      <div class="btn-reihe">
+        <button class="btn" id="btn-osm-nah">In der Nähe suchen</button>
+        <button class="btn" id="btn-osm-karte">Im Kartenausschnitt</button>
+      </div>
+      <input type="search" id="osm-suche" placeholder="Oder nach Namen suchen …"
+             autocomplete="off" enterkeyhint="search">
+      <div id="osm-status" class="status" hidden></div>
+      <div class="list" id="osm-liste"></div>
+    </div>
   </section>
 
   <!-- view: Mehr / Einstellungen -->
@@ -102,6 +117,11 @@
         Kartendarstellung © <a href="https://opentopomap.org" target="_blank" rel="noopener">OpenTopoMap</a> (CC-BY-SA),
         Wanderwege © <a href="https://waymarkedtrails.org" target="_blank" rel="noopener">Waymarked Trails</a>,
         Luftbild © Esri.<br>
+        Wanderwege-Suche: Routendaten © <a href="https://openstreetmap.org/copyright"
+        target="_blank" rel="noopener">OpenStreetMap</a>-Mitwirkende, verfügbar unter
+        der <a href="https://opendatacommons.org/licenses/odbl/" target="_blank"
+        rel="noopener">ODbL</a>, abgerufen über <a href="https://overpass-api.de"
+        target="_blank" rel="noopener">Overpass</a>.<br>
         Tourendaten: GPX-Tracks zum Buch „Mystische Pfade Schwarzwald“ – nur für den privaten Gebrauch.
       </p>
       <p class="hint">Keine Werbung, keine Analyse, keine Konten. Die App sendet nichts außer den Kartenabrufen.</p>
