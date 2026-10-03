@@ -336,19 +336,23 @@ function wegGezogen() {
  */
 function richtung(pos) {
   const { latitude: la, longitude: lo, heading, speed } = pos.coords;
-  const langsam = typeof speed === 'number' && speed < 1.5;
+  // 0,5 m/s = 1,8 km/h trennt Stehen von Gehen. Wandern liegt bei 4-5 km/h,
+  // also 1,1-1,4 m/s - eine höhere Schwelle hielte Wandern für Stillstand.
+  const langsam = typeof speed === 'number' && isFinite(speed) && speed < 0.5;
 
   let neu = null;
   if (typeof heading === 'number' && isFinite(heading) && !langsam) {
     neu = heading;
   } else if (S.letzterOrt && !langsam) {
     const weg = dist(S.letzterOrt[0], S.letzterOrt[1], la, lo);
-    if (weg > 12) neu = peilung(S.letzterOrt[0], S.letzterOrt[1], la, lo);
+    // 8 m sind beim Wandern gut sechs Sekunden und liegen klar über dem
+    // GPS-Rauschen von wenigen Metern.
+    if (weg > 8) neu = peilung(S.letzterOrt[0], S.letzterOrt[1], la, lo);
   }
 
   // Den Bezugspunkt immer nachführen – auch wenn diesmal keine Richtung
   // herauskam. Sonst bliebe er für immer leer und es gäbe nie eine Peilung.
-  if (!S.letzterOrt || dist(S.letzterOrt[0], S.letzterOrt[1], la, lo) > 12) {
+  if (!S.letzterOrt || dist(S.letzterOrt[0], S.letzterOrt[1], la, lo) > 8) {
     S.letzterOrt = [la, lo];
   }
   if (neu == null) return S.blickRichtung ?? null;
@@ -361,6 +365,12 @@ function richtung(pos) {
     S.blickRichtung = (S.blickRichtung + d * 0.4 + 360) % 360;
   }
   return S.blickRichtung;
+}
+
+/** Peilung als Himmelsrichtung, für die Anzeige unter "Mehr". */
+function himmelsrichtung(grad) {
+  const namen = ['N', 'NO', 'O', 'SO', 'S', 'SW', 'W', 'NW'];
+  return namen[Math.round(((grad % 360) + 360) % 360 / 45) % 8];
 }
 
 /** Die Karte der gerade sichtbaren Ansicht, sonst nichts. */
@@ -955,9 +965,17 @@ async function zeigeMehr() {
   const gps = S.standort
     ? `letzte Ortung vor ${alter} s, auf ${Math.round(S.standort.coords.accuracy)} m genau`
     : 'noch keine Ortung empfangen';
+  const tempo = S.standort && typeof S.standort.coords.speed === 'number'
+    && isFinite(S.standort.coords.speed)
+    ? (S.standort.coords.speed * 3.6).toFixed(1).replace('.', ',') + ' km/h'
+    : 'kein Tempo gemeldet';
+  const blick = S.blickRichtung != null
+    ? Math.round(S.blickRichtung) + '° (' + himmelsrichtung(S.blickRichtung) + ')'
+    : 'noch keine';
   $('#gps-info').innerHTML =
     `${gps}<br><span class="hint">Karte folgt: <b>${S.folgen ? 'ja' : 'nein'}</b>`
-    + ` · Navigation: <b>${S.nav ? 'läuft' : 'aus'}</b></span>`;
+    + ` · Navigation: <b>${S.nav ? 'läuft' : 'aus'}</b><br>`
+    + `Tempo: ${tempo} · Richtung: <b>${blick}</b></span>`;
 
   const sw = navigator.serviceWorker && navigator.serviceWorker.controller;
   $('#app-info').innerHTML =
@@ -966,7 +984,7 @@ async function zeigeMehr() {
     + `${S.index.touren.length} Buchtouren, ${S.eigene.length} eigene</span>`;
 }
 
-const APP_VERSION = '1.10.0';
+const APP_VERSION = '1.10.1';
 
 // --- Oberfläche verdrahten ----------------------------------------------
 
