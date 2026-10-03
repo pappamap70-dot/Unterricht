@@ -54,6 +54,8 @@ const vorgabe = {
   // Anschauen einer Tour soll die Karte stehen bleiben. Der Start einer
   // Navigation schaltet es für diese Fahrt ein.
   folgen: false,
+  // Karte in Fahrtrichtung drehen (nur wenn sie ohnehin mitwandert)
+  drehen: false,
 };
 
 let cache = null;

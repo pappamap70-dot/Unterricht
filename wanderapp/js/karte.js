@@ -136,6 +136,80 @@ export function passeAn(karte, tour, { polster = 30, untenFrei = 0 } = {}) {
   });
 }
 
+// --- Karte in Fahrtrichtung drehen ---------------------------------------
+
+/**
+ * Dreht die Karte so, dass die Bewegungsrichtung nach oben zeigt.
+ *
+ * Leaflet kennt keine Drehung, deshalb wird der Kartencontainer selbst
+ * gedreht. Damit bei schräger Lage keine leeren Ecken entstehen, wird er
+ * auf die Diagonale des sichtbaren Bereichs vergrössert; der Elternbereich
+ * schneidet den Überstand ab. Beschriftungen und Marken werden über eine
+ * CSS-Variable gegengedreht, damit sie waagerecht bleiben.
+ *
+ * `winkel` ist die Peilung in Grad (0 = Norden); null stellt gerade.
+ */
+export function dreheKarte(karte, winkel) {
+  const el = karte.getContainer();
+  const eltern = el.parentElement;
+  if (!eltern) return;
+
+  if (winkel == null) {
+    if (!el.classList.contains('dreht')) return;
+    // Kartenhinweise zurück in die Karte hängen
+    const zurueck = eltern.querySelector(':scope > .leaflet-control-container');
+    if (zurueck) el.appendChild(zurueck);
+    el.classList.remove('dreht');
+    el.style.cssText = el.style.cssText
+      .replace(/(width|height|left|top|transform)\s*:[^;]*;?/g, '');
+    el.style.removeProperty('--gegen');
+    el._winkel = null;
+    karte.invalidateSize();
+    return;
+  }
+
+  const breite = eltern.clientWidth, hoehe = eltern.clientHeight;
+  const seite = Math.ceil(Math.hypot(breite, hoehe));
+  const warGedreht = el.classList.contains('dreht');
+
+  if (!warGedreht || el._seite !== seite) {
+    el.classList.add('dreht');
+    // Die Kartenhinweise aus dem drehenden Bereich herausnehmen: Eine feste
+    // Position darin hilft nicht, weil der ganze Bereich mitgedreht wird.
+    // Ausserhalb bleiben sie waagerecht und im Bild – ihre Nennung ist bei
+    // CC-BY-SA Pflicht.
+    const steuerung = el.querySelector(':scope > .leaflet-control-container');
+    if (steuerung) eltern.appendChild(steuerung);
+    el.style.width = seite + 'px';
+    el.style.height = seite + 'px';
+    el.style.left = Math.round((breite - seite) / 2) + 'px';
+    el.style.top = Math.round((hoehe - seite) / 2) + 'px';
+    el._seite = seite;
+    karte.invalidateSize();
+  }
+  // Fortlaufend zählen statt bei 360 umzubrechen: sonst nähme die Animation
+  // beim Nulldurchgang den langen Weg (z. B. 350° statt 10° in die andere
+  // Richtung) und die Karte würde sich einmal komplett drehen.
+  const vorher = el._winkel ?? winkel;
+  const schritt = ((winkel - (vorher % 360) + 540) % 360) - 180;
+  const fortlaufend = vorher + schritt;
+  el._winkel = fortlaufend;
+
+  el.style.transform = `rotate(${(-fortlaufend).toFixed(1)}deg)`;
+  el.style.setProperty('--gegen', `${fortlaufend.toFixed(1)}deg`);
+  // Masse des wirklich sichtbaren Fensters, damit die Kartenhinweise darin
+  // bleiben – ihre Nennung ist bei CC-BY-SA Pflicht.
+
+}
+
+/** Peilung von Punkt a nach b in Grad, 0 = Norden. */
+export function peilung(lat1, lon1, lat2, lon2) {
+  const p1 = grad(lat1), p2 = grad(lat2), dl = grad(lon2 - lon1);
+  const y = Math.sin(dl) * Math.cos(p2);
+  const x = Math.cos(p1) * Math.sin(p2) - Math.sin(p1) * Math.cos(p2) * Math.cos(dl);
+  return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+}
+
 // --- Offline-Kacheln -----------------------------------------------------
 
 const x2 = (lon, z) => Math.floor((lon + 180) / 360 * 2 ** z);

@@ -200,6 +200,23 @@ body.navigiert{--nav-h:var(--nav-h-an)}
   background:var(--akzent);box-shadow:0 0 0 2px var(--karte);
 }
 
+/* Karte in Fahrtrichtung ----------------------------------- */
+.map.dreht{transition:transform .4s ease-out}
+/* Alles mit Text wird gegengedreht, sonst steht es schräg oder kopfüber */
+.map.dreht .kmmarke,
+.map.dreht .start-pin,
+.map.dreht .leaflet-tooltip{
+  transform:rotate(var(--gegen,0deg));
+  transform-origin:center;
+}
+/* Bei gedrehter Karte hängt die Steuerungsebene (und damit die Kartenhinweise)
+   direkt in der Ansicht statt in der Karte – sie liegt dann über dem Bild und
+   dreht sich nicht mit. */
+.view > .leaflet-control-container{
+  position:absolute;inset:0;pointer-events:none;z-index:450;
+}
+.view > .leaflet-control-container .leaflet-control{pointer-events:auto}
+
 /* OpenStreetMap-Suche -------------------------------------- */
 #osm-suche{
   width:100%;margin-top:10px;padding:10px 13px;border:1px solid var(--linie);

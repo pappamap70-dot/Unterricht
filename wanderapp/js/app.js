@@ -10,6 +10,7 @@ import { sucheRouten, sucheImAusschnitt, sucheNachNamen, ladeRoute, QUELLE } fro
 import {
   erstelleKarte, setzeLayer, setzeWanderwege, zeichneTour, passeAn,
   LAYER, kachelListe, ladeKacheln, kachelBestand, kachelnLoeschen, schaetzeGroesse,
+  dreheKarte, peilung,
 } from './karte.js';
 import { zeichneProfil } from './profil.js';
 import {
@@ -306,6 +307,10 @@ function setzeSheet(stufe) {
  */
 function setzeFolgen(an, merken = false) {
   S.folgen = an;
+  if (!an) {
+    S.blickRichtung = null;
+    for (const k of [S.karteU, S.karteT]) if (k) dreheKarte(k, null);
+  }
   for (const wahl of ['#fab-locate', '#fab-locate-u']) {
     const knopf = $(wahl);
     if (knopf) knopf.setAttribute('aria-pressed', String(an));
@@ -321,6 +326,41 @@ function wegGezogen() {
   if (!S.folgen) return;
   setzeFolgen(false);
   toast('Karte folgt nicht mehr – ◎ tippen');
+}
+
+/**
+ * Bestimmt die Bewegungsrichtung. Bevorzugt wird die Angabe des Geräts;
+ * fehlt sie, wird aus der letzten Strecke gepeilt. Unter 1,5 m/s bleibt die
+ * alte Richtung stehen – im Stand liefert GPS nur Rauschen, und eine Karte,
+ * die sich beim Pausieren dreht, ist unbrauchbar.
+ */
+function richtung(pos) {
+  const { latitude: la, longitude: lo, heading, speed } = pos.coords;
+  const langsam = typeof speed === 'number' && speed < 1.5;
+
+  let neu = null;
+  if (typeof heading === 'number' && isFinite(heading) && !langsam) {
+    neu = heading;
+  } else if (S.letzterOrt && !langsam) {
+    const weg = dist(S.letzterOrt[0], S.letzterOrt[1], la, lo);
+    if (weg > 12) neu = peilung(S.letzterOrt[0], S.letzterOrt[1], la, lo);
+  }
+
+  // Den Bezugspunkt immer nachführen – auch wenn diesmal keine Richtung
+  // herauskam. Sonst bliebe er für immer leer und es gäbe nie eine Peilung.
+  if (!S.letzterOrt || dist(S.letzterOrt[0], S.letzterOrt[1], la, lo) > 12) {
+    S.letzterOrt = [la, lo];
+  }
+  if (neu == null) return S.blickRichtung ?? null;
+
+  // Sanft nachführen, sonst zuckt die Karte bei jedem Messfehler
+  if (S.blickRichtung == null) {
+    S.blickRichtung = neu;
+  } else {
+    let d = ((neu - S.blickRichtung + 540) % 360) - 180;   // kürzester Weg
+    S.blickRichtung = (S.blickRichtung + d * 0.4 + 360) % 360;
+  }
+  return S.blickRichtung;
 }
 
 /** Die Karte der gerade sichtbaren Ansicht, sonst nichts. */
@@ -590,6 +630,11 @@ function starteStandort() {
       const karte = sichtbareKarte();
       if (S.folgen && karte) {
         karte.panTo([pos.coords.latitude, pos.coords.longitude], { animate: true, duration: .35 });
+      }
+      // Karte in Fahrtrichtung drehen – nur solange sie auch mitwandert
+      if (karte) {
+        const winkel = (S.einst.drehen && S.folgen) ? richtung(pos) : null;
+        dreheKarte(karte, winkel);
       }
       aktualisiereNavigation(pos);
 
@@ -902,6 +947,7 @@ async function zeigeMehr() {
     + '</span>';
 
   $('#opt-folgen').checked = S.folgen;
+  $('#opt-drehen').checked = S.einst.drehen;
   $('#opt-wach').checked = S.einst.wachhalten;
   $('#opt-km').checked = S.einst.kmMarken;
 
@@ -920,7 +966,7 @@ async function zeigeMehr() {
     + `${S.index.touren.length} Buchtouren, ${S.eigene.length} eigene</span>`;
 }
 
-const APP_VERSION = '1.9.2';
+const APP_VERSION = '1.10.0';
 
 // --- Oberfläche verdrahten ----------------------------------------------
 
@@ -1015,6 +1061,16 @@ function verdrahteOberflaeche() {
 
   // Einstellungen
   $('#opt-folgen').onchange = e => setzeFolgen(e.target.checked, true);
+  $('#opt-drehen').onchange = async e => {
+    S.einst = await setzeEinstellung('drehen', e.target.checked);
+    if (!e.target.checked) {
+      S.blickRichtung = null;
+      for (const k of [S.karteU, S.karteT]) if (k) dreheKarte(k, null);
+    }
+    toast(e.target.checked
+      ? 'Karte dreht sich in Fahrtrichtung, sobald du dich bewegst'
+      : 'Karte bleibt nach Norden ausgerichtet');
+  };
   $('#opt-wach').onchange = async e => { S.einst = await setzeEinstellung('wachhalten', e.target.checked); };
   $('#opt-km').onchange = async e => {
     S.einst = await setzeEinstellung('kmMarken', e.target.checked);
