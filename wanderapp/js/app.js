@@ -518,16 +518,25 @@ function zeichneDetail(tour) {
       <span>Profil antippen</span>
     </div>
 
+    ${tour.vorschau ? `
+    <div class="status" style="border-color:var(--gruen)">
+      Noch nicht übernommen – nur zur Ansicht.
+    </div>
+    <div class="btn-reihe">
+      <button class="btn primary" id="btn-uebernehmen">In die App übernehmen</button>
+      <button class="btn" id="btn-verwerfen">Verwerfen</button>
+    </div>` : `
     <div class="btn-reihe">
       <button class="btn primary" id="btn-nav">Navigation starten</button>
       <button class="btn" id="btn-offline">Karte offline laden</button>
     </div>
-    <div id="offline-status"></div>
+    <div id="offline-status"></div>`}
 
+    ${tour.vorschau ? '' : `
     <div class="btn-reihe">
       <a class="btn" id="btn-anfahrt" href="geo:${start[0]},${start[1]}?q=${start[0]},${start[1]}(Start)">Anfahrt zum Start</a>
       <button class="btn" id="btn-export">Als GPX sichern</button>
-    </div>
+    </div>`}
     ${tour.id && tour.id.startsWith('e')
       ? '<button class="btn warn block" id="btn-loeschen">Tour löschen</button>' : ''}
 
@@ -561,9 +570,14 @@ function zeichneDetail(tour) {
     S.profil = p;
   });
 
-  $('#btn-nav').onclick = () => (S.nav ? beendeNavigation(true) : starteNavigation(tour));
-  $('#btn-offline').onclick = () => offlineDialog(tour);
-  $('#btn-export').onclick = () => exportiere(tour);
+  if (tour.vorschau) {
+    $('#btn-uebernehmen').onclick = osmUebernehmen;
+    $('#btn-verwerfen').onclick = osmVerwerfen;
+  } else {
+    $('#btn-nav').onclick = () => (S.nav ? beendeNavigation(true) : starteNavigation(tour));
+    $('#btn-offline').onclick = () => offlineDialog(tour);
+    $('#btn-export').onclick = () => exportiere(tour);
+  }
   const del = $('#btn-loeschen');
   if (del) del.onclick = () => loescheTour(tour);
 }
@@ -1215,7 +1229,12 @@ function osmEintrag(r) {
 }
 
 /** Lädt eine OSM-Route und legt sie als eigene Tour ab. */
-async function osmUebernehmen(id) {
+/**
+ * Zeigt eine gefundene Route zur Ansicht – ohne sie abzulegen. Erst der
+ * Knopf in der Ansicht übernimmt sie dauerhaft. So sammelt sich nichts an,
+ * was man hinterher wieder löschen müsste.
+ */
+async function osmAnsehen(id) {
   const gefunden = (S.osmTreffer || []).find(r => String(r.id) === String(id));
   sperre('Wegverlauf wird geladen …');
   try {
@@ -1223,25 +1242,48 @@ async function osmUebernehmen(id) {
     const tour = bauTour(roh.titel, roh.haupt,
       roh.hoehen || roh.haupt.map(() => null),
       roh.varianten.map(v => ({ km: 0, c: v })));
-    tour.id = neueId();
+    tour.id = VORSCHAU;
+    tour.osmId = id;
     tour.quelle = 'OpenStreetMap, Relation ' + id;
     tour.lizenz = QUELLE;
-    tour.angelegt = Date.now();
-    if (gefunden) tour.region = gefunden.netz;
-    await tourSpeichern(tour);
-    S.eigene = await eigeneTouren();
-    zeigeEigene();
-
-    const teile = roh.varianten.length;
+    tour.region = gefunden ? gefunden.netz : 'OpenStreetMap';
+    tour.vorschau = true;
+    S.geometrien.set(VORSCHAU, tour);
     sperre(null);
-    toast(teile
-      ? `„${tour.titel}" übernommen – ${teile} Abzweigung(en) gestrichelt.`
-      : `„${tour.titel}" übernommen.`);
-    location.hash = '#/tour/' + tour.id;
+    location.hash = '#/tour/' + VORSCHAU;
   } catch (e) {
     sperre(null);
     osmStatus(esc(e.message), 'warn');
+    zeigeOsmBereich();
   }
+}
+
+const VORSCHAU = 'vorschau';
+
+/** Übernimmt die betrachtete Route dauerhaft. */
+async function osmUebernehmen() {
+  const tour = S.geometrien.get(VORSCHAU);
+  if (!tour) return;
+  const fertig = { ...tour, id: neueId(), vorschau: false, angelegt: Date.now() };
+  delete fertig.osmId;
+  await tourSpeichern(fertig);
+  S.geometrien.delete(VORSCHAU);
+  S.geometrien.set(fertig.id, fertig);
+  S.eigene = await eigeneTouren();
+  zeigeEigene();
+  const teile = (tour.varianten || []).length;
+  toast(teile
+    ? `„${fertig.titel}" übernommen – ${teile} Abzweigung(en) gestrichelt.`
+    : `„${fertig.titel}" übernommen.`);
+  location.hash = '#/tour/' + fertig.id;
+}
+
+/** Verwirft die betrachtete Route und kehrt zur Trefferliste zurück. */
+function osmVerwerfen() {
+  S.geometrien.delete(VORSCHAU);
+  if (S.tour && S.tour.id === VORSCHAU) S.tour = null;
+  location.hash = '#/eigene';
+  setTimeout(zeigeOsmBereich, 400);
 }
 
 // --- Einstellungen -------------------------------------------------------
@@ -1299,7 +1341,7 @@ async function zeigeMehr() {
     + `${S.index.touren.length} Buchtouren, ${S.eigene.length} eigene</span>`;
 }
 
-const APP_VERSION = '1.13.2';
+const APP_VERSION = '1.14.0';
 
 // --- Oberfläche verdrahten ----------------------------------------------
 
@@ -1330,7 +1372,10 @@ function verdrahteOberflaeche() {
   };
 
   // Detail
-  $('#btn-zurueck').onclick = () => history.length > 1 ? history.back() : (location.hash = '#/touren');
+  $('#btn-zurueck').onclick = () => {
+    if (S.tour && S.tour.vorschau) { osmVerwerfen(); return; }
+    if (history.length > 1) history.back(); else location.hash = '#/touren';
+  };
   $('#fab-fit').onclick = () => {
     setzeFolgen(false);
     S.folgenPausiert = true;
@@ -1427,7 +1472,7 @@ function verdrahteOberflaeche() {
   });
   $('#osm-liste').addEventListener('click', e => {
     const k = e.target.closest('[data-osm]');
-    if (k) osmUebernehmen(k.dataset.osm);
+    if (k) osmAnsehen(k.dataset.osm);
   });
 
   // Einstellungen
