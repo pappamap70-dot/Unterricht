@@ -1,6 +1,6 @@
 {
   "hinweis": "Diese Datei steuert die Uebersichtsseite. Sie wird ueber verwalten.html gepflegt - Handarbeit ist moeglich, aber nicht noetig.",
-  "aktualisiert": "2026-10-06T06:44:45.476Z",
+  "aktualisiert": "2026-10-06T09:48:29.755Z",
   "rubriken": [
     {
       "name": "Arduino",
@@ -94,6 +94,11 @@
         {
           "datei": "getriebe_exp_fuer_mich_loesungen.html",
           "titel": "Getriebe Exp Fuer Mich Loesungen",
+          "sichtbar": true
+        },
+        {
+          "datei": "Seifenblasenmaschine.html",
+          "titel": "Seifenblasenmaschine",
           "sichtbar": true
         }
       ]
