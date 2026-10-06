@@ -1,6 +1,6 @@
 {
   "hinweis": "Diese Datei steuert die Uebersichtsseite. Sie wird ueber verwalten.html gepflegt - Handarbeit ist moeglich, aber nicht noetig.",
-  "aktualisiert": "2026-10-01T05:05:26.223Z",
+  "aktualisiert": "2026-10-06T06:44:45.476Z",
   "rubriken": [
     {
       "name": "Arduino",
@@ -126,6 +126,11 @@
         {
           "datei": "sicherheitsregeln_domino.html",
           "titel": "Sicherheitsregeln Domino",
+          "sichtbar": true
+        },
+        {
+          "datei": "tischbohrmaschine_arbeitsblatt.html",
+          "titel": "Tischbohrmaschine Arbeitsblatt",
           "sichtbar": true
         }
       ]
