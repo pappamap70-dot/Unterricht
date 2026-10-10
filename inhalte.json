@@ -1,6 +1,6 @@
 {
   "hinweis": "Diese Datei steuert die Uebersichtsseite. Sie wird ueber verwalten.html gepflegt - Handarbeit ist moeglich, aber nicht noetig.",
-  "aktualisiert": "2026-10-06T09:48:29.755Z",
+  "aktualisiert": "2026-10-10T11:50:37.071Z",
   "rubriken": [
     {
       "name": "Arduino",
@@ -139,6 +139,11 @@
           "sichtbar": true
         }
       ]
+    },
+    {
+      "name": "medienbildung",
+      "sichtbar": true,
+      "eintraege": []
     }
   ]
 }
