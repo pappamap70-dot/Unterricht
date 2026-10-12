@@ -1,6 +1,6 @@
 {
   "hinweis": "Diese Datei steuert die Uebersichtsseite. Sie wird ueber verwalten.html gepflegt - Handarbeit ist moeglich, aber nicht noetig.",
-  "aktualisiert": "2026-10-10T11:50:37.071Z",
+  "aktualisiert": "2026-10-12T10:22:19.550Z",
   "rubriken": [
     {
       "name": "Arduino",
@@ -136,6 +136,11 @@
         {
           "datei": "tischbohrmaschine_arbeitsblatt.html",
           "titel": "Tischbohrmaschine Arbeitsblatt",
+          "sichtbar": true
+        },
+        {
+          "datei": "naehmaschine_arbeitsblatt.html",
+          "titel": "Naehmaschine Arbeitsblatt",
           "sichtbar": true
         }
       ]
