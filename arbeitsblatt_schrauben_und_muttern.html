@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Schrauben und Muttern</title>
+<style>
+:root{
+  --bordeaux:#6B1A2A; --terrakotta:#C0603A; --lachs:#E8906A; --creme:#FBF5F0;
+  --grau:#666; --feld:#ececec;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--creme);color:#222;font-family:'Barlow Condensed','Arial Narrow',Arial,sans-serif;font-size:18px;line-height:1.45}
+nav{position:sticky;top:0;z-index:10;background:var(--bordeaux);padding:8px 12px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+nav button{font:inherit;font-size:16px;font-weight:600;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;background:var(--lachs);color:#3a0d17}
+nav button.active{background:#fff;color:var(--bordeaux)}
+nav .sp{flex:1}
+.page{display:none;max-width:860px;margin:18px auto;background:#fff;padding:28px 34px;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.page.active{display:block}
+.head{display:flex;gap:14px;align-items:baseline;border-bottom:1px solid #222;padding-bottom:6px;margin-bottom:18px;flex-wrap:wrap}
+.head .title{flex:1;text-align:center;font-weight:600;font-size:20px}
+.head input{font:inherit;border:none;border-bottom:1px solid #999;background:transparent;width:170px;padding:2px 4px}
+.head .nm{display:inline-block;min-width:170px;border-bottom:1px solid #999}
+.info{border:3px solid #222;border-radius:4px;padding:14px 18px;margin-bottom:26px}
+.info h3{margin:0 0 8px;font-size:19px;text-decoration:underline}
+.info ul{margin:4px 0 12px 22px;padding:0}
+.info p{margin:4px 0}
+.info .sub{font-weight:700;margin-top:10px}
+.task{margin:22px 0}
+.task .t{font-weight:700;font-size:20px;text-decoration:underline;margin-bottom:6px}
+.task .t .n{display:inline-block;width:24px;height:24px;line-height:22px;text-align:center;border:1px solid #222;border-radius:50%;font-size:15px;margin-right:8px;text-decoration:none}
+table{width:100%;border-collapse:collapse;margin-top:10px;table-layout:fixed}
+td,th{border:1px solid #222;padding:6px 8px;vertical-align:middle;text-align:center;font-weight:400}
+tr.top td{background:#eee;text-align:left}
+tr.grey td{background:#eee}
+.cellsel select{width:100%}
+.mirror{display:none}
+select.ans{font:inherit;font-size:16px;background:var(--feld);border:1px solid transparent;border-radius:5px;padding:3px 6px;max-width:100%}
+select.gap{min-width:9.5em}
+select.ans.correct{background:#d4edda;border-color:#28a745}
+select.ans.wrong{background:#f8d7da;border-color:#dc3545}
+.lueck{border:2px solid #222;border-radius:4px;padding:14px 20px;line-height:2.1}
+.lueck ul{margin:0 0 0 22px;padding:0}
+.wb{margin-top:12px;line-height:1.9}
+.wb span{white-space:nowrap}
+.wb span:not(:last-child)::after{content:" | ";margin:0 6px}
+.checkbar{margin:18px 0 4px}
+.btn{font:inherit;font-weight:600;background:var(--bordeaux);color:#fff;border:none;border-radius:6px;padding:7px 16px;cursor:pointer}
+.msg{margin-top:8px}
+.checkmsg.good{color:#1c6b32}
+.checkmsg.bad{color:var(--bordeaux)}.checkmsg.bad b{font-weight:700}
+.checkmsg.open{color:var(--grau)}
+.checkmsg ul{margin:6px 0 6px 20px;padding:0}
+.checkmsg:empty{display:none}
+.pager{display:flex;justify-content:space-between;margin-top:14px}
+.pager button{font:inherit;font-weight:600;border:1px solid var(--bordeaux);color:var(--bordeaux);background:#fff;border-radius:6px;padding:5px 14px;cursor:pointer}
+.foot{display:flex;justify-content:space-between;border-top:1px solid #222;margin-top:22px;padding-top:4px;font-size:16px}
+@media print{
+  body{background:#fff}
+  nav,.no-print,.pager,.msg:empty{display:none !important}
+  .page{display:none !important;box-shadow:none;margin:0;padding:0;max-width:none}
+  .page.active{display:block !important}
+  body.print-all .page{display:block !important;break-after:page;page-break-after:always}
+  body.print-all .page:last-of-type{break-after:auto;page-break-after:auto}
+  .task,tr{page-break-inside:avoid}
+  .head input{border-bottom:1px solid #000}
+  select.ans{border:none;border-bottom:1px solid #000;background:transparent !important;appearance:none;-webkit-appearance:none;-moz-appearance:none;color:#000 !important;border-radius:0}
+  select.ans.correct,select.ans.wrong{background:transparent !important;border-color:#000 !important}
+  .cellsel select{display:none}
+  .mirror{display:block;border-bottom:1px solid #000;min-height:1.4em}
+}
+</style>
+</head>
+<body>
+<nav id="nav">
+  <button class="nav-btn active" data-page="1" onclick="showPage(1)">Seite 1</button>
+  <button class="nav-btn" data-page="2" onclick="showPage(2)">Seite 2</button>
+  <span class="sp"></span>
+  <button onclick="exportData()">💾 Speichern</button>
+  <button onclick="importData()">📂 Laden</button>
+  <button class="tool" onclick="resetAll()">🗑 Zurücksetzen</button>
+  <button onclick="printSingle()">🖨 Diese Seite</button>
+  <button onclick="printAll()">🖨 Alle Seiten</button>
+</nav>
+
+<div id="pages">
+
+<!-- ============ SEITE 1 ============ -->
+<div class="page active" id="page1">
+  <div class="head">
+    <span>Name: <input type="text" id="f-name" data-k="name" oninput="syncName();save()"></span>
+    <span>Klasse: <input type="text" id="f-klasse" data-k="klasse" style="width:90px" oninput="save()"></span>
+    <span class="title">Schrauben und Muttern</span>
+  </div>
+
+  <div class="info">
+    <h3>Grundlagen</h3>
+    <p>Eine Schraubverbindung besteht in der Regel aus einer <b>Schraube</b> und einer <b>Mutter</b>.<br>
+    Je nach Aufgabe kann die Verbindung <b>fest</b> (unbeweglich) oder <b>beweglich</b> (drehbar) sein.</p>
+    <p class="sub">⚙️ Wichtig:</p>
+    <p>Bei unserer Seifenblasenmaschine kommen <b>zwei verschiedene Schraubenarten</b> vor:</p>
+    <p class="sub">🔹 Metrische Schrauben (z. B. M4):</p>
+    <ul>
+      <li>haben ein <b>genormtes Gewinde (metrisch)</b></li>
+      <li>werden <b>durch ein Loch gesteckt</b> und mit einer <b>Mutter</b> befestigt</li>
+      <li><b>schneiden kein Gewinde</b> ins Material</li>
+      <li>werden z. B. verwendet, wenn sich etwas <b>drehen oder verstellen</b> können soll</li>
+    </ul>
+    <p class="sub">🔹 Holzschrauben (z. B. Spax-Schrauben):</p>
+    <ul>
+      <li><b>schneiden sich ihr Gewinde selbst</b> ins Holz</li>
+      <li>werden <b>ohne Mutter</b> direkt ins Material geschraubt</li>
+      <li>dienen zur <b>festen Befestigung</b> von Bauteilen aus Holz oder Kunststoff</li>
+      <li>können durch Vorbohren leichter eingedreht werden</li>
+    </ul>
+  </div>
+
+  <div class="task">
+    <div class="t"><span class="n">1</span>Aufgabe 1: Fülle die leeren Zellen in der Tabelle!</div>
+    <table>
+      <colgroup><col style="width:19%"><col style="width:27%"><col style="width:27%"><col style="width:27%"></colgroup>
+      <tr class="top"><td colspan="4">Arten von Schraubverbindungen</td></tr>
+      <tr><th>Art der Verbindung</th><th>Beschreibung</th><th>Beispiel</th><th>Sicherung</th></tr>
+      <tr class="grey">
+        <td>Feste Verbindung</td>
+        <td class="cellsel"><select class="ans tsel" data-k="t1" data-ok="Teile sollen sich nicht bewegen." onchange="chk(this)"></select><span class="mirror"></span></td>
+        <td>Gestell mit Spax-Schrauben, Motorhalterung.</td>
+        <td class="cellsel"><select class="ans tsel" data-k="t2" data-ok="Schraube fest anziehen, evtl. Unterlegscheibe." onchange="chk(this)"></select><span class="mirror"></span></td>
+      </tr>
+      <tr>
+        <td class="cellsel"><select class="ans tsel" data-k="t3" data-ok="Bewegliche Verbindung" onchange="chk(this)"></select><span class="mirror"></span></td>
+        <td>Teile sollen sich drehen oder schwenken können.</td>
+        <td class="cellsel"><select class="ans tsel" data-k="t4" data-ok="Räder auf Schrauben mit selbstsichernden Muttern." onchange="chk(this)"></select><span class="mirror"></span></td>
+        <td>Mutter nur leicht anziehen oder Gummiring als Abstandshalter.</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="pager no-print"><span></span><button onclick="showPage(2)">Weiter ▸</button></div>
+  <div class="foot"><span>Technik</span><span>Seite 1/2</span></div>
+</div>
+
+<!-- ============ SEITE 2 ============ -->
+<div class="page" id="page2">
+  <div class="head">
+    <span>Name: <span class="nm"></span></span>
+    <span class="title">Schrauben und Muttern</span>
+  </div>
+
+  <div class="task">
+    <div class="t"><span class="n">2</span>Aufgabe 2: Muttern sichern!</div>
+    <div class="lueck">
+      Damit sich Schrauben und Muttern durch
+      <select class="ans gap" data-k="g1" data-ok="Vibrationen" data-alt="Bewegung" data-pair="p1" onchange="chk(this)"></select>
+      oder
+      <select class="ans gap" data-k="g2" data-ok="Bewegung" data-alt="Vibrationen" data-pair="p1" onchange="chk(this)"></select>
+      nicht lösen, werden sie
+      <select class="ans gap" data-k="g3" data-ok="gesichert" onchange="chk(this)"></select>.
+      <br>Es gibt verschiedene Möglichkeiten:
+      <ul>
+        <li><select class="ans gap" data-k="g4" data-ok="Kontermutter" onchange="chk(this)"></select><b>:</b> Zwei
+          <select class="ans gap" data-k="g5" data-ok="Muttern" onchange="chk(this)"></select> werden gegeneinander
+          <select class="ans gap" data-k="g6" data-ok="festgezogen" onchange="chk(this)"></select>, damit sie sich nicht lösen.</li>
+        <li><b>Federring:</b> Ein aufgeschnittener
+          <select class="ans gap" data-k="g7" data-ok="Ring aus Federstahl" onchange="chk(this)"></select>, der durch seine
+          <select class="ans gap" data-k="g8" data-ok="Spannung" onchange="chk(this)"></select> die Mutter festhält.</li>
+        <li><select class="ans gap" data-k="g9" data-ok="Sicherungsmutter" onchange="chk(this)"></select><b>:</b> Eine Mutter mit
+          <select class="ans gap" data-k="g10" data-ok="Kunststoffring" onchange="chk(this)"></select>, der das
+          <select class="ans gap" data-k="g11" data-ok="Gewinde" onchange="chk(this)"></select> blockiert und ein Lösen verhindert.</li>
+      </ul>
+      <b>Merksatz:</b> Muttern sichern bedeutet, sie so zu befestigen, dass sie sich
+      <select class="ans gap" data-k="g12" data-ok="nicht selbst lösen" onchange="chk(this)"></select>, auch wenn sich das Bauteil bewegt.
+      <div class="wb"><div>Wörter zur Auswahl:</div><div id="wordbank"></div></div>
+    </div>
+  </div>
+
+  <div class="pager no-print"><button onclick="showPage(1)">◂ Zurück</button><span></span></div>
+  <div class="foot"><span>Technik</span><span>Seite 2/2</span></div>
+</div>
+
+</div>
+
+<input type="file" id="fileImport" accept=".json" style="display:none" onchange="loadFile(this)">
+
+<script>
+const LS_KEY = 'ab_schrauben_und_muttern';
+const WORDS = ['gesichert','Bewegung','Kunststoffring','festgezogen','Muttern','nicht selbst lösen','Vibrationen','Ring aus Federstahl','Spannung','Gewinde','Kontermutter','Sicherungsmutter'];
+const TABLE_OPTS = ['Schraube fest anziehen, evtl. Unterlegscheibe.','Teile sollen sich nicht bewegen.','Räder auf Schrauben mit selbstsichernden Muttern.','Bewegliche Verbindung'];
+
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+function buildOptions(){
+  const sorted=[...WORDS].sort((a,b)=>a.localeCompare(b,'de'));
+  document.querySelectorAll('select.gap').forEach(s=>{
+    s.innerHTML='<option value="">&nbsp;</option>'+sorted.map(w=>'<option value="'+esc(w)+'">'+esc(w)+'</option>').join('');
+  });
+  document.querySelectorAll('select.tsel').forEach(s=>{
+    s.innerHTML='<option value="">– auswählen –</option>'+TABLE_OPTS.map(w=>'<option value="'+esc(w)+'">'+esc(w)+'</option>').join('');
+  });
+  document.getElementById('wordbank').innerHTML=sorted.map(w=>'<span>'+esc(w)+'</span>').join('');
+}
+
+function syncMirrors(){
+  document.querySelectorAll('.cellsel').forEach(td=>{
+    const s=td.querySelector('select'), m=td.querySelector('.mirror');
+    if(s&&m) m.textContent=s.value;
+  });
+}
+function syncName(){
+  const n=document.getElementById('f-name').value;
+  document.querySelectorAll('.nm').forEach(e=>e.textContent=n);
+}
+
+/* ---------- Navigation ---------- */
+function showPage(n){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page'+n).classList.add('active');
+  document.querySelector('.nav-btn[data-page="'+n+'"]')?.classList.add('active');
+  window.scrollTo(0,0);
+}
+
+/* ---------- Speichern / Laden ---------- */
+function collectData(){
+  const f={};
+  document.querySelectorAll('[data-k]').forEach(el=>{
+    f[el.dataset.k]={v:el.value,c:el.classList.contains('correct')?'correct':''};
+  });
+  return {fields:f,ts:Date.now()};
+}
+function save(){ try{localStorage.setItem(LS_KEY,JSON.stringify(collectData()));}catch(e){} }
+function applyData(d){
+  if(!d||!d.fields) return;
+  document.querySelectorAll('[data-k]').forEach(el=>{
+    const f=d.fields[el.dataset.k]; if(!f) return;
+    el.value=f.v;
+    el.classList.remove('correct','wrong');
+    if(f.c==='correct') el.classList.add('correct');
+  });
+  syncMirrors(); syncName();
+}
+function exportData(){
+  const blob=new Blob([JSON.stringify(collectData(),null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const name=document.getElementById('f-name').value.trim();
+  const kl=document.getElementById('f-klasse').value.trim();
+  a.download='schrauben_und_muttern'+(name?'_'+name.replace(/\s+/g,'_'):'')+(kl?'_'+kl:'')+'.json';
+  a.href=url; a.click(); URL.revokeObjectURL(url);
+}
+function importData(){ document.getElementById('fileImport').click(); }
+function loadFile(input){
+  const file=input.files[0]; if(!file) return;
+  const r=new FileReader();
+  r.onload=e=>{ try{ applyData(JSON.parse(e.target.result)); save(); }catch(err){ alert('Die Datei konnte nicht gelesen werden.'); } };
+  r.readAsText(file);
+  input.value='';
+}
+
+/* ---------- Drucken ---------- */
+function printSingle(){
+  document.body.classList.remove('print-all');
+  syncMirrors(); syncName();
+  window.print();
+}
+function printAll(){
+  const activeId=document.querySelector('.page.active')?.id;
+  document.querySelectorAll('.page').forEach(p=>p.style.display='block');
+  document.body.classList.add('print-all');
+  syncMirrors(); syncName();
+  setTimeout(()=>{
+    window.print();
+    setTimeout(()=>{
+      document.body.classList.remove('print-all');
+      document.querySelectorAll('.page').forEach(p=>p.style.display='');
+      if(activeId) document.getElementById(activeId)?.classList.add('active');
+    },500);
+  },300);
+}
+
+/* ---------- Prüfen pro Seite ---------- */
+function isOk(el){
+  if(el.dataset.pair){
+    const mine=el.value;
+    const other=[...document.querySelectorAll('[data-pair="'+el.dataset.pair+'"]')].find(x=>x!==el);
+    const ok=[el.dataset.ok,el.dataset.alt];
+    return ok.includes(mine) && (!other || other.value!==mine);
+  }
+  return el.value===el.dataset.ok;
+}
+function chk(el){
+  el.classList.remove('correct','wrong');
+  if(el.dataset.pair){
+    document.querySelectorAll('[data-pair="'+el.dataset.pair+'"]').forEach(x=>x.classList.remove('correct','wrong'));
+  }
+  const m=el.closest('.page')?.querySelector('.checkmsg');
+  if(m){ m.textContent=''; m.className='msg checkmsg'; }
+  syncMirrors(); updateScores(); save();
+}
+function blockName(b,pg){
+  if(b.dataset.name) return b.dataset.name;
+  const t=b.querySelector?.(':scope > .t');
+  if(t){ const x=t.textContent.trim().replace(/^\d+/,''); return /^Aufgabe \d+/.test(x)? x.split(':')[0] : x; }
+  return 'diese Aufgabe';
+}
+function checkPage(id){
+  const pg=document.getElementById('page'+id); if(!pg) return;
+  const msg=pg.querySelector('.checkmsg');
+  const all=[...pg.querySelectorAll('.ans[data-ok]')];
+  const open=all.filter(e=>String(e.value).trim()==='').length;
+  if(open){
+    msg.className='msg checkmsg open';
+    msg.textContent= open===1 ? 'Ein Feld ist noch nicht ausgefüllt. Fülle erst alles aus, dann kannst du prüfen.' : open+' Felder sind noch nicht ausgefüllt. Fülle erst alles aus, dann kannst du prüfen.';
+    return;
+  }
+  const groups=new Map();
+  all.forEach(e=>{ const b=e.closest('.task')||pg; if(!groups.has(b)) groups.set(b,[]); groups.get(b).push(e); });
+  let err=0; const names=[];
+  groups.forEach((els,b)=>{
+    const bad=els.filter(e=>!isOk(e)).length;
+    els.forEach(e=>{
+      e.classList.remove('correct','wrong');
+      if(!bad) e.classList.add('correct');
+    });
+    if(bad){ err+=bad; names.push(blockName(b,pg)); }
+  });
+  if(!err){ msg.className='msg checkmsg good'; msg.textContent='Alles richtig! Gut gemacht.'; }
+  else {
+    msg.className='msg checkmsg bad';
+    msg.innerHTML=(err===1?'Es gibt noch <b>1 Fehler</b>':'Es gibt noch <b>'+err+' Fehler</b>')+'. Schau dir diese Aufgaben noch einmal genau an:<ul>'+names.map(n=>'<li>'+esc(n)+'</li>').join('')+'</ul>Lies dazu die Infokästen und denke nach. Richtige Aufgaben werden grün.';
+  }
+  updateScores(); save();
+}
+function addCheckBars(){
+  document.querySelectorAll('.page').forEach(pg=>{
+    if(!pg.querySelector('.ans[data-ok]')) return;
+    const id=pg.id.replace('page','');
+    const bar=document.createElement('div'); bar.className='checkbar no-print';
+    bar.innerHTML='<button class="btn" onclick="checkPage(\''+id+'\')">Antworten prüfen</button><div class="msg checkmsg"></div>';
+    pg.insertBefore(bar,pg.querySelector('.pager'));
+  });
+}
+function updateScores(){ /* kein Sofort-Feedback, keine Punkteanzeige */ }
+
+/* ---------- Zurücksetzen ---------- */
+function resetAll(){
+  if(!confirm('Wirklich alle Eingaben löschen? Das kann nicht rückgängig gemacht werden.')) return;
+  try{ localStorage.removeItem(LS_KEY); }catch(e){}
+  document.querySelectorAll('[data-k]').forEach(el=>{ el.value=''; el.classList.remove('correct','wrong'); });
+  document.querySelectorAll('.checkmsg').forEach(m=>{ m.textContent=''; m.className='msg checkmsg'; });
+  syncMirrors(); syncName(); updateScores(); showPage(1);
+}
+
+/* ---------- Start ---------- */
+window.addEventListener('load',()=>{
+  buildOptions();
+  addCheckBars();
+  try{ const s=localStorage.getItem(LS_KEY); if(s) applyData(JSON.parse(s)); }catch(e){}
+  syncMirrors(); syncName();
+});
+</script>
+</body>
+</html>
