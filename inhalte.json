@@ -1,6 +1,6 @@
 {
   "hinweis": "Diese Datei steuert die Uebersichtsseite. Sie wird ueber verwalten.html gepflegt - Handarbeit ist moeglich, aber nicht noetig.",
-  "aktualisiert": "2026-10-12T11:45:24.325Z",
+  "aktualisiert": "2026-10-13T06:11:09.596Z",
   "rubriken": [
     {
       "name": "Arduino",
@@ -99,6 +99,11 @@
         {
           "datei": "Seifenblasenmaschine.html",
           "titel": "Seifenblasenmaschine",
+          "sichtbar": true
+        },
+        {
+          "datei": "arbeitsblatt_schrauben_und_muttern.html",
+          "titel": "Arbeitsblatt Schrauben Und Muttern",
           "sichtbar": true
         }
       ]
